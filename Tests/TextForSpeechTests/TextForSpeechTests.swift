@@ -75,6 +75,55 @@ import Testing
     #expect(snapshot.replacements.map(\.id) == ["logs-rule"])
 }
 
+@Test func runtimeSavesAndLoadsPersistedProfiles() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "text-profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let writer = TextForSpeechRuntime(persistenceURL: fileURL)
+    writer.store(
+        TextForSpeech.Profile(
+            id: "logs",
+            name: "Logs",
+            replacements: [
+                TextForSpeech.Replacement("stderr", with: "standard error", id: "logs-rule")
+            ]
+        )
+    )
+    writer.use(
+        TextForSpeech.Profile(
+            id: "ops",
+            name: "Ops",
+            replacements: [
+                TextForSpeech.Replacement("stdout", with: "standard output", id: "ops-rule")
+            ]
+        )
+    )
+
+    try writer.save()
+
+    let reader = TextForSpeechRuntime(persistenceURL: fileURL)
+    try reader.load()
+
+    #expect(reader.customProfile.id == "ops")
+    #expect(reader.customProfile.replacements.map(\.id) == ["ops-rule"])
+    #expect(reader.profile(named: "logs")?.replacements.map(\.id) == ["logs-rule"])
+}
+
+@Test func runtimeRestoreRejectsUnsupportedPersistedStateVersion() {
+    let runtime = TextForSpeechRuntime()
+
+    #expect(throws: TextForSpeech.PersistenceError.self) {
+        try runtime.restore(
+            TextForSpeech.PersistedState(
+                version: 99,
+                customProfile: .default,
+                profiles: [:]
+            )
+        )
+    }
+}
+
 // MARK: - Profiles
 
 @Test func profileFiltersReplacementsByPhaseAndFormat() {

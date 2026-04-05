@@ -149,6 +149,50 @@ public enum TextForSpeech {
         }
     }
 
+    // MARK: Persistence
+
+    public struct PersistedState: Codable, Sendable, Equatable {
+        public let version: Int
+        public let customProfile: Profile
+        public let profiles: [String: Profile]
+
+        public init(
+            version: Int = 1,
+            customProfile: Profile,
+            profiles: [String: Profile]
+        ) {
+            self.version = version
+            self.customProfile = customProfile
+            self.profiles = profiles
+        }
+    }
+
+    public enum PersistenceError: Swift.Error, Sendable, Equatable, LocalizedError {
+        case missingPersistenceURL
+        case unsupportedPersistedStateVersion(Int)
+        case couldNotRead(URL, String)
+        case couldNotDecode(URL, String)
+        case couldNotCreateDirectory(URL, String)
+        case couldNotWrite(URL, String)
+
+        public var errorDescription: String? {
+            switch self {
+            case .missingPersistenceURL:
+                "TextForSpeech could not load or save profiles because no persistence URL was configured for this runtime."
+            case .unsupportedPersistedStateVersion(let version):
+                "TextForSpeech could not load the persisted profile state because archive version \(version) is not supported by this build."
+            case .couldNotRead(let url, let details):
+                "TextForSpeech could not read persisted profiles from '\(url.path)'. \(details)"
+            case .couldNotDecode(let url, let details):
+                "TextForSpeech could not decode persisted profiles from '\(url.path)'. \(details)"
+            case .couldNotCreateDirectory(let url, let details):
+                "TextForSpeech could not create the directory for persisted profiles at '\(url.path)'. \(details)"
+            case .couldNotWrite(let url, let details):
+                "TextForSpeech could not write persisted profiles to '\(url.path)'. \(details)"
+            }
+        }
+    }
+
     // MARK: Forensics
 
     public struct ForensicFeatures: Sendable, Equatable {
@@ -251,18 +295,36 @@ public extension TextForSpeech.Profile {
 
 @Observable
 public final class TextForSpeechRuntime {
+    private enum Persistence {
+        static let currentVersion = 1
+    }
+
     public let baseProfile: TextForSpeech.Profile
     public var customProfile: TextForSpeech.Profile
     public private(set) var profiles: [String: TextForSpeech.Profile]
+    public let persistenceURL: URL?
+    private let fileManager: FileManager
 
     public init(
         baseProfile: TextForSpeech.Profile = .base,
         customProfile: TextForSpeech.Profile = .default,
-        profiles: [String: TextForSpeech.Profile] = [:]
+        profiles: [String: TextForSpeech.Profile] = [:],
+        persistenceURL: URL? = nil,
+        fileManager: FileManager = .default
     ) {
         self.baseProfile = baseProfile
         self.customProfile = customProfile
         self.profiles = profiles
+        self.persistenceURL = persistenceURL?.standardizedFileURL
+        self.fileManager = fileManager
+    }
+
+    public var persistedState: TextForSpeech.PersistedState {
+        TextForSpeech.PersistedState(
+            version: Persistence.currentVersion,
+            customProfile: customProfile,
+            profiles: profiles
+        )
     }
 
     public func profile(named id: String) -> TextForSpeech.Profile? {
@@ -295,6 +357,96 @@ public final class TextForSpeechRuntime {
 
     public func reset() {
         customProfile = .default
+    }
+
+    public func restore(_ state: TextForSpeech.PersistedState) throws {
+        guard state.version == Persistence.currentVersion else {
+            throw TextForSpeech.PersistenceError.unsupportedPersistedStateVersion(state.version)
+        }
+
+        customProfile = state.customProfile
+        profiles = state.profiles
+    }
+
+    public func load() throws {
+        guard let persistenceURL else {
+            throw TextForSpeech.PersistenceError.missingPersistenceURL
+        }
+
+        try load(from: persistenceURL)
+    }
+
+    public func load(from url: URL) throws {
+        let fileURL = url.standardizedFileURL
+        guard fileManager.fileExists(atPath: fileURL.path) else { return }
+
+        let data: Data
+        do {
+            data = try Data(contentsOf: fileURL)
+        } catch {
+            throw TextForSpeech.PersistenceError.couldNotRead(
+                fileURL,
+                error.localizedDescription
+            )
+        }
+
+        let state: TextForSpeech.PersistedState
+        do {
+            state = try JSONDecoder().decode(TextForSpeech.PersistedState.self, from: data)
+        } catch {
+            throw TextForSpeech.PersistenceError.couldNotDecode(
+                fileURL,
+                error.localizedDescription
+            )
+        }
+
+        try restore(state)
+    }
+
+    public func save() throws {
+        guard let persistenceURL else {
+            throw TextForSpeech.PersistenceError.missingPersistenceURL
+        }
+
+        try save(to: persistenceURL)
+    }
+
+    public func save(to url: URL) throws {
+        let fileURL = url.standardizedFileURL
+        let directoryURL = fileURL.deletingLastPathComponent()
+
+        do {
+            try fileManager.createDirectory(
+                at: directoryURL,
+                withIntermediateDirectories: true
+            )
+        } catch {
+            throw TextForSpeech.PersistenceError.couldNotCreateDirectory(
+                directoryURL,
+                error.localizedDescription
+            )
+        }
+
+        let data: Data
+        do {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            data = try encoder.encode(persistedState)
+        } catch {
+            throw TextForSpeech.PersistenceError.couldNotWrite(
+                fileURL,
+                "TextForSpeech could not encode the current profile state before writing it. \(error.localizedDescription)"
+            )
+        }
+
+        do {
+            try data.write(to: fileURL, options: .atomic)
+        } catch {
+            throw TextForSpeech.PersistenceError.couldNotWrite(
+                fileURL,
+                error.localizedDescription
+            )
+        }
     }
 }
 
