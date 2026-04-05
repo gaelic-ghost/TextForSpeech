@@ -347,6 +347,8 @@ public enum TextForSpeech {
     }
 }
 
+// MARK: - Built-in Profiles
+
 public extension TextForSpeech.Profile {
     static let base = TextForSpeech.Profile(id: "base", name: "Base")
     static let `default` = TextForSpeech.Profile()
@@ -359,6 +361,8 @@ public final class TextForSpeechRuntime {
     private enum Persistence {
         static let currentVersion = 1
     }
+
+    // MARK: Public State
 
     public let baseProfile: TextForSpeech.Profile
     public var customProfile: TextForSpeech.Profile
@@ -379,6 +383,8 @@ public final class TextForSpeechRuntime {
         self.persistenceURL = persistenceURL?.standardizedFileURL
         self.fileManager = fileManager
     }
+
+    // MARK: Profiles
 
     public var persistedState: TextForSpeech.PersistedState {
         TextForSpeech.PersistedState(
@@ -443,36 +449,64 @@ public final class TextForSpeechRuntime {
         }
     }
 
+    // MARK: Replacements
+
+    public func addReplacement(
+        _ replacement: TextForSpeech.Replacement
+    ) -> TextForSpeech.Profile {
+        let updatedProfile = customProfile.adding(replacement)
+        customProfile = updatedProfile
+        return updatedProfile
+    }
+
     public func addReplacement(
         _ replacement: TextForSpeech.Replacement,
-        toProfileNamed id: String? = nil
+        toStoredProfileNamed id: String
     ) throws -> TextForSpeech.Profile {
-        let updatedProfile = try mutableProfile(named: id).adding(replacement)
-        setProfile(updatedProfile, named: id)
+        let updatedProfile = try storedProfile(named: id).adding(replacement)
+        profiles[id] = updatedProfile
+        return updatedProfile
+    }
+
+    public func replaceReplacement(
+        _ replacement: TextForSpeech.Replacement
+    ) throws -> TextForSpeech.Profile {
+        let updatedProfile = try customProfile.replacing(replacement)
+        customProfile = updatedProfile
         return updatedProfile
     }
 
     public func replaceReplacement(
         _ replacement: TextForSpeech.Replacement,
-        inProfileNamed id: String? = nil
+        inStoredProfileNamed id: String
     ) throws -> TextForSpeech.Profile {
-        let updatedProfile = try mutableProfile(named: id).replacing(replacement)
-        setProfile(updatedProfile, named: id)
+        let updatedProfile = try storedProfile(named: id).replacing(replacement)
+        profiles[id] = updatedProfile
+        return updatedProfile
+    }
+
+    public func removeReplacement(
+        id replacementID: String
+    ) throws -> TextForSpeech.Profile {
+        let updatedProfile = try customProfile.removingReplacement(id: replacementID)
+        customProfile = updatedProfile
         return updatedProfile
     }
 
     public func removeReplacement(
         id replacementID: String,
-        fromProfileNamed profileID: String? = nil
+        fromStoredProfileNamed profileID: String
     ) throws -> TextForSpeech.Profile {
-        let updatedProfile = try mutableProfile(named: profileID).removingReplacement(id: replacementID)
-        setProfile(updatedProfile, named: profileID)
+        let updatedProfile = try storedProfile(named: profileID).removingReplacement(id: replacementID)
+        profiles[profileID] = updatedProfile
         return updatedProfile
     }
 
     public func reset() {
         customProfile = .default
     }
+
+    // MARK: Persistence
 
     public func restore(_ state: TextForSpeech.PersistedState) throws {
         guard state.version == Persistence.currentVersion else {
@@ -564,20 +598,13 @@ public final class TextForSpeechRuntime {
         }
     }
 
-    private func mutableProfile(named id: String?) throws -> TextForSpeech.Profile {
-        guard let id else { return customProfile }
+    // MARK: Helpers
+
+    private func storedProfile(named id: String) throws -> TextForSpeech.Profile {
         guard let profile = profiles[id] else {
             throw TextForSpeech.RuntimeError.profileNotFound(id)
         }
         return profile
-    }
-
-    private func setProfile(_ profile: TextForSpeech.Profile, named id: String?) {
-        guard let id else {
-            customProfile = profile
-            return
-        }
-        profiles[id] = profile
     }
 }
 

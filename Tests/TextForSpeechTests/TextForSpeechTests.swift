@@ -98,24 +98,27 @@ import Testing
     )
     _ = try runtime.createProfile(id: "logs", named: "Logs")
 
-    let customProfile = try runtime.addReplacement(
+    let customProfile = runtime.addReplacement(
         TextForSpeech.Replacement("stdout", with: "standard output", id: "stdout-rule")
     )
     #expect(customProfile.replacements.map(\.id) == ["stderr-rule", "stdout-rule"])
 
     let storedProfile = try runtime.addReplacement(
         TextForSpeech.Replacement("panic", with: "runtime panic", id: "panic-rule"),
-        toProfileNamed: "logs"
+        toStoredProfileNamed: "logs"
     )
     #expect(storedProfile.replacements.map(\.id) == ["panic-rule"])
 
     let replacedProfile = try runtime.replaceReplacement(
         TextForSpeech.Replacement("panic", with: "fatal runtime panic", id: "panic-rule"),
-        inProfileNamed: "logs"
+        inStoredProfileNamed: "logs"
     )
     #expect(replacedProfile.replacements.first?.replacement == "fatal runtime panic")
 
-    let trimmedProfile = try runtime.removeReplacement(id: "panic-rule", fromProfileNamed: "logs")
+    let trimmedProfile = try runtime.removeReplacement(
+        id: "panic-rule",
+        fromStoredProfileNamed: "logs"
+    )
     #expect(trimmedProfile.replacements.isEmpty)
 }
 
