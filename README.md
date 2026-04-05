@@ -1,22 +1,50 @@
 # TextForSpeech
 
-A Swift package for turning hard-to-speak source text into speech-safe text before it reaches a speech model.
+A Swift package for turning code-heavy or path-heavy source text into speech-safe text before it reaches a speech model.
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Setup](#setup)
+- [Usage](#usage)
+- [API Notes](#api-notes)
+- [Development](#development)
+- [Verification](#verification)
+- [License](#license)
 
 ## Overview
 
-`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` now consumes as an external package. It preserves the always-on built-in normalization rules that keep the speech model reliable, and it layers optional custom profiles and replacement rules on top of that base behavior.
+`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` consumes as an external package. It keeps the always-on built-in normalization passes in one reusable package, then layers optional profile-driven replacements and runtime persistence on top so callers can tune pronunciation without reimplementing the core pipeline.
 
-The package exposes three main pieces:
+### Motivation
 
-- `TextForSpeech`
-  The namespaced normalization API and model types.
-- `TextForSpeechRuntime`
-  The observable runtime owner for active and stored text profiles.
-- JSON-backed profile persistence through `load()`, `save()`, and `restore(_:)`.
+Speech models do poorly with raw developer text such as file paths, identifiers, markdown, inline code, repeated punctuation, and repeated-letter runs. This package centralizes those cleanup rules so the same speech-safe behavior can be reused across callers, while still leaving room for custom replacement profiles and lightweight forensic inspection of how the original text was segmented.
+
+## Setup
+
+`TextForSpeech` is a Swift Package Manager library product that currently targets macOS 15 and Swift 6 language mode.
+
+During local development, add it to another package with a local path dependency:
+
+```swift
+dependencies: [
+    .package(path: "../TextForSpeech"),
+],
+targets: [
+    .executableTarget(
+        name: "ExampleApp",
+        dependencies: [
+            .product(name: "TextForSpeech", package: "TextForSpeech"),
+        ]
+    ),
+]
+```
+
+After adding the dependency, import `TextForSpeech` in the targets that need normalization or runtime profile management.
 
 ## Usage
 
-### Normalize text directly
+Normalize raw text directly when you just need the merged built-in behavior and an optional context:
 
 ```swift
 import TextForSpeech
@@ -30,14 +58,16 @@ let normalized = TextForSpeech.normalize(
 )
 ```
 
-If you omit `context.format`, `TextForSpeech` will detect a likely format before running the normalization pipeline.
+If you omit `context.format`, the package detects a likely input format before running the normalization pipeline.
 
-### Manage profiles and replacements
+Use `TextForSpeechRuntime` when you need an observable owner for editable custom profiles, stored profiles, and JSON-backed persistence:
 
 ```swift
+import Foundation
 import TextForSpeech
 
-let runtime = TextForSpeechRuntime()
+let fileURL = URL(fileURLWithPath: "/tmp/text-profiles.json")
+let runtime = TextForSpeechRuntime(persistenceURL: fileURL)
 
 try runtime.createProfile(id: "logs", named: "Logs")
 try runtime.addReplacement(
@@ -45,52 +75,72 @@ try runtime.addReplacement(
     toStoredProfileNamed: "logs"
 )
 
-runtime.use(
-    TextForSpeech.Profile(
-        id: "ops",
-        name: "Ops",
-        replacements: [
-            TextForSpeech.Replacement("stdout", with: "standard output", id: "stdout-rule")
-        ]
-    )
+let normalized = TextForSpeech.normalize(
+    "stderr and stdout",
+    profile: runtime.snapshot(named: "logs")
 )
 
-let effectiveProfile = runtime.snapshot(named: "logs")
+try runtime.save()
 ```
 
-### Persist profile state
+The package also exposes forensic helpers when a caller needs to inspect how an input was shaped or segmented:
 
 ```swift
 import TextForSpeech
 
-let fileURL = URL(fileURLWithPath: "/tmp/text-profiles.json")
-let runtime = TextForSpeechRuntime(persistenceURL: fileURL)
+let original = """
+# Intro
+Please read /tmp/Thing and NSApplication.didFinishLaunchingNotification.
+"""
 
-try runtime.createProfile(id: "logs", named: "Logs")
-try runtime.save()
-try runtime.load()
+let normalized = TextForSpeech.normalize(original)
+let features = TextForSpeech.forensicFeatures(
+    originalText: original,
+    normalizedText: normalized
+)
+let sections = TextForSpeech.sections(originalText: original)
 ```
 
-## Model shape
+## API Notes
 
-The current package model is intentionally hybrid:
+`TextForSpeech` currently exposes one library product with a small public surface:
 
-- `TextForSpeech.Profile.base`
-  The always-on built-in normalization layer.
-- `TextForSpeech.Profile.default`
-  The default empty custom profile.
-- `TextForSpeechRuntime.customProfile`
-  The active editable custom layer for a runtime.
-- `TextForSpeechRuntime.profiles`
-  Stored named custom layers.
+- `TextForSpeech.normalize(_:context:profile:as:)` runs the built-in normalization pipeline merged with the provided custom profile.
+- `TextForSpeech.detectFormat(in:)` identifies likely input formats such as markdown, Swift, or list-like text.
+- `TextForSpeech.forensicFeatures(originalText:normalizedText:)`, `sections(originalText:)`, and `sectionWindows(originalText:totalDurationMS:totalChunkCount:)` support post-normalization inspection and chunk planning.
+- `TextForSpeechRuntime` owns `baseProfile`, `customProfile`, stored named profiles, and JSON-backed `load()`, `save()`, and `restore(_:)`.
 
-The effective profile for a job is the base profile merged with either the selected stored profile or the active custom profile.
+The current profile model is intentionally hybrid:
+
+- `TextForSpeech.Profile.base` is the always-on built-in normalization layer.
+- `TextForSpeech.Profile.default` is the empty custom profile.
+- `TextForSpeechRuntime.customProfile` is the active editable custom layer.
+- `TextForSpeechRuntime.profiles` stores named custom layers.
+
+The effective profile for a normalization job is the base profile merged with either the selected stored profile or the active custom profile.
 
 ## Development
 
-Use the standard Swift package checks:
+Use the standard Swift package workflow from the repository root:
 
 ```bash
 swift build
 swift test
 ```
+
+The package source lives under [`Sources/TextForSpeech`](/Users/galew/Workspace/TextForSpeech/Sources/TextForSpeech), and the current test coverage lives under [`Tests/TextForSpeechTests`](/Users/galew/Workspace/TextForSpeech/Tests/TextForSpeechTests).
+
+## Verification
+
+The baseline verification path for this repository is:
+
+```bash
+swift build
+swift test
+```
+
+The test suite covers end-to-end normalization behavior, runtime profile management, markdown and URL handling, and the current forensic APIs.
+
+## License
+
+This repository does not currently include a committed `LICENSE` file. Until one is added, treat the code as unlicensed source rather than assuming an open-source grant.
