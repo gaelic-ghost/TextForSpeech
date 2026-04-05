@@ -107,7 +107,10 @@ import Testing
 @Test func codeHeavyLinesBecomeSpokenCode() {
     let text = #"let fallback = weirdWords.first(where: { $0.hasPrefix("q") }) ?? "nothing""#
 
-    let normalized = TextNormalizer.normalizeCodeHeavyLines(text)
+    let normalized = TextNormalizer.normalizeCodeHeavyLines(
+        text,
+        format: .source(.swift)
+    )
 
     #expect(normalized.contains("open brace"))
     #expect(normalized.contains("nil coalescing"))

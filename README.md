@@ -44,12 +44,12 @@ After adding the dependency, import `TextForSpeech` in the targets that need nor
 
 ## Usage
 
-Normalize raw text directly when you just need the merged built-in behavior and an optional context:
+Normalize mixed text directly when you just need the text lane with the merged built-in behavior and an optional context:
 
 ```swift
 import TextForSpeech
 
-let normalized = TextForSpeech.normalize(
+let normalized = TextForSpeech.normalizeText(
     "stderr: /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
     context: TextForSpeech.Context(
         cwd: "/Users/galew/Workspace/SpeakSwiftly",
@@ -58,7 +58,40 @@ let normalized = TextForSpeech.normalize(
 )
 ```
 
-If you omit `context.format`, the package detects a likely input format before running the normalization pipeline.
+If you omit `format`, `TextForSpeech` detects a likely outer text format before running the text normalization pipeline.
+
+When the outer document is mixed text but the embedded code language is known, pass `nestedFormat` so fenced or inline code can route through the source lane:
+
+```swift
+import TextForSpeech
+
+let normalized = TextForSpeech.normalizeText(
+    """
+    Read this first:
+
+    ```swift
+    let sampleRate = profile?.sampleRate ?? 24000
+    ```
+    """,
+    format: .markdown,
+    nestedFormat: .swift
+)
+```
+
+Use the source lane when the whole input is a source file or editor buffer and the caller already knows the language:
+
+```swift
+import TextForSpeech
+
+let normalized = TextForSpeech.normalizeSource(
+    """
+    struct WorkerRuntime {
+        let sampleRate: Int
+    }
+    """,
+    as: .swift
+)
+```
 
 Use `TextForSpeechRuntime` when you need an observable owner for editable custom profiles, stored profiles, and JSON-backed persistence:
 
@@ -75,7 +108,7 @@ try runtime.addReplacement(
     toStoredProfileNamed: "logs"
 )
 
-let normalized = TextForSpeech.normalize(
+let normalized = TextForSpeech.normalizeText(
     "stderr and stdout",
     profile: runtime.snapshot(named: "logs")
 )
@@ -93,7 +126,7 @@ let original = """
 Please read /tmp/Thing and NSApplication.didFinishLaunchingNotification.
 """
 
-let normalized = TextForSpeech.normalize(original)
+let normalized = TextForSpeech.normalizeText(original)
 let features = TextForSpeech.forensicFeatures(
     originalText: original,
     normalizedText: normalized
@@ -105,8 +138,10 @@ let sections = TextForSpeech.sections(originalText: original)
 
 `TextForSpeech` currently exposes one library product with a small public surface:
 
-- `TextForSpeech.normalize(_:context:profile:as:)` runs the built-in normalization pipeline merged with the provided custom profile.
-- `TextForSpeech.detectFormat(in:)` identifies likely input formats such as markdown, Swift, or list-like text.
+- `TextForSpeech.normalizeText(_:context:profile:format:nestedFormat:)` handles prose, markdown, logs, lists, HTML, and other mixed-document inputs.
+- `TextForSpeech.normalizeSource(_:as:context:profile:)` is the explicit whole-source lane for callers that already know the source language.
+- `TextForSpeech.detectTextFormat(in:)` identifies likely outer text formats such as markdown, log, CLI output, or list-like text.
+- `TextForSpeech.detectFormat(in:)` remains available as the legacy umbrella detector for older callers.
 - `TextForSpeech.forensicFeatures(originalText:normalizedText:)`, `sections(originalText:)`, and `sectionWindows(originalText:totalDurationMS:totalChunkCount:)` support post-normalization inspection and chunk planning.
 - `TextForSpeechRuntime` owns `baseProfile`, `customProfile`, stored named profiles, and JSON-backed `load()`, `save()`, and `restore(_:)`.
 

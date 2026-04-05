@@ -64,24 +64,34 @@ The phase split is still the part that matters most architecturally.
 
 ## Input formats
 
-Formats are the coarse input taxonomy.
+Formats are now split by lane.
 
-Today that type is `TextForSpeech.Format`, with cases such as:
+For mixed text and container documents, use `TextForSpeech.TextFormat`, with cases such as:
 
 - `plain`
 - `markdown`
 - `html`
-- `source`
-- `swift`
-- `python`
-- `rust`
 - `log`
 - `cli`
 - `list`
 
-The important behavior is that formats can match hierarchically. For example, `.source` matches `.swift`, `.python`, and `.rust`.
+For whole-file or whole-buffer source normalization, use `TextForSpeech.SourceFormat`, with cases such as:
 
-Format is also optional in `TextForSpeech.Context`. Callers can provide it when they know better, but the package can detect a likely format when it is omitted.
+- `generic`
+- `swift`
+- `python`
+- `rust`
+
+The important behavior is that source formats still match hierarchically. `SourceFormat.generic` is the broad bucket that can stand in for any source lane.
+
+The old `TextForSpeech.Format` enum still exists as a compatibility bridge. It is still used for older call sites and persisted replacement scope data, but the intended public direction is the text/source split.
+
+`TextForSpeech.Context` can now carry:
+
+- `textFormat`
+- `nestedSourceFormat`
+
+Callers can provide those when they know better, but the package can still detect a likely outer text format for the text lane when it is omitted.
 
 ## Runtime ownership
 
@@ -192,8 +202,12 @@ The concise model to keep in your head is:
 
 - `Context`
   Request-local environment and optional format hint.
+- `TextFormat`
+  The broad outer document family for the text lane.
+- `SourceFormat`
+  The explicit source-language family for the source lane.
 - `Format`
-  The broad input family, either caller-specified or detected.
+  The legacy bridge type that still exists for compatibility.
 - `Profile.base`
   The always-on built-in normalization layer.
 - `customProfile`

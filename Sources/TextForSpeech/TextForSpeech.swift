@@ -7,13 +7,43 @@ public enum TextForSpeech {}
 // MARK: - Public API
 
 public extension TextForSpeech {
+    static func normalizeText(
+        _ text: String,
+        context: Context? = nil,
+        profile: Profile = .default,
+        format: TextFormat? = nil,
+        nestedFormat: SourceFormat? = nil
+    ) -> String {
+        TextNormalizer.normalizeText(
+            text,
+            context: context,
+            profile: profile,
+            format: format,
+            nestedFormat: nestedFormat
+        )
+    }
+
+    static func normalizeSource(
+        _ source: String,
+        as format: SourceFormat,
+        context: Context? = nil,
+        profile: Profile = .default
+    ) -> String {
+        SourceNormalizer.normalize(
+            source,
+            as: format,
+            context: context,
+            profile: profile
+        )
+    }
+
     static func normalize(
         _ text: String,
         context: Context? = nil,
         profile: Profile = .default,
         as format: Format? = nil
     ) -> String {
-        TextNormalizer.normalize(
+        TextNormalizer.normalizeLegacy(
             text,
             context: context,
             profile: .base.merged(with: profile),
@@ -21,8 +51,12 @@ public extension TextForSpeech {
         )
     }
 
+    static func detectTextFormat(in text: String) -> TextFormat {
+        TextNormalizer.detectTextFormat(in: text)
+    }
+
     static func detectFormat(in text: String) -> Format {
-        TextNormalizer.detectFormat(in: text)
+        TextNormalizer.detectLegacyFormat(in: text)
     }
 
     static func forensicFeatures(

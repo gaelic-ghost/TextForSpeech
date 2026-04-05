@@ -45,10 +45,17 @@ extension TextNormalizer {
     static func applyReplacementRules(
         _ text: String,
         profile: TextForSpeech.Profile,
-        format: TextForSpeech.Format,
+        format: NormalizationFormat,
         phase: TextForSpeech.Replacement.Phase
     ) -> String {
-        profile.replacements(for: phase, in: format).reduce(text) { partial, rule in
+        let replacements: [TextForSpeech.Replacement] = switch format {
+        case .text(let textFormat):
+            profile.replacements(for: phase, in: textFormat)
+        case .source(let sourceFormat):
+            profile.replacements(for: phase, in: sourceFormat)
+        }
+
+        return replacements.reduce(text) { partial, rule in
             applyReplacementRule(rule, to: partial)
         }
     }
@@ -329,14 +336,38 @@ extension TextNormalizer {
         text.map { String($0) }.joined(separator: " ")
     }
 
-    static func spokenCodeBlock(_ body: String) -> String {
-        let spoken = spokenCode(body)
+    static func spokenCodeBlock(
+        _ body: String,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
+    ) -> String {
+        let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat)
         return spoken.isEmpty ? "Code sample." : "Code sample. \(spoken). End code sample."
     }
 
-    static func spokenInlineCode(_ body: String) -> String {
-        let spoken = spokenCode(body)
+    static func spokenInlineCode(
+        _ body: String,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
+    ) -> String {
+        let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat)
         return spoken.isEmpty ? " code " : " \(spoken) "
+    }
+
+    static func spokenEmbeddedCode(
+        _ body: String,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
+    ) -> String {
+        if let nestedFormat {
+            return SourceNormalizer.normalizeEmbedded(body, as: nestedFormat)
+        }
+
+        return spokenCode(body)
+    }
+
+    static func spokenSource(_ text: String, format: TextForSpeech.SourceFormat) -> String {
+        switch format {
+        case .generic, .swift, .python, .rust:
+            spokenCode(text)
+        }
     }
 
     static func spokenSegment(_ text: String) -> String {

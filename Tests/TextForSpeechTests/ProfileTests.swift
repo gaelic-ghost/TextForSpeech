@@ -11,14 +11,16 @@ import Testing
                 with: "Swift thing",
                 id: "swift",
                 in: .beforeNormalization,
-                for: [.swift]
+                for: [],
+                sourceFormats: [.swift]
             ),
             TextForSpeech.Replacement(
                 "Thing",
                 with: "Any source thing",
                 id: "source",
                 in: .beforeNormalization,
-                for: [.source],
+                for: [],
+                sourceFormats: [.generic],
                 priority: 10
             ),
             TextForSpeech.Replacement(
@@ -30,11 +32,52 @@ import Testing
         ]
     )
 
-    let beforeNormalization = profile.replacements(for: .beforeNormalization, in: .swift)
-    let afterNormalization = profile.replacements(for: .afterNormalization, in: .swift)
+    let beforeNormalization = profile.replacements(
+        for: TextForSpeech.Replacement.Phase.beforeNormalization,
+        in: TextForSpeech.SourceFormat.swift
+    )
+    let afterNormalization = profile.replacements(
+        for: TextForSpeech.Replacement.Phase.afterNormalization,
+        in: TextForSpeech.SourceFormat.swift
+    )
 
     #expect(beforeNormalization.map(\.id) == ["source", "swift"])
     #expect(afterNormalization.map(\.id) == ["final"])
+}
+
+@Test func profileFiltersTextScopedReplacementsIndependentlyFromSourceScopedOnes() {
+    let profile = TextForSpeech.Profile(
+        replacements: [
+            TextForSpeech.Replacement(
+                "Thing",
+                with: "Markdown thing",
+                id: "markdown",
+                in: .beforeNormalization,
+                for: [.markdown]
+            ),
+            TextForSpeech.Replacement(
+                "Thing",
+                with: "Swift thing",
+                id: "swift",
+                in: .beforeNormalization,
+                for: [],
+                sourceFormats: [.swift]
+            ),
+        ]
+    )
+
+    #expect(
+        profile.replacements(
+            for: TextForSpeech.Replacement.Phase.beforeNormalization,
+            in: TextForSpeech.TextFormat.markdown
+        ).map(\.id) == ["markdown"]
+    )
+    #expect(
+        profile.replacements(
+            for: TextForSpeech.Replacement.Phase.beforeNormalization,
+            in: TextForSpeech.SourceFormat.swift
+        ).map(\.id) == ["swift"]
+    )
 }
 
 @Test func baseProfileAndDefaultProfileStayDistinct() {

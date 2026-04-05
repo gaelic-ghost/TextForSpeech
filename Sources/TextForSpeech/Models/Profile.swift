@@ -30,6 +30,34 @@ public extension TextForSpeech {
                 }
         }
 
+        public func replacements(
+            for phase: Replacement.Phase,
+            in format: TextFormat
+        ) -> [Replacement] {
+            replacements
+                .filter { $0.phase == phase && $0.applies(to: format) }
+                .sorted {
+                    if $0.priority == $1.priority {
+                        return $0.id < $1.id
+                    }
+                    return $0.priority > $1.priority
+                }
+        }
+
+        public func replacements(
+            for phase: Replacement.Phase,
+            in format: SourceFormat
+        ) -> [Replacement] {
+            replacements
+                .filter { $0.phase == phase && $0.applies(to: format) }
+                .sorted {
+                    if $0.priority == $1.priority {
+                        return $0.id < $1.id
+                    }
+                    return $0.priority > $1.priority
+                }
+        }
+
         public func merged(with custom: Self) -> Self {
             Self(
                 id: custom.id,

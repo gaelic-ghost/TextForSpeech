@@ -3,7 +3,25 @@ import Foundation
 // MARK: - Normalization Passes
 
 extension TextNormalizer {
-    static func normalizeFencedCodeBlocks(_ text: String) -> String {
+    static func normalizeStructuredSourceLines(
+        _ text: String,
+        format: TextForSpeech.SourceFormat
+    ) -> String {
+        text
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                let rawLine = String(line)
+                let trimmedLine = rawLine.trimmingCharacters(in: .whitespaces)
+                guard !trimmedLine.isEmpty else { return rawLine }
+                return spokenSource(rawLine, format: format)
+            }
+            .joined(separator: "\n")
+    }
+
+    static func normalizeFencedCodeBlocks(
+        _ text: String,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
+    ) -> String {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         guard !lines.isEmpty else { return text }
 
@@ -15,7 +33,8 @@ extension TextNormalizer {
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             if trimmed.hasPrefix("```") {
                 if insideFence {
-                    output.append(spokenCodeBlock(bufferedCode.joined(separator: "\n")))
+                    let body = bufferedCode.joined(separator: "\n")
+                    output.append(spokenCodeBlock(body, nestedFormat: nestedFormat))
                     bufferedCode.removeAll(keepingCapacity: true)
                 }
                 insideFence.toggle()
@@ -30,13 +49,16 @@ extension TextNormalizer {
         }
 
         if insideFence, !bufferedCode.isEmpty {
-            output.append(spokenCodeBlock(bufferedCode.joined(separator: "\n")))
+            output.append(spokenCodeBlock(bufferedCode.joined(separator: "\n"), nestedFormat: nestedFormat))
         }
 
         return output.joined(separator: "\n")
     }
 
-    static func normalizeInlineCodeSpans(_ text: String) -> String {
+    static func normalizeInlineCodeSpans(
+        _ text: String,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
+    ) -> String {
         let bodies = inlineCodeBodies(in: text)
         guard !bodies.isEmpty else { return text }
 
@@ -61,7 +83,7 @@ extension TextNormalizer {
 
             let body = String(text[contentStart..<closing])
             if body == expectedBody {
-                result += spokenInlineCode(body)
+                result += spokenInlineCode(body, nestedFormat: nestedFormat)
                 index = text.index(after: closing)
                 nextBody = bodyIterator.next()
             } else {
@@ -115,7 +137,8 @@ extension TextNormalizer {
         _ text: String,
         context: TextForSpeech.Context? = nil,
         profile _: TextForSpeech.Profile = .default,
-        format _: TextForSpeech.Format = .plain
+        format _: NormalizationFormat = .text(.plain),
+        nestedFormat _: TextForSpeech.SourceFormat? = nil
     ) -> String {
         transformTokens(in: text) { token in
             guard isLikelyFilePath(token) else { return nil }
@@ -151,10 +174,24 @@ extension TextNormalizer {
         }
     }
 
-    static func normalizeCodeHeavyLines(_ text: String) -> String {
+    static func normalizeCodeHeavyLines(
+        _ text: String,
+        format: NormalizationFormat,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
+    ) -> String {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         return lines.map { line in
-            isLikelyCodeLine(line) ? spokenCode(line) : line
+            guard isLikelyCodeLine(line) else { return line }
+
+            if case .source(let sourceFormat) = format {
+                return spokenSource(line, format: sourceFormat)
+            }
+
+            if let nestedFormat {
+                return spokenSource(line, format: nestedFormat)
+            }
+
+            return spokenCode(line)
         }.joined(separator: "\n")
     }
 
