@@ -147,6 +147,50 @@ public enum TextForSpeech {
                 replacements: replacements + custom.replacements
             )
         }
+
+        public func replacement(id: String) -> Replacement? {
+            replacements.first { $0.id == id }
+        }
+
+        public func named(_ name: String) -> Self {
+            Self(id: id, name: name, replacements: replacements)
+        }
+
+        public func adding(_ replacement: Replacement) -> Self {
+            Self(id: id, name: name, replacements: replacements + [replacement])
+        }
+
+        public func replacing(_ replacement: Replacement) throws -> Self {
+            guard replacements.contains(where: { $0.id == replacement.id }) else {
+                throw TextForSpeech.RuntimeError.replacementNotFound(
+                    replacement.id,
+                    profileID: id
+                )
+            }
+
+            return Self(
+                id: id,
+                name: name,
+                replacements: replacements.map { existing in
+                    existing.id == replacement.id ? replacement : existing
+                }
+            )
+        }
+
+        public func removingReplacement(id replacementID: String) throws -> Self {
+            guard replacements.contains(where: { $0.id == replacementID }) else {
+                throw TextForSpeech.RuntimeError.replacementNotFound(
+                    replacementID,
+                    profileID: id
+                )
+            }
+
+            return Self(
+                id: id,
+                name: name,
+                replacements: replacements.filter { $0.id != replacementID }
+            )
+        }
     }
 
     // MARK: Persistence
@@ -189,6 +233,23 @@ public enum TextForSpeech {
                 "TextForSpeech could not create the directory for persisted profiles at '\(url.path)'. \(details)"
             case .couldNotWrite(let url, let details):
                 "TextForSpeech could not write persisted profiles to '\(url.path)'. \(details)"
+            }
+        }
+    }
+
+    public enum RuntimeError: Swift.Error, Sendable, Equatable, LocalizedError {
+        case profileAlreadyExists(String)
+        case profileNotFound(String)
+        case replacementNotFound(String, profileID: String)
+
+        public var errorDescription: String? {
+            switch self {
+            case .profileAlreadyExists(let id):
+                "TextForSpeech could not create profile '\(id)' because a stored profile with that identifier already exists."
+            case .profileNotFound(let id):
+                "TextForSpeech could not find a stored profile named '\(id)'."
+            case .replacementNotFound(let replacementID, let profileID):
+                "TextForSpeech could not find replacement '\(replacementID)' in profile '\(profileID)'."
             }
         }
     }
@@ -331,6 +392,15 @@ public final class TextForSpeechRuntime {
         profiles[id]
     }
 
+    public func storedProfiles() -> [TextForSpeech.Profile] {
+        profiles.values.sorted { lhs, rhs in
+            if lhs.name == rhs.name {
+                return lhs.id < rhs.id
+            }
+            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+        }
+    }
+
     public func effectiveProfile(named id: String? = nil) -> TextForSpeech.Profile {
         let selectedProfile = id.flatMap { profiles[$0] } ?? customProfile
         return baseProfile.merged(with: selectedProfile)
@@ -348,11 +418,56 @@ public final class TextForSpeechRuntime {
         profiles[profile.id] = profile
     }
 
+    public func createProfile(
+        id: String,
+        named name: String,
+        replacements: [TextForSpeech.Replacement] = []
+    ) throws -> TextForSpeech.Profile {
+        guard profiles[id] == nil else {
+            throw TextForSpeech.RuntimeError.profileAlreadyExists(id)
+        }
+
+        let profile = TextForSpeech.Profile(
+            id: id,
+            name: name,
+            replacements: replacements
+        )
+        profiles[id] = profile
+        return profile
+    }
+
     public func removeProfile(named id: String) {
         profiles.removeValue(forKey: id)
         if customProfile.id == id {
             customProfile = .default
         }
+    }
+
+    public func addReplacement(
+        _ replacement: TextForSpeech.Replacement,
+        toProfileNamed id: String? = nil
+    ) throws -> TextForSpeech.Profile {
+        let updatedProfile = try mutableProfile(named: id).adding(replacement)
+        setProfile(updatedProfile, named: id)
+        return updatedProfile
+    }
+
+    public func replaceReplacement(
+        _ replacement: TextForSpeech.Replacement,
+        inProfileNamed id: String? = nil
+    ) throws -> TextForSpeech.Profile {
+        let updatedProfile = try mutableProfile(named: id).replacing(replacement)
+        setProfile(updatedProfile, named: id)
+        return updatedProfile
+    }
+
+    public func removeReplacement(
+        id replacementID: String,
+        fromProfileNamed profileID: String? = nil
+    ) throws -> TextForSpeech.Profile {
+        let updatedProfile = try mutableProfile(named: profileID).removingReplacement(id: replacementID)
+        setProfile(updatedProfile, named: profileID)
+        return updatedProfile
     }
 
     public func reset() {
@@ -447,6 +562,22 @@ public final class TextForSpeechRuntime {
                 error.localizedDescription
             )
         }
+    }
+
+    private func mutableProfile(named id: String?) throws -> TextForSpeech.Profile {
+        guard let id else { return customProfile }
+        guard let profile = profiles[id] else {
+            throw TextForSpeech.RuntimeError.profileNotFound(id)
+        }
+        return profile
+    }
+
+    private func setProfile(_ profile: TextForSpeech.Profile, named id: String?) {
+        guard let id else {
+            customProfile = profile
+            return
+        }
+        profiles[id] = profile
     }
 }
 

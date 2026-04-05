@@ -75,6 +75,50 @@ import Testing
     #expect(snapshot.replacements.map(\.id) == ["logs-rule"])
 }
 
+@Test func runtimeCreatesProfilesAndListsThemInStableOrder() throws {
+    let runtime = TextForSpeechRuntime()
+
+    let zebra = try runtime.createProfile(id: "zebra", named: "Zebra")
+    let alpha = try runtime.createProfile(id: "alpha", named: "Alpha")
+
+    #expect(zebra.id == "zebra")
+    #expect(alpha.name == "Alpha")
+    #expect(runtime.storedProfiles().map(\.id) == ["alpha", "zebra"])
+}
+
+@Test func runtimeEditsCustomAndStoredProfileReplacements() throws {
+    let runtime = TextForSpeechRuntime(
+        customProfile: TextForSpeech.Profile(
+            id: "default",
+            name: "Default",
+            replacements: [
+                TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule")
+            ]
+        )
+    )
+    _ = try runtime.createProfile(id: "logs", named: "Logs")
+
+    let customProfile = try runtime.addReplacement(
+        TextForSpeech.Replacement("stdout", with: "standard output", id: "stdout-rule")
+    )
+    #expect(customProfile.replacements.map(\.id) == ["stderr-rule", "stdout-rule"])
+
+    let storedProfile = try runtime.addReplacement(
+        TextForSpeech.Replacement("panic", with: "runtime panic", id: "panic-rule"),
+        toProfileNamed: "logs"
+    )
+    #expect(storedProfile.replacements.map(\.id) == ["panic-rule"])
+
+    let replacedProfile = try runtime.replaceReplacement(
+        TextForSpeech.Replacement("panic", with: "fatal runtime panic", id: "panic-rule"),
+        inProfileNamed: "logs"
+    )
+    #expect(replacedProfile.replacements.first?.replacement == "fatal runtime panic")
+
+    let trimmedProfile = try runtime.removeReplacement(id: "panic-rule", fromProfileNamed: "logs")
+    #expect(trimmedProfile.replacements.isEmpty)
+}
+
 @Test func runtimeSavesAndLoadsPersistedProfiles() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "text-profiles.json")
