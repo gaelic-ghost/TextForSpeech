@@ -132,6 +132,21 @@ import Testing
     #expect(TextForSpeech.detectFormat(in: swift) == .swift)
 }
 
+@Test func detectTextFormatFindsListHtmlCliAndLogInputs() {
+    let list = """
+    - First
+    - Second
+    """
+    let html = "<div><p>Hello</p></div>"
+    let cli = "$ swift test"
+    let log = "2026-04-05 18:00:00 ERROR Worker failed"
+
+    #expect(TextForSpeech.detectTextFormat(in: list) == .list)
+    #expect(TextForSpeech.detectTextFormat(in: html) == .html)
+    #expect(TextForSpeech.detectTextFormat(in: cli) == .cli)
+    #expect(TextForSpeech.detectTextFormat(in: log) == .log)
+}
+
 @Test func contextFormatOverridesAutomaticDetection() {
     let text = """
     # Header
@@ -162,6 +177,25 @@ import Testing
     )
 
     #expect(normalized.contains("Code sample."))
+    #expect(normalized.contains("optional chaining"))
+    #expect(normalized.contains("nil coalescing"))
+}
+
+@Test func normalizeTextUsesNestedSourceFormatFromContext() {
+    let original = """
+    ```swift
+    let sampleRate = profile?.sampleRate ?? 24000
+    ```
+    """
+
+    let normalized = TextForSpeech.normalizeText(
+        original,
+        context: TextForSpeech.Context(
+            textFormat: .markdown,
+            nestedSourceFormat: .swift
+        )
+    )
+
     #expect(normalized.contains("optional chaining"))
     #expect(normalized.contains("nil coalescing"))
 }

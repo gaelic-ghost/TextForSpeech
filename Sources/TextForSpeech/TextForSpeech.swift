@@ -7,6 +7,8 @@ public enum TextForSpeech {}
 // MARK: - Public API
 
 public extension TextForSpeech {
+    // MARK: Text Normalization
+
     static func normalizeText(
         _ text: String,
         context: Context? = nil,
@@ -23,6 +25,8 @@ public extension TextForSpeech {
         )
     }
 
+    // MARK: Source Normalization
+
     static func normalizeSource(
         _ source: String,
         as format: SourceFormat,
@@ -36,6 +40,8 @@ public extension TextForSpeech {
             profile: profile
         )
     }
+
+    // MARK: Legacy Compatibility
 
     static func normalize(
         _ text: String,
@@ -51,6 +57,8 @@ public extension TextForSpeech {
         )
     }
 
+    // MARK: Detection
+
     static func detectTextFormat(in text: String) -> TextFormat {
         TextNormalizer.detectTextFormat(in: text)
     }
@@ -58,6 +66,8 @@ public extension TextForSpeech {
     static func detectFormat(in text: String) -> Format {
         TextNormalizer.detectLegacyFormat(in: text)
     }
+
+    // MARK: Forensics
 
     static func forensicFeatures(
         originalText: String,

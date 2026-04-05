@@ -4,10 +4,14 @@ import Foundation
 
 public extension TextForSpeech {
     struct Context: Codable, Sendable, Equatable {
+        // MARK: Public State
+
         public let cwd: String?
         public let repoRoot: String?
         public let textFormat: TextFormat?
         public let nestedSourceFormat: SourceFormat?
+
+        // MARK: Initializers
 
         public init(
             cwd: String? = nil,
@@ -34,6 +38,8 @@ public extension TextForSpeech {
             )
         }
 
+        // MARK: Helpers
+
         private static func normalizedPath(_ path: String?) -> String? {
             guard let trimmed = path?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
                 return nil
@@ -46,6 +52,8 @@ public extension TextForSpeech {
 }
 
 public extension TextForSpeech.Context {
+    // MARK: Legacy Compatibility
+
     var format: TextForSpeech.Format? {
         if let textFormat {
             return TextForSpeech.Format(textFormat)

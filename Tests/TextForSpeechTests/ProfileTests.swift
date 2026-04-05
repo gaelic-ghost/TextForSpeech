@@ -80,6 +80,34 @@ import Testing
     )
 }
 
+@Test func genericSourceScopedReplacementsApplyToSpecificSourceFormats() {
+    let profile = TextForSpeech.Profile(
+        replacements: [
+            TextForSpeech.Replacement(
+                "Thing",
+                with: "Any source thing",
+                id: "source",
+                in: .beforeNormalization,
+                for: [],
+                sourceFormats: [.generic]
+            )
+        ]
+    )
+
+    #expect(
+        profile.replacements(
+            for: TextForSpeech.Replacement.Phase.beforeNormalization,
+            in: TextForSpeech.SourceFormat.swift
+        ).map(\.id) == ["source"]
+    )
+    #expect(
+        profile.replacements(
+            for: TextForSpeech.Replacement.Phase.beforeNormalization,
+            in: TextForSpeech.SourceFormat.python
+        ).map(\.id) == ["source"]
+    )
+}
+
 @Test func baseProfileAndDefaultProfileStayDistinct() {
     #expect(TextForSpeech.Profile.base.id == "base")
     #expect(TextForSpeech.Profile.default.id == "default")

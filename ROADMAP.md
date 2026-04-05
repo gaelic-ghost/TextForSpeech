@@ -14,7 +14,9 @@
 
 - [x] M1 Core normalization package
 - [x] M2 Runtime profiles and persistence
-- [ ] M3 Forensic surface cleanup
+- [x] M3 Text and source lane API split
+- [ ] M4 Structured source normalization
+- [ ] M5 Forensic surface cleanup
 
 ## M1 Core normalization package
 
@@ -52,7 +54,48 @@
 - [x] A caller can create or edit stored profiles, snapshot an effective profile, and persist state to disk.
 - [x] Runtime behavior is covered by the current Swift Testing suite.
 
-## M3 Forensic surface cleanup
+## M3 Text and source lane API split
+
+### Scope
+
+- [x] Split mixed-text normalization from whole-source normalization at the public API level.
+- [x] Preserve legacy callers through compatibility forwarding while downstream packages migrate.
+- [x] Let mixed documents carry an explicit nested source hint for embedded code.
+
+### Tickets
+
+- [x] Add `normalizeText(...)`, `normalizeSource(...)`, and `detectTextFormat(in:)`.
+- [x] Split the public format model into `TextFormat` and `SourceFormat`.
+- [x] Keep the old `normalize(... as:)` and `detectFormat(in:)` entrypoints as compatibility shims.
+- [x] Update package docs and tests to reflect the new API shape.
+
+### Exit criteria
+
+- [x] Callers can choose a text lane or a source lane explicitly.
+- [x] Mixed markdown-like inputs can route embedded snippets through an explicit nested source format.
+- [x] The package still validates cleanly with backward-compatibility coverage in place.
+
+## M4 Structured source normalization
+
+### Scope
+
+- [ ] Add a language-aware Swift source lane backed by SwiftSyntax.
+- [ ] Keep the explicit source lane extensible for future Python and other language-specific parsers.
+- [ ] Preserve a generic source fallback when no structured parser exists yet.
+
+### Tickets
+
+- [ ] Add the `swiftlang/swift-syntax` package at a toolchain-compatible release and wire a Swift-specific normalizer.
+- [ ] Normalize Swift declarations, symbols, labels, and member access with syntax-aware traversal instead of token heuristics alone.
+- [ ] Add coverage that proves the Swift source lane is materially more accurate than the generic source fallback on representative Swift code.
+
+### Exit criteria
+
+- [ ] `normalizeSource(... as: .swift ...)` uses a structured Swift implementation rather than the generic source fallback.
+- [ ] The package documents the current structured-source coverage honestly.
+- [ ] Future language-specific source lanes can be added without reshaping the public API again.
+
+## M5 Forensic surface cleanup
 
 ### Scope
 

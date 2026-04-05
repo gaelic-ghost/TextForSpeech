@@ -3,6 +3,8 @@ import Foundation
 // MARK: - Source Normalizer
 
 enum SourceNormalizer {
+    // MARK: Public Routing
+
     static func normalize(
         _ source: String,
         as format: TextForSpeech.SourceFormat,
@@ -16,6 +18,8 @@ enum SourceNormalizer {
             format: format
         )
     }
+
+    // MARK: Embedded Routing
 
     static func normalizeEmbedded(
         _ source: String,

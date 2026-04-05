@@ -93,6 +93,8 @@ let normalized = TextForSpeech.normalizeSource(
 )
 ```
 
+Right now the source lane is explicit but still generic. It normalizes whole-source input more consistently than the mixed-text lane, but SwiftSyntax-backed Swift-specific structure is still planned future work rather than current behavior.
+
 Use `TextForSpeechRuntime` when you need an observable owner for editable custom profiles, stored profiles, and JSON-backed persistence:
 
 ```swift
@@ -153,6 +155,8 @@ The current profile model is intentionally hybrid:
 - `TextForSpeechRuntime.profiles` stores named custom layers.
 
 The effective profile for a normalization job is the base profile merged with either the selected stored profile or the active custom profile.
+
+The current roadmap keeps the text/source split in place and tracks structured Swift normalization as a distinct next milestone in [ROADMAP.md](/Users/galew/Workspace/TextForSpeech/ROADMAP.md).
 
 ## Development
 
