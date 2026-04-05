@@ -11,10 +11,16 @@ public enum TextForSpeech {
     public struct Context: Codable, Sendable, Equatable {
         public let cwd: String?
         public let repoRoot: String?
+        public let format: Format?
 
-        public init(cwd: String? = nil, repoRoot: String? = nil) {
+        public init(
+            cwd: String? = nil,
+            repoRoot: String? = nil,
+            format: Format? = nil
+        ) {
             self.cwd = Context.normalizedPath(cwd)
             self.repoRoot = Context.normalizedPath(repoRoot)
+            self.format = format
         }
 
         private static func normalizedPath(_ path: String?) -> String? {
@@ -27,9 +33,9 @@ public enum TextForSpeech {
         }
     }
 
-    // MARK: Kind
+    // MARK: Format
 
-    public enum Kind: String, Codable, CaseIterable, Sendable, Hashable {
+    public enum Format: String, Codable, CaseIterable, Sendable, Hashable {
         case plain = "plain_text"
         case markdown
         case html
@@ -74,7 +80,7 @@ public enum TextForSpeech {
         public let match: Match
         public let phase: Phase
         public let isCaseSensitive: Bool
-        public let kinds: Set<Kind>
+        public let formats: Set<Format>
         public let priority: Int
 
         public init(
@@ -84,7 +90,7 @@ public enum TextForSpeech {
             as match: Match = .phrase,
             in phase: Phase = .beforeNormalization,
             caseSensitive isCaseSensitive: Bool = false,
-            for kinds: Set<Kind> = [],
+            for formats: Set<Format> = [],
             priority: Int = 0
         ) {
             self.id = id
@@ -93,13 +99,13 @@ public enum TextForSpeech {
             self.match = match
             self.phase = phase
             self.isCaseSensitive = isCaseSensitive
-            self.kinds = kinds
+            self.formats = formats
             self.priority = priority
         }
 
-        public func applies(to kind: Kind) -> Bool {
-            guard !kinds.isEmpty else { return true }
-            return kinds.contains(where: { $0.matches(kind) })
+        public func applies(to format: Format) -> Bool {
+            guard !formats.isEmpty else { return true }
+            return formats.contains(where: { $0.matches(format) })
         }
     }
 
@@ -122,10 +128,10 @@ public enum TextForSpeech {
 
         public func replacements(
             for phase: Replacement.Phase,
-            in kind: Kind
+            in format: Format
         ) -> [Replacement] {
             replacements
-                .filter { $0.phase == phase && $0.applies(to: kind) }
+                .filter { $0.phase == phase && $0.applies(to: format) }
                 .sorted {
                     if $0.priority == $1.priority {
                         return $0.id < $1.id
@@ -194,9 +200,18 @@ public enum TextForSpeech {
         _ text: String,
         context: Context? = nil,
         profile: Profile = .default,
-        kind: Kind = .plain
+        as format: Format? = nil
     ) -> String {
-        TextNormalizer.normalize(text, context: context, profile: .base.merged(with: profile), kind: kind)
+        TextNormalizer.normalize(
+            text,
+            context: context,
+            profile: .base.merged(with: profile),
+            format: format
+        )
+    }
+
+    public static func detectFormat(in text: String) -> Format {
+        TextNormalizer.detectFormat(in: text)
     }
 
     public static func forensicFeatures(
@@ -288,7 +303,7 @@ public final class TextForSpeechRuntime {
 enum TextNormalizer {
     typealias NormalizationPass = (String) -> String
     typealias ContextualNormalizationPass =
-        (String, TextForSpeech.Context?, TextForSpeech.Profile, TextForSpeech.Kind) -> String
+        (String, TextForSpeech.Context?, TextForSpeech.Profile, TextForSpeech.Format) -> String
 
     private static var codeMarkerRegex: Regex<Substring> {
         Regex {
@@ -344,22 +359,23 @@ enum TextNormalizer {
         _ text: String,
         context: TextForSpeech.Context? = nil,
         profile: TextForSpeech.Profile = .default,
-        kind: TextForSpeech.Kind = .plain
+        format: TextForSpeech.Format? = nil
     ) -> String {
+        let format = format ?? context?.format ?? detectFormat(in: text)
         let seeded = applyReplacementRules(
             canonicalize(text),
             profile: profile,
-            kind: kind,
+            format: format,
             phase: .beforeNormalization
         )
         let normalized = normalizationPasses.reduce(seeded) { partial, pass in
-            pass(partial, context, profile, kind)
+            pass(partial, context, profile, format)
         }
         let finalized = collapseWhitespace(
             applyReplacementRules(
                 normalized,
                 profile: profile,
-                kind: kind,
+                format: format,
                 phase: .afterNormalization
             )
         )
@@ -451,6 +467,45 @@ enum TextNormalizer {
             elapsedChunks += chunkCount
             return window
         }
+    }
+
+    static func detectFormat(in text: String) -> TextForSpeech.Format {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return .plain }
+
+        if looksLikeHTML(trimmed) {
+            return .html
+        }
+
+        if looksLikeMarkdownList(trimmed) {
+            return .list
+        }
+
+        if looksLikeMarkdown(trimmed) {
+            return .markdown
+        }
+
+        if looksLikeSwiftSource(trimmed) {
+            return .swift
+        }
+
+        if looksLikePythonSource(trimmed) {
+            return .python
+        }
+
+        if looksLikeRustSource(trimmed) {
+            return .rust
+        }
+
+        if looksLikeCLIOutput(trimmed) {
+            return .cli
+        }
+
+        if looksLikeLogOutput(trimmed) {
+            return .log
+        }
+
+        return .plain
     }
 }
 
@@ -569,7 +624,7 @@ extension TextNormalizer {
         _ text: String,
         context: TextForSpeech.Context? = nil,
         profile _: TextForSpeech.Profile = .default,
-        kind _: TextForSpeech.Kind = .plain
+        format _: TextForSpeech.Format = .plain
     ) -> String {
         transformTokens(in: text) { token in
             guard isLikelyFilePath(token) else { return nil }
@@ -628,6 +683,86 @@ extension TextNormalizer {
 
         result += text[cursor...]
         return result
+    }
+
+    static func looksLikeHTML(_ text: String) -> Bool {
+        text.contains(/<([A-Za-z][A-Za-z0-9:-]*)(\s[^>]*)?>/) && text.contains("</")
+    }
+
+    static func looksLikeMarkdownList(_ text: String) -> Bool {
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        let listLineCount = lines.count { line in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            return trimmed.hasPrefix("- ")
+                || trimmed.hasPrefix("* ")
+                || trimmed.hasPrefix("+ ")
+                || trimmed.firstMatch(of: /^\d+\.\s+/) != nil
+        }
+
+        return listLineCount >= 2
+    }
+
+    static func looksLikeMarkdown(_ text: String) -> Bool {
+        text.contains("```")
+            || text.split(separator: "\n", omittingEmptySubsequences: false)
+                .contains(where: { markdownHeaderTitle(in: String($0)) != nil })
+            || !markdownLinks(in: text).isEmpty
+            || !inlineCodeBodies(in: text).isEmpty
+    }
+
+    static func looksLikeSwiftSource(_ text: String) -> Bool {
+        text.contains("import Foundation")
+            || text.contains("import SwiftUI")
+            || text.contains("func ")
+            || text.contains("struct ")
+            || text.contains("enum ")
+            || text.contains("actor ")
+            || text.contains("let ")
+    }
+
+    static func looksLikePythonSource(_ text: String) -> Bool {
+        text.contains("def ")
+            || text.contains("import ")
+            || text.contains("from ")
+            || text.contains("self.")
+            || text.contains("print(")
+    }
+
+    static func looksLikeRustSource(_ text: String) -> Bool {
+        text.contains("fn ")
+            || text.contains("let mut ")
+            || text.contains("impl ")
+            || text.contains("use ")
+            || text.contains("pub struct ")
+    }
+
+    static func looksLikeCLIOutput(_ text: String) -> Bool {
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        let promptLikeLines = lines.count { line in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            return trimmed.hasPrefix("$ ")
+                || trimmed.hasPrefix("> ")
+                || trimmed.hasPrefix("% ")
+                || trimmed.firstMatch(of: /^[A-Za-z0-9_.-]+@\S+[:~]/) != nil
+        }
+
+        return promptLikeLines >= 1
+    }
+
+    static func looksLikeLogOutput(_ text: String) -> Bool {
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        let logLineCount = lines.count { line in
+            let trimmed = line.trimmingCharacters(in: .whitespaces)
+            return trimmed.firstMatch(of: /^\d{4}-\d{2}-\d{2}[ T]/) != nil
+                || trimmed.contains(" ERROR ")
+                || trimmed.contains(" WARN ")
+                || trimmed.contains(" INFO ")
+                || trimmed.contains("[error]")
+                || trimmed.contains("[warn]")
+                || trimmed.contains("[info]")
+        }
+
+        return logLineCount >= 1
     }
 }
 
@@ -1109,10 +1244,10 @@ extension TextNormalizer {
     static func applyReplacementRules(
         _ text: String,
         profile: TextForSpeech.Profile,
-        kind: TextForSpeech.Kind,
+        format: TextForSpeech.Format,
         phase: TextForSpeech.Replacement.Phase
     ) -> String {
-        profile.replacements(for: phase, in: kind).reduce(text) { partial, rule in
+        profile.replacements(for: phase, in: format).reduce(text) { partial, rule in
             applyReplacementRule(rule, to: partial)
         }
     }

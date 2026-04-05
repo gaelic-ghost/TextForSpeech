@@ -77,7 +77,7 @@ import Testing
 
 // MARK: - Profiles
 
-@Test func profileFiltersReplacementsByPhaseAndKind() {
+@Test func profileFiltersReplacementsByPhaseAndFormat() {
     let profile = TextForSpeech.Profile(
         replacements: [
             TextForSpeech.Replacement(
@@ -403,13 +403,47 @@ import Testing
     let normalized = TextForSpeech.normalize(
         "Please say chrommmaticallly and snake_case_stuff once.",
         profile: profile,
-        kind: .plain
+        as: .plain
     )
 
     #expect(normalized.contains("chromatically"))
     #expect(normalized.contains("settings token"))
     #expect(!normalized.contains("c h r o m"))
     #expect(!normalized.contains("snake case stuff"))
+}
+
+@Test func detectFormatFindsMarkdownAndSwiftSource() {
+    let markdown = """
+    # Header
+
+    Read `code` and [docs](https://example.com).
+    """
+    let swift = """
+    import Foundation
+
+    struct Thing {
+        let value: String
+    }
+    """
+
+    #expect(TextForSpeech.detectFormat(in: markdown) == .markdown)
+    #expect(TextForSpeech.detectFormat(in: swift) == .swift)
+}
+
+@Test func contextFormatOverridesAutomaticDetection() {
+    let text = """
+    # Header
+
+    - First
+    - Second
+    """
+
+    let normalized = TextForSpeech.normalize(
+        text,
+        context: TextForSpeech.Context(format: .list)
+    )
+
+    #expect(normalized.contains("Header"))
 }
 
 // MARK: - Forensics
