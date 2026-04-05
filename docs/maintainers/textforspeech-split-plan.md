@@ -1,4 +1,4 @@
-# TextForSpeech Split and SpeakSwiftly Integration Plan
+# TextForSpeech Split, Source Lanes, and SpeakSwiftly Integration Plan
 
 ## Status
 
@@ -14,6 +14,8 @@ The remaining work from this plan has shifted from extraction to refinement:
 - higher-level editing ergonomics
 - YAML-backed configuration and hot reload
 - additional format-specific normalization growth
+- public API cleanup around text lanes versus source lanes
+- structured source normalization, starting with Swift
 
 ## Goal
 
@@ -25,6 +27,123 @@ At the end of this work:
 - `SpeakSwiftly` depends on `TextForSpeech` as an external package.
 - `SpeakSwiftly` consumers can manage normalization profiles through public `SpeakSwiftly` APIs.
 - speech requests can select a normalization profile and text format at request time.
+- whole source files and mixed documents can use different normalization entrypoints.
+
+## New API direction
+
+The next durable building-block change is to stop forcing mixed text and whole source files through one ambiguous `normalize` entrypoint.
+
+There are two real caller modes:
+
+- mixed text such as Markdown, README-like prose, logs, or CLI output that may include embedded identifiers or code snippets
+- whole source files where the caller already knows the language and wants a source-aware lane
+
+The simpler path considered first was adding only `nestedFormat:` to the existing API. That helps mixed documents, but it still leaves whole-file source normalization trapped in the generic text lane.
+
+That is not enough for the Xcode Source Extension case, so the package should move to an explicit split:
+
+- `normalizeText(...)`
+- `normalizeSource(... as: ...)`
+
+## Target public API
+
+The intended public surface should converge on:
+
+- `normalizeText(_:, context:, profile:, format:, nestedFormat:)`
+- `normalizeSource(_:, as:, context:, profile:)`
+- `detectTextFormat(in:)`
+
+The old `normalize(_:, context:, profile:, as:)` and `detectFormat(in:)` APIs should remain only as compatibility surfaces while callers migrate.
+
+## Format model direction
+
+The public format model should be split into:
+
+- `TextFormat`
+  - `plain`
+  - `markdown`
+  - `html`
+  - `log`
+  - `cli`
+  - `list`
+- `SourceFormat`
+  - `generic`
+  - `swift`
+  - `python`
+  - `rust`
+
+The old umbrella `Format` enum can remain temporarily as a compatibility bridge for persisted replacement rules and older call sites.
+
+## Lane responsibilities
+
+### Text lane
+
+`normalizeText(...)` should own:
+
+- caller-specified or detected outer text format
+- mixed-content normalization for prose plus embedded identifiers
+- optional nested source hinting for inline code, fenced code, and other code-like fragments
+
+The text lane should continue using heuristic detection only for text containers.
+
+### Source lane
+
+`normalizeSource(... as: ...)` should own:
+
+- explicit language selection by the caller
+- whole-file or whole-buffer normalization
+- future structured parsing for languages that earn it
+
+The source lane should not rely on mixed-text heuristics.
+
+## Nested source handling
+
+Mixed documents should accept a nested source hint when the caller knows the language of embedded code.
+
+That means:
+
+- outer `format:` answers “what kind of document is this?”
+- inner `nestedFormat:` answers “what kind of code tends to appear inside this document?”
+
+Examples:
+
+- `README.md` with Swift code fences
+  - `format: .markdown`
+  - `nestedFormat: .swift`
+- HTML with embedded JavaScript would eventually use:
+  - `format: .html`
+  - `nestedFormat: <future source format>`
+
+## Structured source roadmap
+
+The source lane should support staged growth instead of pretending every language is equally understood today.
+
+### Stage 1
+
+- separate `normalizeSource(...)` API exists
+- generic source fallback exists
+- text lane can route embedded snippets through the source lane when the caller provides `nestedFormat`
+
+### Stage 2
+
+- add `SwiftSourceNormalizer`
+- back it with `swiftlang/swift-syntax`
+- normalize declarations, symbols, labels, and other syntax-aware structures more accurately than the generic token path
+
+### Stage 3
+
+- add additional language-specific normalizers such as Python when they earn their own parsing lane
+
+## Compatibility strategy
+
+The migration path should stay explicit and temporary:
+
+1. add `TextFormat` and `SourceFormat`
+2. add `normalizeText(...)`, `normalizeSource(...)`, and `detectTextFormat(in:)`
+3. keep the old `Format` enum as a bridge for replacement persistence and older callers
+4. keep the old `normalize(...)` and `detectFormat(...)` entrypoints as forwarding compatibility shims
+5. migrate package docs and tests to the new APIs
+6. remove the old compatibility surface only when downstream callers are actually updated
 
 ## Non-negotiable behavior
 
