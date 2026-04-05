@@ -143,4 +143,4 @@ The test suite covers end-to-end normalization behavior, runtime profile managem
 
 ## License
 
-This repository does not currently include a committed `LICENSE` file. Until one is added, treat the code as unlicensed source rather than assuming an open-source grant.
+This project is licensed under the Apache License 2.0. See [`LICENSE`](/Users/galew/Workspace/TextForSpeech/LICENSE) for the full text.
