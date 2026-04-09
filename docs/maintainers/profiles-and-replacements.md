@@ -1,112 +1,141 @@
-# TextForSpeech Profiles, Replacements, and Slices
+# TextForSpeech Profiles and Replacements
 
 ## Why this exists
 
-This note explains the current `TextForSpeech` model in maintainer terms, with special attention to three ideas that are easy to conflate:
+This note explains the current `TextForSpeech` model in maintainer terms, with special attention to the separation between:
 
-- normalization profiles
-- text replacements
-- slices
+- structural normalization logic
+- built-in lexical normalization policy
+- runtime-owned custom profile state
+- forensic helpers
 
-The first two are first-class public API. The third is still only partially formalized, but the public package already exposes section and section-window forensic data that behaves like the first draft of a slice system.
+Those concerns deliberately live in different places now. The package is easier to reason about when maintainers keep those boundaries straight.
 
-## Normalization profile
+## Core model
 
-A normalization profile is the reusable rule set that the runtime merges into the always-on base profile.
+The current package model is:
 
-Today that type is `TextForSpeech.Profile`. It stays intentionally small:
+- `TextForSpeech.Profile.base`
+  The static always-on built-in profile that ships with the package.
+- stored custom profiles
+  Named user- or app-owned profiles persisted by `TextForSpeech.Runtime`.
+- active custom profile id
+  The one stored custom profile currently selected by the runtime.
+- effective profile
+  The merged `base + active custom` profile used for runtime normalization work.
+
+The simpler extension path considered first was keeping one loose active custom profile value beside a stored profile dictionary. That was rejected because it made bootstrap, active-profile identity, and persistence semantics harder to reason about. The runtime now treats the active custom layer as a stored profile selected by id.
+
+## Profile type
+
+`TextForSpeech.Profile` stays intentionally small:
 
 - `id`
 - `name`
 - `replacements`
 
-The important design choice is that a profile is not the whole normalization engine. It does not carry request-local path context, detected format, or runtime-owned persistence state. It answers a narrower question:
+It does not carry request-local path context, detected formats, or runtime-owned persistence state. It answers the narrower question:
 
-> "What custom rewrite rules should run around the built-in speech-safe normalizer?"
+> "What reusable rewrite policy should apply around the structural normalizer?"
 
-That keeps the responsibilities clean:
+That keeps responsibilities clean:
 
-- `TextForSpeech.Context` carries request-local environment like `cwd`, `repoRoot`, and optional format hints.
-- `TextForSpeech.Profile.base` carries the always-on built-in replacement policy.
+- `TextForSpeech.Context` carries request-local environment such as `cwd`, `repoRoot`, and optional format hints.
+- `TextForSpeech.Profile.base` carries the built-in replacement policy.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
-- `TextForSpeech.Runtime` exposes grouped profile and persistence capabilities.
-- the built-in normalizer remains always on through the base profile and the concrete normalization passes.
+- `TextForSpeech.Runtime` owns persistence and active-profile selection.
+- the normalizer owns structural document parsing and pipeline routing.
 
-## Text replacements
+## Replacement type
 
-Text replacements are the custom rules inside a profile.
+`TextForSpeech.Replacement` describes one reusable rule. Each replacement captures:
 
-Today that type is `TextForSpeech.Replacement`. Each replacement describes:
+- what shape to match
+- when to run
+- which text or source formats it applies to
+- how to transform the matched content
+- how strongly it should win relative to other rules
 
-- what text to match
-- what spoken text to substitute
-- how to match it
-- how to transform a match once it has been found
-- when to run it
-- which formats it applies to
-- how strongly it should win against other rules
+The current matching model supports:
 
-The simplest way to think about a replacement is:
+- exact phrase matching
+- whole-token matching
+- token-kind matching
+- line-kind matching
 
-> "If this source text shows up in this kind of input, rewrite it to this more speakable form at this point in the pipeline."
+The current transform model supports:
 
-## Replacement phases
+- literal string replacement
+- spoken path conversion
+- spoken URL conversion
+- spoken identifier conversion
+- spoken code conversion
+- spelling out repeated-letter-run tokens
 
-The phase split is still the part that matters most architecturally.
+## Pipeline phases
+
+The phase split is still architecturally important.
 
 `beforeBuiltIns` means:
 
-- run this rule before the built-in normalizer rewrites paths, identifiers, links, and code-ish text
-- use this when you need to protect or rename hard-to-speak source text before the built-ins touch it
+- run this rule before the built-in lexical rules have finished rewriting the text
+- use it when a caller needs to rename or protect raw source text before the built-in behavior touches it
 
 `afterBuiltIns` means:
 
-- run this rule after the built-in normalizer has already made the text more speakable
-- use this when you want final-pass polish on the spoken output
+- run this rule after the built-in lexical behavior has already made the text more speakable
+- use it for final-pass polish on the spoken output
 
-## Input formats
+## What lives in `Profile.base`
 
-Formats are now split by lane.
+The built-in profile now carries the durable lexical policy that used to be spread through hard-coded helpers.
 
-For mixed text and container documents, use `TextForSpeech.TextFormat`, with cases such as:
+That includes:
 
-- `plain`
-- `markdown`
-- `html`
-- `log`
-- `cli`
-- `list`
+- Gale alias replacements such as `galew` and `galem`
+- spoken URL conversion
+- spoken file-path conversion
+- spoken dotted, snake_case, dashed, and camelCase identifier conversion
+- line-based spoken code conversion for code-like text lines
+- line-based spoken code conversion for whole-source input
+- repeated-letter-run spelling
 
-For whole-file or whole-buffer source normalization, use `TextForSpeech.SourceFormat`, with cases such as:
+This change is a durable building-block change, not a cosmetic one. It unlocks inspectable built-in behavior, one merge story for base and custom rules, and better testability for shipped normalization policy.
 
-- `generic`
-- `swift`
-- `python`
-- `rust`
+## What stays structural in code
 
-The important behavior is that source formats still match hierarchically. `SourceFormat.generic` is the broad bucket that can stand in for any source lane.
+Not every behavior belongs in replacement data.
 
-`TextForSpeech.Context` can now carry:
+The normalizer still owns:
 
-- `textFormat`
-- `nestedSourceFormat`
+- fenced-code extraction
+- inline-code extraction
+- markdown-link parsing
+- format detection
+- path-context shortening such as `current directory` and `repo root`
+- final whitespace cleanup
 
-Callers can provide those when they know better, but the package can still detect a likely outer text format for the text lane when it is omitted.
+Those are document-structure or routing decisions rather than durable lexical policy. Treating them as replacement rules would make the system harder, not easier, to reason about.
 
 ## Runtime ownership
 
-The runtime-owned profile holder is `TextForSpeech.Runtime`.
+`TextForSpeech.Runtime` owns:
 
-It now exposes:
+- `baseProfile`
+- `persistenceURL`
+- `activeCustomProfileID`
+- `storedCustomProfilesByID`
+
+Its public grouped surfaces are:
 
 - `profiles`
 - `persistence`
-- `persistenceURL`
 
-The core runtime operations are:
+The runtime profile API now centers on:
 
 - `profiles.activeID`
 - `profiles.active()`
+- `profiles.effective()`
 - `profiles.effective(id:)`
 - `profiles.stored(id:)`
 - `profiles.list()`
@@ -120,110 +149,50 @@ The core runtime operations are:
 - `profiles.replace(_:inProfileID:)`
 - `profiles.removeReplacement(id:)`
 - `profiles.removeReplacement(id:fromProfileID:)`
+- `profiles.reset()`
+
+The grouped persistence API centers on:
+
 - `persistence.state`
 - `persistence.load()`
+- `persistence.load(from:)`
 - `persistence.save()`
+- `persistence.save(to:)`
 - `persistence.restore(_:)`
 
-The concurrency model is still snapshot-per-job:
+## Bootstrap behavior
 
-- profile edits can change the active state immediately
-- already-started jobs keep the snapshot they began with
-- later jobs see the updated effective profile
+`TextForSpeech.Runtime()` is now throwing and persistence is default-on.
 
-## How profiles and replacements are added today
+Startup behavior is:
 
-Profiles can still be built as plain value types, but the runtime editing workflow is now first-class.
+1. resolve the persistence URL, defaulting to Application Support
+2. load persisted state if the file exists
+3. ensure a stored `default` custom profile exists
+4. create and persist an empty `default` profile if it does not
+5. ensure `activeCustomProfileID` points at a real stored profile
+6. fall back to `default` if the saved active id is missing or invalid
 
-Value-style setup still works:
+The Application Support namespace uses the host bundle identifier when available and falls back to `TextForSpeech` when it is not.
 
-1. build a `TextForSpeech.Profile`
-2. put `TextForSpeech.Replacement` values into its `replacements` array
-3. hand that profile to `TextForSpeech.Runtime` through `profiles.store(_:)`
-4. activate it with `profiles.activate(id:)` when it should become the active custom layer
+## Practical maintainer rules
 
-The runtime-owned editing path is now available too:
+When touching profile behavior:
 
-- `profiles.create(id:name:replacements:)`
-- `profiles.add(_:)`
-- `profiles.add(_:toProfileID:)`
-- `profiles.replace(_:)`
-- `profiles.replace(_:inProfileID:)`
-- `profiles.removeReplacement(id:)`
-- `profiles.removeReplacement(id:fromProfileID:)`
+- put durable shipped lexical behavior into `Profile.base`
+- put request-local behavior into `Context`
+- keep structural parsing and routing logic in the normalizer
+- keep persistence and active-profile selection in `Runtime`
 
-That means callers no longer have to rebuild whole profile values for every small persisted edit.
+When touching docs or tests:
 
-## Default profile behavior
+- describe the active profile as a stored custom profile selected by id
+- describe the effective profile as `base + active custom`
+- do not describe `Profile.default` as the built-in always-on layer
+- do not treat runtime persistence as caller-managed setup unless the caller explicitly overrides the path
 
-There are now two profile concepts that matter publicly:
+## Related docs
 
-- `TextForSpeech.Profile.base`
-  The static always-on base profile that ships with the package.
-- `TextForSpeech.Profile.default`
-  The default empty custom profile value.
-- `TextForSpeech.Runtime.profiles.activeID`
-  The id of the currently active stored custom profile.
-- `TextForSpeech.Runtime.profiles.active()`
-  The currently active stored custom profile for a runtime.
-
-The effective profile for a job is always `Profile.base` merged with the active stored custom profile.
-
-## Persistence
-
-Yes, `TextForSpeech` profiles are now persisted by default by the package. A runtime uses Application Support automatically unless a persistence URL override is provided.
-
-Persistence is JSON-backed today through:
-
-- `TextForSpeech.PersistedState`
-- `TextForSpeech.PersistenceError`
-- `TextForSpeech.Runtime.persistence.load()`
-- `TextForSpeech.Runtime.persistence.save()`
-- `TextForSpeech.Runtime.persistence.restore(_:)`
-
-YAML and hot reload are still future work.
-
-## What “slices” means today
-
-There is still not a first-class public type literally named `Slice`.
-
-But the slice-like structure is now public through:
-
-- `TextForSpeech.ForensicFeatures`
-- `TextForSpeech.Section`
-- `TextForSpeech.SectionWindow`
-- `TextForSpeech.Forensics.sections(originalText:)`
-- `TextForSpeech.Forensics.sectionWindows(originalText:totalDurationMS:totalChunkCount:)`
-
-Those APIs still behave like the first real draft of a slice system:
-
-1. split by Markdown headers if present
-2. otherwise split by paragraphs
-3. otherwise fall back to one full-request section
-
-## Practical mental model
-
-The concise model to keep in your head is:
-
-- `Context`
-  Request-local environment and optional format hint.
-- `TextFormat`
-  The broad outer document family for the text lane.
-- `SourceFormat`
-  The explicit source-language family for the source lane.
-- `profiles`
-  The runtime profile capability handle.
-- `Profile.base`
-  The always-on built-in profile value.
-- `profiles.activeID`
-  The id of the active stored custom profile.
-- `profiles.active()`
-  The active editable custom layer for a runtime.
-- `Replacement`
-  One custom rewrite rule inside a profile.
-- `profiles.effective()`
-  The merged base-plus-active profile captured for one job.
-- `persistence`
-  The runtime persistence capability handle.
-- `Section` and `SectionWindow`
-  Public forensic structure that already behaves like the first draft of slices.
+- [README.md](../../README.md)
+- [ROADMAP.md](../../ROADMAP.md)
+- [textforspeech-split-plan.md](./textforspeech-split-plan.md)

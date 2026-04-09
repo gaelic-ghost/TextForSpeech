@@ -1,0 +1,45 @@
+import Foundation
+
+// MARK: - Replacement Rule Matching
+
+extension TextNormalizer {
+    static func tokenMatches(_ expected: String, token: String, caseSensitive: Bool) -> Bool {
+        caseSensitive
+            ? token == expected
+            : token.compare(expected, options: [.caseInsensitive]) == .orderedSame
+    }
+
+    static func tokenMatches(
+        _ tokenKind: TextForSpeech.Replacement.TokenKind,
+        token: String
+    ) -> Bool {
+        switch tokenKind {
+        case .filePath:
+            isLikelyFilePath(token)
+        case .url:
+            isLikelyURL(token)
+        case .dottedIdentifier:
+            isLikelyDottedIdentifier(token)
+        case .snakeCaseIdentifier:
+            isLikelySnakeCaseIdentifier(token)
+        case .dashedIdentifier:
+            isLikelyDashedIdentifier(token)
+        case .camelCaseIdentifier:
+            isLikelyCamelCaseIdentifier(token)
+        case .repeatedLetterRun:
+            containsRepeatedLetterRun(trimmedCandidateToken(token))
+        }
+    }
+
+    static func lineMatches(
+        _ lineKind: TextForSpeech.Replacement.LineKind,
+        line: String
+    ) -> Bool {
+        switch lineKind {
+        case .codeLike:
+            isLikelyCodeLine(line)
+        case .nonEmpty:
+            !line.trimmingCharacters(in: .whitespaces).isEmpty
+        }
+    }
+}

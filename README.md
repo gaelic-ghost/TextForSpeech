@@ -1,28 +1,35 @@
 # TextForSpeech
 
-A Swift package for turning code-heavy or path-heavy source text into speech-safe text before it reaches a speech model.
+A Swift package for turning code-heavy, path-heavy, and markdown-heavy developer text into speech-safe text before it reaches a speech model.
 
 ## Table of Contents
 
 - [Overview](#overview)
 - [Setup](#setup)
 - [Usage](#usage)
-- [API Notes](#api-notes)
+- [Runtime profiles](#runtime-profiles)
+- [Source layout](#source-layout)
 - [Development](#development)
 - [Verification](#verification)
 - [License](#license)
 
 ## Overview
 
-`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` consumes as an external package. It keeps the always-on built-in normalization rules in one reusable `Profile.base` value, then layers persisted custom profiles on top so callers can tune pronunciation without reimplementing the core pipeline.
+`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` consumes as an external package. It ships one always-on built-in `Profile.base`, then layers persisted custom profiles on top so callers can tune pronunciation without reimplementing the core normalization pipeline.
+
+The package currently has three main responsibilities:
+
+- normalize mixed text such as markdown, logs, CLI output, and prose with embedded code or identifiers
+- normalize whole-source input through an explicit source lane
+- persist and edit named custom profiles while keeping the built-in base layer always on
 
 ### Motivation
 
-Speech models do poorly with raw developer text such as file paths, identifiers, markdown, inline code, repeated punctuation, and repeated-letter runs. This package centralizes those cleanup rules so the same speech-safe behavior can be reused across callers, while still leaving room for custom replacement profiles and lightweight forensic inspection of how the original text was segmented.
+Speech models do poorly with raw developer text such as file paths, identifiers, markdown links, inline code, repeated separators, and repeated-letter runs. `TextForSpeech` centralizes those cleanup rules so the same behavior can be reused across callers instead of being reimplemented in app code or worker code.
 
 ## Setup
 
-`TextForSpeech` is a Swift Package Manager library product that currently targets iOS 17, macOS 14, and Swift 6 language mode.
+`TextForSpeech` is a Swift Package Manager library product targeting iOS 17, macOS 14, and Swift 6 language mode.
 
 During local development, add it to another package with a local path dependency:
 
@@ -40,11 +47,11 @@ targets: [
 ]
 ```
 
-After adding the dependency, import `TextForSpeech` in the targets that need normalization or runtime profile management.
+Then import `TextForSpeech` in the targets that need normalization or runtime-managed profile state.
 
 ## Usage
 
-Normalize mixed text directly when you just need the text lane with the always-on base profile and an optional context:
+Normalize mixed text directly when you just need the text lane with the always-on base profile and an optional path context:
 
 ```swift
 import TextForSpeech
@@ -93,30 +100,9 @@ let normalized = TextForSpeech.Normalize.source(
 )
 ```
 
-Right now the source lane is explicit but still generic. It normalizes whole-source input more consistently than the mixed-text lane, but SwiftSyntax-backed Swift-specific structure is still planned future work rather than current behavior.
+The source lane is explicit today but still generic. It normalizes whole-source input more consistently than the mixed-text lane, but SwiftSyntax-backed Swift-specific structure is still future roadmap work rather than current behavior.
 
-Use `TextForSpeech.Runtime` when you need an observable owner for editable custom profiles, stored profile ids, and default-on JSON-backed persistence in Application Support:
-
-```swift
-import Foundation
-import TextForSpeech
-
-let runtime = try TextForSpeech.Runtime()
-
-try runtime.profiles.create(id: "logs", name: "Logs")
-try runtime.profiles.add(
-    TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
-    toProfileID: "logs"
-)
-try runtime.profiles.activate(id: "logs")
-
-let normalized = TextForSpeech.Normalize.text(
-    "stderr and stdout",
-    profile: runtime.profiles.effective()
-)
-```
-
-The package also exposes forensic helpers when a caller needs to inspect how an input was shaped or segmented:
+The package also exposes forensic helpers when a caller needs to inspect how an input was segmented:
 
 ```swift
 import TextForSpeech
@@ -134,28 +120,65 @@ let features = TextForSpeech.Forensics.features(
 let sections = TextForSpeech.Forensics.sections(originalText: original)
 ```
 
-## API Notes
+## Runtime Profiles
 
-`TextForSpeech` currently exposes one library product with a small public surface:
+Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, and default-on JSON-backed persistence in Application Support:
 
-- `TextForSpeech.Normalize.text(_:context:profile:format:nestedFormat:)` handles prose, markdown, logs, lists, HTML, and other mixed-document inputs.
-- `TextForSpeech.Normalize.source(_:as:context:profile:)` is the explicit whole-source lane for callers that already know the source language.
-- `TextForSpeech.Normalize.detectTextFormat(in:)` identifies likely outer text formats such as markdown, log, CLI output, or list-like text.
-- `TextForSpeech.Forensics.features(originalText:normalizedText:)`, `sections(originalText:)`, and `sectionWindows(originalText:totalDurationMS:totalChunkCount:)` support post-normalization inspection and chunk planning.
-- `TextForSpeech.Runtime` exposes grouped `profiles` and `persistence` capabilities instead of one flat mutation surface.
+```swift
+import TextForSpeech
 
-The current profile model is intentionally explicit:
+let runtime = try TextForSpeech.Runtime()
 
-- `TextForSpeech.Profile.base` is the always-on in-memory base profile that ships with the package.
+try runtime.profiles.create(id: "logs", name: "Logs")
+try runtime.profiles.add(
+    TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
+    toProfileID: "logs"
+)
+try runtime.profiles.activate(id: "logs")
+
+let normalized = TextForSpeech.Normalize.text(
+    "stderr and stdout",
+    profile: runtime.profiles.effective()
+)
+```
+
+The runtime model is intentionally explicit:
+
+- `TextForSpeech.Profile.base` is the static built-in profile that ships with the package.
 - `TextForSpeech.Profile.default` is the empty default custom profile value.
-- `TextForSpeech.Runtime.profiles.activeID` points at the active stored custom profile.
-- `TextForSpeech.Runtime.profiles.active()` reads the active stored custom profile.
-- `TextForSpeech.Runtime.profiles.effective()` reads the merged `base + active custom` profile used for normalization.
-- `TextForSpeech.Runtime.profiles.stored(id:)` reads a named stored custom profile without activating it.
+- `runtime.profiles.activeID` is the stored custom profile id currently selected by the runtime.
+- `runtime.profiles.active()` is the raw active custom profile.
+- `runtime.profiles.effective()` is always `base + active custom`.
+- `runtime.profiles.stored(id:)` reads a named stored custom profile without activating it.
 
-`TextForSpeech.Runtime` persists profiles by default to Application Support. It uses the host bundle identifier to namespace that storage location when available, and falls back to `TextForSpeech` when it is not.
+Persistence is default-on. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not.
 
-The current roadmap keeps the text/source split in place and tracks structured Swift normalization as a distinct next milestone in [ROADMAP.md](ROADMAP.md).
+## Source Layout
+
+The package source lives under `Sources/TextForSpeech` and is organized by responsibility:
+
+- `API/`
+  Public namespace-first entrypoints such as `Normalize` and `Forensics`.
+- `Models/`
+  Core value types such as `Profile`, `Replacement`, `Context`, and the built-in profiles.
+- `Normalization/`
+  The text lane, source lane, structural markdown parsing, replacement-rule engine, speech helpers, and format detection.
+- `Runtime/`
+  Runtime ownership, grouped profile and persistence handles, persisted state, and runtime-facing errors.
+- `Forensics/`
+  Sectioning and feature extraction helpers used by the forensic surface.
+
+The current source split keeps structural normalization logic separate from durable lexical policy:
+
+- structural work such as markdown parsing, code-span extraction, and format detection stays in code
+- durable lexical policy such as built-in aliases, identifier speaking, path speaking, URL speaking, and repeated-letter-run handling lives in `Profile.base`
+
+Tests live under `Tests/TextForSpeechTests` and are grouped by role:
+
+- `Models/`
+- `Normalization/`
+- `Runtime/`
+- top-level forensic coverage
 
 ## Development
 
@@ -166,8 +189,6 @@ swift build
 swift test
 ```
 
-The package source lives under [`Sources/TextForSpeech`](Sources/TextForSpeech), and the current test coverage lives under [`Tests/TextForSpeechTests`](Tests/TextForSpeechTests).
-
 ## Verification
 
 The baseline verification path for this repository is:
@@ -177,8 +198,8 @@ swift build
 swift test
 ```
 
-The test suite covers end-to-end normalization behavior, runtime profile management, markdown and URL handling, and the current forensic APIs.
+For release work or architectural refactors, also review the current roadmap in [ROADMAP.md](ROADMAP.md) and the maintainer notes under [docs/maintainers](docs/maintainers).
 
 ## License
 
-This project is licensed under the Apache License 2.0. See [`LICENSE`](LICENSE) for the full text.
+This project is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for the full text.

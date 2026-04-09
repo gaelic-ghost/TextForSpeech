@@ -7,7 +7,7 @@
 ## Product principles
 
 - [ ] Keep normalization deterministic and reusable across callers instead of duplicating speech-cleanup rules in app code.
-- [x] Keep the built-in normalization layer internal but consistently merged so callers get one reliable normalization pipeline.
+- [x] Keep the built-in normalization layer explicit as `Profile.base` and consistently merged so callers get one reliable normalization pipeline.
 - [ ] Keep forensic APIs honest about what they measure and separate from the production normalization path unless shared primitives clearly belong in both places.
 - [ ] Keep the public Swift surface grouped by capability, with namespace-first entrypoints and runtime handles that stay easy to discover in SourceKit.
 
@@ -16,9 +16,10 @@
 - [x] M1 Core normalization package
 - [x] M2 Runtime profiles and persistence
 - [x] M3 Text and source lane API split
-- [ ] M4 Runtime lookup and profile ergonomics
+- [x] M4 Runtime lookup and profile ergonomics
 - [ ] M5 Structured source normalization
 - [ ] M6 Forensic surface cleanup
+- [ ] M7 Release and maintainability polish
 
 ## M1 Core normalization package
 
@@ -81,21 +82,21 @@
 
 ### Scope
 
-- [ ] Tighten the profile lookup story so active, stored, and effective views are easy to reason about at the call site.
-- [ ] Keep the runtime grouped by capability without making callers bounce between near-duplicate lookup methods.
-- [ ] Preserve the current always-on base-profile merge behavior while clarifying raw custom-layer access.
+- [x] Tighten the profile lookup story so active, stored, and effective views are easy to reason about at the call site.
+- [x] Keep the runtime grouped by capability without making callers bounce between near-duplicate lookup methods.
+- [x] Preserve the current always-on base-profile merge behavior while clarifying raw custom-layer access.
 
 ### Tickets
 
-- [ ] Decide whether `profiles.stored(id:)` and `profiles.active(id:)` should collapse into one lookup API or stay intentionally distinct.
-- [ ] Review whether `profiles.active(id:)` should keep returning an optional when the active custom layer always exists.
-- [ ] Add focused docs and tests around the raw custom-layer view versus the built-in merged effective view.
+- [x] Make `profiles` and `persistence` the public grouped entry points for external callers.
+- [x] Keep the active custom layer explicit through `activeID`, `active()`, and `activate(id:)`.
+- [x] Add focused docs and tests around the raw custom-layer view versus the built-in merged effective view.
 
 ### Exit criteria
 
-- [ ] The runtime profile lookup story reads naturally at the call site without redundant concepts.
-- [ ] Docs and tests explain the distinction between raw custom profiles and effective merged profiles clearly.
-- [ ] `SpeakSwiftly` integration can choose a profile view without adapter glue or naming confusion.
+- [x] The runtime profile lookup story reads naturally at the call site without redundant concepts.
+- [x] Docs and tests explain the distinction between raw custom profiles and effective merged profiles clearly.
+- [x] `SpeakSwiftly` integration can choose a profile view without adapter glue or naming confusion.
 
 ## M5 Structured source normalization
 
@@ -136,3 +137,24 @@
 - [ ] The forensic API surface has clear ownership boundaries.
 - [ ] Shared parsing utilities live where both normalization and forensics can use them without duplicate codepaths.
 - [ ] File and type naming make it obvious which code is production normalization logic and which code is forensic analysis support.
+
+## M7 Release and maintainability polish
+
+### Scope
+
+- [ ] Keep source files role-focused so oversized catch-all files do not silently grow back.
+- [ ] Keep public docs aligned with the real package architecture instead of preserving stale migration notes.
+- [ ] Prepare the next minor release with updated roadmap and release notes.
+
+### Tickets
+
+- [x] Split the runtime implementation into grouped profile, persistence, and storage files.
+- [x] Split normalization helpers by markdown passes, token passes, replacement engine, and format detection.
+- [x] Refresh README and maintainer docs to reflect the current runtime and normalization model.
+- [ ] Prepare the next minor release notes and tag plan.
+
+### Exit criteria
+
+- [ ] The package source layout is easy to scan without oversized catch-all files.
+- [ ] Maintainer docs describe the current package architecture instead of the old migration state.
+- [ ] The next minor release can be tagged and published from a clean, verified commit.

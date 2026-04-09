@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Replacement Rules
+// MARK: - Replacement Rule Engine
 
 extension TextNormalizer {
     static func paragraphCount(in text: String) -> Int {
@@ -13,6 +13,34 @@ extension TextNormalizer {
             .filter { !$0.isEmpty }
             .count
     }
+
+    static func applyReplacementRules(
+        _ text: String,
+        profile: TextForSpeech.Profile,
+        format: NormalizationFormat,
+        phase: TextForSpeech.Replacement.Phase,
+        context: TextForSpeech.Context? = nil,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
+    ) -> String {
+        let replacements: [TextForSpeech.Replacement] = switch format {
+        case .text(let textFormat):
+            profile.replacements(for: phase, in: textFormat)
+        case .source(let sourceFormat):
+            profile.replacements(for: phase, in: sourceFormat)
+        }
+
+        return replacements.reduce(text) { partial, rule in
+            applyReplacementRule(
+                rule,
+                to: partial,
+                context: context,
+                format: format,
+                nestedFormat: nestedFormat
+            )
+        }
+    }
+
+    // MARK: Line and Token Transforms
 
     static func transformTokens(in text: String, transform: (String) -> String?) -> String {
         var result = ""
@@ -45,32 +73,6 @@ extension TextNormalizer {
                 return transform(rawLine) ?? rawLine
             }
             .joined(separator: "\n")
-    }
-
-    static func applyReplacementRules(
-        _ text: String,
-        profile: TextForSpeech.Profile,
-        format: NormalizationFormat,
-        phase: TextForSpeech.Replacement.Phase,
-        context: TextForSpeech.Context? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
-    ) -> String {
-        let replacements: [TextForSpeech.Replacement] = switch format {
-        case .text(let textFormat):
-            profile.replacements(for: phase, in: textFormat)
-        case .source(let sourceFormat):
-            profile.replacements(for: phase, in: sourceFormat)
-        }
-
-        return replacements.reduce(text) { partial, rule in
-            applyReplacementRule(
-                rule,
-                to: partial,
-                context: context,
-                format: format,
-                nestedFormat: nestedFormat
-            )
-        }
     }
 
     static func transformedToken(_ rawToken: String, transform: (String) -> String?) -> String {
@@ -124,6 +126,8 @@ extension TextNormalizer {
 
         return String(token[start..<end])
     }
+
+    // MARK: Rule Application
 
     private static func applyReplacementRule(
         _ rule: TextForSpeech.Replacement,
@@ -223,46 +227,6 @@ extension TextNormalizer {
 
         case .spellOut:
             spelledOut(trimmedCandidateToken(text))
-        }
-    }
-
-    private static func tokenMatches(_ expected: String, token: String, caseSensitive: Bool) -> Bool {
-        caseSensitive
-            ? token == expected
-            : token.compare(expected, options: [.caseInsensitive]) == .orderedSame
-    }
-
-    private static func tokenMatches(
-        _ tokenKind: TextForSpeech.Replacement.TokenKind,
-        token: String
-    ) -> Bool {
-        switch tokenKind {
-        case .filePath:
-            isLikelyFilePath(token)
-        case .url:
-            isLikelyURL(token)
-        case .dottedIdentifier:
-            isLikelyDottedIdentifier(token)
-        case .snakeCaseIdentifier:
-            isLikelySnakeCaseIdentifier(token)
-        case .dashedIdentifier:
-            isLikelyDashedIdentifier(token)
-        case .camelCaseIdentifier:
-            isLikelyCamelCaseIdentifier(token)
-        case .repeatedLetterRun:
-            containsRepeatedLetterRun(trimmedCandidateToken(token))
-        }
-    }
-
-    private static func lineMatches(
-        _ lineKind: TextForSpeech.Replacement.LineKind,
-        line: String
-    ) -> Bool {
-        switch lineKind {
-        case .codeLike:
-            isLikelyCodeLine(line)
-        case .nonEmpty:
-            !line.trimmingCharacters(in: .whitespaces).isEmpty
         }
     }
 }
