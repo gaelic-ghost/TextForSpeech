@@ -4,57 +4,57 @@ import Observation
 // MARK: - Runtime
 
 public extension TextForSpeech {
-    // MARK: Runtime Type
-
     @Observable
     final class Runtime {
-        // MARK: Versioning
-
         private enum Versioning {
             static let currentPersistedStateVersion = 1
         }
 
-        // MARK: Stored State
+        public let baseProfile: TextForSpeech.Profile
+        public let persistenceURL: URL
 
-        private var customProfile: TextForSpeech.Profile
-        private var storedProfilesByID: [String: TextForSpeech.Profile]
-        public let persistenceURL: URL?
         private let fileManager: FileManager
 
-        // MARK: Lifecycle
+        private var activeCustomProfileID: String
+        private var storedCustomProfilesByID: [String: TextForSpeech.Profile]
 
         public init(
-            customProfile: TextForSpeech.Profile = .default,
-            profiles: [String: TextForSpeech.Profile] = [:],
             persistenceURL: URL? = nil,
-            fileManager: FileManager = .default
-        ) {
-            self.customProfile = customProfile
-            storedProfilesByID = profiles
-            self.persistenceURL = persistenceURL?.standardizedFileURL
+            fileManager: FileManager = .default,
+            bundle: Bundle = .main
+        ) throws {
+            baseProfile = .base
             self.fileManager = fileManager
+            self.persistenceURL = persistenceURL?.standardizedFileURL
+                ?? Self.defaultPersistenceURL(bundle: bundle)
+            activeCustomProfileID = TextForSpeech.Profile.default.id
+            storedCustomProfilesByID = [:]
+
+            try loadPersistedStateIfPresent()
+            try repairProfileState(persistIfChanged: true)
         }
     }
 }
 
 public extension TextForSpeech.Runtime {
-    // MARK: Profiles Handle
-
     struct Profiles {
         fileprivate let runtime: TextForSpeech.Runtime
 
-        // MARK: Reads
+        public var activeID: String {
+            runtime.activeCustomProfileID
+        }
 
-        public func active(id: String? = nil) -> TextForSpeech.Profile? {
-            id.flatMap { runtime.storedProfilesByID[$0] } ?? runtime.customProfile
+        public func active() -> TextForSpeech.Profile {
+            runtime.storedCustomProfilesByID[runtime.activeCustomProfileID]
+                ?? .default
         }
 
         public func stored(id: String) -> TextForSpeech.Profile? {
-            runtime.storedProfilesByID[id]
+            runtime.storedCustomProfilesByID[id]
         }
 
         public func list() -> [TextForSpeech.Profile] {
-            runtime.storedProfilesByID.values.sorted { lhs, rhs in
+            runtime.storedCustomProfilesByID.values.sorted { lhs, rhs in
                 if lhs.name == rhs.name {
                     return lhs.id < rhs.id
                 }
@@ -62,19 +62,26 @@ public extension TextForSpeech.Runtime {
             }
         }
 
-        public func effective(id: String? = nil) -> TextForSpeech.Profile? {
-            guard let activeProfile = active(id: id) else { return nil }
-            return TextForSpeech.Profile.base.merged(with: activeProfile)
+        public func effective() -> TextForSpeech.Profile {
+            runtime.baseProfile.merged(with: active())
         }
 
-        // MARK: Writes
-
-        public func use(_ profile: TextForSpeech.Profile) {
-            runtime.customProfile = profile
+        public func effective(id: String) -> TextForSpeech.Profile? {
+            stored(id: id).map { runtime.baseProfile.merged(with: $0) }
         }
 
-        public func store(_ profile: TextForSpeech.Profile) {
-            runtime.storedProfilesByID[profile.id] = profile
+        public func activate(id: String) throws {
+            guard runtime.storedCustomProfilesByID[id] != nil else {
+                throw TextForSpeech.RuntimeError.profileNotFound(id)
+            }
+
+            runtime.activeCustomProfileID = id
+            try runtime.persistCurrentState()
+        }
+
+        public func store(_ profile: TextForSpeech.Profile) throws {
+            runtime.storedCustomProfilesByID[profile.id] = profile
+            try runtime.repairProfileState(persistIfChanged: true)
         }
 
         @discardableResult
@@ -83,7 +90,7 @@ public extension TextForSpeech.Runtime {
             name: String,
             replacements: [TextForSpeech.Replacement] = []
         ) throws -> TextForSpeech.Profile {
-            guard runtime.storedProfilesByID[id] == nil else {
+            guard runtime.storedCustomProfilesByID[id] == nil else {
                 throw TextForSpeech.RuntimeError.profileAlreadyExists(id)
             }
 
@@ -92,33 +99,34 @@ public extension TextForSpeech.Runtime {
                 name: name,
                 replacements: replacements
             )
-            runtime.storedProfilesByID[id] = profile
+            runtime.storedCustomProfilesByID[id] = profile
+            try runtime.persistCurrentState()
             return profile
         }
 
-        public func delete(id: String) {
-            runtime.storedProfilesByID.removeValue(forKey: id)
-            if runtime.customProfile.id == id {
-                runtime.customProfile = .default
-            }
+        public func delete(id: String) throws {
+            runtime.storedCustomProfilesByID.removeValue(forKey: id)
+            try runtime.repairProfileState(persistIfChanged: true)
         }
 
         @discardableResult
         public func add(
             _ replacement: TextForSpeech.Replacement
-        ) -> TextForSpeech.Profile {
-            let updatedProfile = runtime.customProfile.adding(replacement)
-            runtime.customProfile = updatedProfile
+        ) throws -> TextForSpeech.Profile {
+            let updatedProfile = active().adding(replacement)
+            runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
+            try runtime.persistCurrentState()
             return updatedProfile
         }
 
         @discardableResult
         public func add(
             _ replacement: TextForSpeech.Replacement,
-            toStoredProfileID id: String
+            toProfileID id: String
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = try storedProfile(id: id).adding(replacement)
-            runtime.storedProfilesByID[id] = updatedProfile
+            runtime.storedCustomProfilesByID[id] = updatedProfile
+            try runtime.persistCurrentState()
             return updatedProfile
         }
 
@@ -126,18 +134,20 @@ public extension TextForSpeech.Runtime {
         public func replace(
             _ replacement: TextForSpeech.Replacement
         ) throws -> TextForSpeech.Profile {
-            let updatedProfile = try runtime.customProfile.replacing(replacement)
-            runtime.customProfile = updatedProfile
+            let updatedProfile = try active().replacing(replacement)
+            runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
+            try runtime.persistCurrentState()
             return updatedProfile
         }
 
         @discardableResult
         public func replace(
             _ replacement: TextForSpeech.Replacement,
-            inStoredProfileID id: String
+            inProfileID id: String
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = try storedProfile(id: id).replacing(replacement)
-            runtime.storedProfilesByID[id] = updatedProfile
+            runtime.storedCustomProfilesByID[id] = updatedProfile
+            try runtime.persistCurrentState()
             return updatedProfile
         }
 
@@ -145,69 +155,60 @@ public extension TextForSpeech.Runtime {
         public func removeReplacement(
             id replacementID: String
         ) throws -> TextForSpeech.Profile {
-            let updatedProfile = try runtime.customProfile.removingReplacement(id: replacementID)
-            runtime.customProfile = updatedProfile
+            let updatedProfile = try active().removingReplacement(id: replacementID)
+            runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
+            try runtime.persistCurrentState()
             return updatedProfile
         }
 
         @discardableResult
         public func removeReplacement(
             id replacementID: String,
-            fromStoredProfileID profileID: String
+            fromProfileID profileID: String
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = try storedProfile(id: profileID).removingReplacement(id: replacementID)
-            runtime.storedProfilesByID[profileID] = updatedProfile
+            runtime.storedCustomProfilesByID[profileID] = updatedProfile
+            try runtime.persistCurrentState()
             return updatedProfile
         }
 
-        public func reset() {
-            runtime.customProfile = .default
+        public func reset() throws {
+            runtime.activeCustomProfileID = TextForSpeech.Profile.default.id
+            runtime.storedCustomProfilesByID[TextForSpeech.Profile.default.id] = .default
+            try runtime.persistCurrentState()
         }
 
-        // MARK: Helpers
-
         private func storedProfile(id: String) throws -> TextForSpeech.Profile {
-            guard let profile = runtime.storedProfilesByID[id] else {
+            guard let profile = runtime.storedCustomProfilesByID[id] else {
                 throw TextForSpeech.RuntimeError.profileNotFound(id)
             }
             return profile
         }
     }
 
-    // MARK: Persistence Handle
-
     struct Persistence {
         fileprivate let runtime: TextForSpeech.Runtime
 
-        // MARK: State
-
         public var state: TextForSpeech.PersistedState {
             TextForSpeech.PersistedState(
-                version: Versioning.currentPersistedStateVersion,
-                customProfile: runtime.customProfile,
-                profiles: runtime.storedProfilesByID
+                version: TextForSpeech.Runtime.Versioning.currentPersistedStateVersion,
+                activeCustomProfileID: runtime.activeCustomProfileID,
+                profiles: runtime.storedCustomProfilesByID
             )
         }
 
-        // MARK: Restore
-
         public func restore(_ state: TextForSpeech.PersistedState) throws {
-            guard state.version == Versioning.currentPersistedStateVersion else {
+            guard state.version == TextForSpeech.Runtime.Versioning.currentPersistedStateVersion else {
                 throw TextForSpeech.PersistenceError.unsupportedPersistedStateVersion(state.version)
             }
 
-            runtime.customProfile = state.customProfile
-            runtime.storedProfilesByID = state.profiles
+            runtime.activeCustomProfileID = state.activeCustomProfileID
+            runtime.storedCustomProfilesByID = state.profiles
+            try runtime.repairProfileState(persistIfChanged: false)
         }
 
-        // MARK: Loading
-
         public func load() throws {
-            guard let persistenceURL = runtime.persistenceURL else {
-                throw TextForSpeech.PersistenceError.missingPersistenceURL
-            }
-
-            try load(from: persistenceURL)
+            try load(from: runtime.persistenceURL)
         }
 
         public func load(from url: URL) throws {
@@ -237,14 +238,8 @@ public extension TextForSpeech.Runtime {
             try restore(state)
         }
 
-        // MARK: Saving
-
         public func save() throws {
-            guard let persistenceURL = runtime.persistenceURL else {
-                throw TextForSpeech.PersistenceError.missingPersistenceURL
-            }
-
-            try save(to: persistenceURL)
+            try save(to: runtime.persistenceURL)
         }
 
         public func save(to url: URL) throws {
@@ -286,13 +281,63 @@ public extension TextForSpeech.Runtime {
         }
     }
 
-    // MARK: Accessors
-
     var profiles: Profiles {
         Profiles(runtime: self)
     }
 
     var persistence: Persistence {
         Persistence(runtime: self)
+    }
+
+    static func defaultPersistenceURL(bundle: Bundle = .main) -> URL {
+        defaultPersistenceURL(bundleIdentifier: bundle.bundleIdentifier)
+    }
+}
+
+private extension TextForSpeech.Runtime {
+    static func defaultPersistenceURL(bundleIdentifier: String?) -> URL {
+        let namespace = bundleIdentifier?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .nonEmpty
+            ?? "TextForSpeech"
+        let namespacedDirectory = URL.applicationSupportDirectory
+            .appending(path: namespace, directoryHint: .isDirectory)
+        let packageDirectory = bundleIdentifier == nil
+            ? namespacedDirectory
+            : namespacedDirectory.appending(path: "TextForSpeech", directoryHint: .isDirectory)
+
+        return packageDirectory.appending(path: "profiles.json", directoryHint: .notDirectory)
+    }
+
+    func loadPersistedStateIfPresent() throws {
+        try persistence.load()
+    }
+
+    func persistCurrentState() throws {
+        try persistence.save()
+    }
+
+    func repairProfileState(persistIfChanged: Bool) throws {
+        var didChangeState = false
+
+        if storedCustomProfilesByID[TextForSpeech.Profile.default.id] == nil {
+            storedCustomProfilesByID[TextForSpeech.Profile.default.id] = .default
+            didChangeState = true
+        }
+
+        if storedCustomProfilesByID[activeCustomProfileID] == nil {
+            activeCustomProfileID = TextForSpeech.Profile.default.id
+            didChangeState = true
+        }
+
+        if persistIfChanged && didChangeState {
+            try persistCurrentState()
+        }
+    }
+}
+
+private extension String {
+    var nonEmpty: String? {
+        isEmpty ? nil : self
     }
 }

@@ -3,16 +3,16 @@
 public extension TextForSpeech {
     struct PersistedState: Codable, Sendable, Equatable {
         public let version: Int
-        public let customProfile: Profile
+        public let activeCustomProfileID: String
         public let profiles: [String: Profile]
 
         public init(
             version: Int = 1,
-            customProfile: Profile,
+            activeCustomProfileID: String,
             profiles: [String: Profile]
         ) {
             self.version = version
-            self.customProfile = customProfile
+            self.activeCustomProfileID = activeCustomProfileID
             self.profiles = profiles
         }
     }

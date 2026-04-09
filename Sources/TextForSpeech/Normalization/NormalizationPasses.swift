@@ -9,15 +9,11 @@ extension TextNormalizer {
         _ text: String,
         format: TextForSpeech.SourceFormat
     ) -> String {
-        text
-            .split(separator: "\n", omittingEmptySubsequences: false)
-            .map { line in
-                let rawLine = String(line)
-                let trimmedLine = rawLine.trimmingCharacters(in: .whitespaces)
-                guard !trimmedLine.isEmpty else { return rawLine }
-                return spokenSource(rawLine, format: format)
-            }
-            .joined(separator: "\n")
+        applySingleBaseRule(
+            id: "base-source-line",
+            to: text,
+            format: .source(format)
+        )
     }
 
     // MARK: Markdown Code Normalization
@@ -127,16 +123,27 @@ extension TextNormalizer {
     // MARK: Token-Level Passes
 
     static func normalizeURLs(_ text: String) -> String {
-        transformTokens(in: text) { token in
-            guard isLikelyURL(token) else { return nil }
-            return spokenURL(token)
-        }
+        applySingleBaseRule(
+            id: "base-url",
+            to: text,
+            format: .text(.plain)
+        )
     }
 
     static func normalizeStandaloneGaleAliases(_ text: String) -> String {
-        transformTokens(in: text) { token in
-            standaloneGaleAlias(for: token)
-        }
+        applyReplacementRules(
+            text,
+            profile: TextForSpeech.Profile(
+                id: "base-aliases-only",
+                name: "Base Aliases Only",
+                replacements: [
+                    TextForSpeech.Profile.base.replacement(id: "base-galew"),
+                    TextForSpeech.Profile.base.replacement(id: "base-galem"),
+                ].compactMap { $0 }
+            ),
+            format: .text(.plain),
+            phase: .beforeBuiltIns
+        )
     }
 
     static func normalizeFilePaths(
@@ -146,38 +153,44 @@ extension TextNormalizer {
         format _: NormalizationFormat = .text(.plain),
         nestedFormat _: TextForSpeech.SourceFormat? = nil
     ) -> String {
-        transformTokens(in: text) { token in
-            guard isLikelyFilePath(token) else { return nil }
-            return spokenPath(token, context: context)
-        }
+        applySingleBaseRule(
+            id: "base-file-path",
+            to: text,
+            format: .text(.plain),
+            context: context
+        )
     }
 
     static func normalizeDottedIdentifiers(_ text: String) -> String {
-        transformTokens(in: text) { token in
-            guard isLikelyDottedIdentifier(token) else { return nil }
-            return spokenIdentifier(token)
-        }
+        applySingleBaseRule(
+            id: "base-dotted-identifier",
+            to: text,
+            format: .text(.plain)
+        )
     }
 
     static func normalizeSnakeCaseIdentifiers(_ text: String) -> String {
-        transformTokens(in: text) { token in
-            guard isLikelySnakeCaseIdentifier(token) else { return nil }
-            return spokenIdentifier(token)
-        }
+        applySingleBaseRule(
+            id: "base-snake-identifier",
+            to: text,
+            format: .text(.plain)
+        )
     }
 
     static func normalizeDashedIdentifiers(_ text: String) -> String {
-        transformTokens(in: text) { token in
-            guard isLikelyDashedIdentifier(token) else { return nil }
-            return spokenIdentifier(token)
-        }
+        applySingleBaseRule(
+            id: "base-dashed-identifier",
+            to: text,
+            format: .text(.plain)
+        )
     }
 
     static func normalizeCamelCaseIdentifiers(_ text: String) -> String {
-        transformTokens(in: text) { token in
-            guard isLikelyCamelCaseIdentifier(token) else { return nil }
-            return spokenIdentifier(token)
-        }
+        applySingleBaseRule(
+            id: "base-camel-identifier",
+            to: text,
+            format: .text(.plain)
+        )
     }
 
     // MARK: Code-Like Line Passes
@@ -187,40 +200,29 @@ extension TextNormalizer {
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat? = nil
     ) -> String {
-        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        return lines.map { line in
-            guard isLikelyCodeLine(line) else { return line }
+        let ruleID: String = switch format {
+        case .text:
+            "base-text-code-line"
+        case .source:
+            "base-source-line"
+        }
 
-            if case .source(let sourceFormat) = format {
-                return spokenSource(line, format: sourceFormat)
-            }
-
-            if let nestedFormat {
-                return spokenSource(line, format: nestedFormat)
-            }
-
-            return spokenCode(line)
-        }.joined(separator: "\n")
+        return applySingleBaseRule(
+            id: ruleID,
+            to: text,
+            format: format,
+            nestedFormat: nestedFormat
+        )
     }
 
     // MARK: Natural Language Passes
 
     static func normalizeSpiralProneWords(_ text: String) -> String {
-        let tokens = naturalLanguageTokenRanges(in: text)
-        guard !tokens.isEmpty else { return text }
-
-        var result = ""
-        var cursor = text.startIndex
-
-        for range in tokens {
-            result += text[cursor..<range.lowerBound]
-            let token = String(text[range])
-            result += containsRepeatedLetterRun(token) ? spelledOut(token) : token
-            cursor = range.upperBound
-        }
-
-        result += text[cursor...]
-        return result
+        applySingleBaseRule(
+            id: "base-repeated-letter-run",
+            to: text,
+            format: .text(.plain)
+        )
     }
 
     // MARK: Format Heuristics
@@ -303,5 +305,28 @@ extension TextNormalizer {
         }
 
         return logLineCount >= 1
+    }
+
+    private static func applySingleBaseRule(
+        id: String,
+        to text: String,
+        format: NormalizationFormat,
+        context: TextForSpeech.Context? = nil,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
+    ) -> String {
+        guard let rule = TextForSpeech.Profile.base.replacement(id: id) else { return text }
+
+        return applyReplacementRules(
+            text,
+            profile: TextForSpeech.Profile(
+                id: "base-\(id)",
+                name: "Base \(id)",
+                replacements: [rule]
+            ),
+            format: format,
+            phase: .beforeBuiltIns,
+            context: context,
+            nestedFormat: nestedFormat
+        )
     }
 }

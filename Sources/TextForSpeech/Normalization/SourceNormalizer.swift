@@ -9,7 +9,7 @@ enum SourceNormalizer {
         _ source: String,
         as format: TextForSpeech.SourceFormat,
         context: TextForSpeech.Context? = nil,
-        profile: TextForSpeech.Profile = .default
+        profile: TextForSpeech.Profile = .base
     ) -> String {
         TextNormalizer.normalizeSource(
             source,

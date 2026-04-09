@@ -60,30 +60,32 @@ enum TextNormalizer {
                 normalizeInlineCodeSpans(text, nestedFormat: nestedFormat)
             },
             { text, _, _, _, _ in normalizeMarkdownLinks(text) },
-            { text, _, _, _, _ in normalizeURLs(text) },
-            { text, _, _, _, _ in normalizeStandaloneGaleAliases(text) },
-            normalizeFilePaths,
-            { text, _, _, _, _ in normalizeDottedIdentifiers(text) },
-            { text, _, _, _, _ in normalizeSnakeCaseIdentifiers(text) },
-            { text, _, _, _, _ in normalizeDashedIdentifiers(text) },
-            { text, _, _, _, _ in normalizeCamelCaseIdentifiers(text) },
-            { text, _, _, format, nestedFormat in
-                normalizeCodeHeavyLines(text, format: format, nestedFormat: nestedFormat)
+            { text, context, profile, format, nestedFormat in
+                applyReplacementRules(
+                    text,
+                    profile: profile,
+                    format: format,
+                    phase: .beforeBuiltIns,
+                    context: context,
+                    nestedFormat: nestedFormat
+                )
             },
-            { text, _, _, _, _ in normalizeSpiralProneWords(text) },
             { text, _, _, _, _ in collapseWhitespace(text) },
         ]
     }
 
     static var sourceNormalizationPasses: [ContextualNormalizationPass] {
         [
-            { text, _, _, _, _ in normalizeStandaloneGaleAliases(text) },
-            normalizeFilePaths,
-            { text, _, _, format, _ in
-                guard case .source(let sourceFormat) = format else { return text }
-                return normalizeStructuredSourceLines(text, format: sourceFormat)
+            { text, context, profile, format, nestedFormat in
+                applyReplacementRules(
+                    text,
+                    profile: profile,
+                    format: format,
+                    phase: .beforeBuiltIns,
+                    context: context,
+                    nestedFormat: nestedFormat
+                )
             },
-            { text, _, _, _, _ in normalizeSpiralProneWords(text) },
             { text, _, _, _, _ in collapseWhitespace(text) },
         ]
     }
@@ -133,13 +135,7 @@ enum TextNormalizer {
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         passes: [ContextualNormalizationPass]
     ) -> String {
-        let seeded = applyReplacementRules(
-            text,
-            profile: profile,
-            format: format,
-            phase: .beforeBuiltIns
-        )
-        let normalized = passes.reduce(seeded) { partial, pass in
+        let normalized = passes.reduce(text) { partial, pass in
             pass(partial, context, profile, format, nestedFormat)
         }
         let finalized = collapseWhitespace(
@@ -147,7 +143,9 @@ enum TextNormalizer {
                 normalized,
                 profile: profile,
                 format: format,
-                phase: .afterBuiltIns
+                phase: .afterBuiltIns,
+                context: context,
+                nestedFormat: nestedFormat
             )
         )
         return finalized.isEmpty ? text : finalized

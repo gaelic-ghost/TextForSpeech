@@ -12,7 +12,7 @@ The first two are first-class public API. The third is still only partially form
 
 ## Normalization profile
 
-A normalization profile is the reusable custom rule set that rides on top of the always-on base normalizer.
+A normalization profile is the reusable rule set that the runtime merges into the always-on base profile.
 
 Today that type is `TextForSpeech.Profile`. It stays intentionally small:
 
@@ -27,7 +27,8 @@ The important design choice is that a profile is not the whole normalization eng
 That keeps the responsibilities clean:
 
 - `TextForSpeech.Context` carries request-local environment like `cwd`, `repoRoot`, and optional format hints.
-- `TextForSpeech.Profile` carries the reusable custom replacement policy.
+- `TextForSpeech.Profile.base` carries the always-on built-in replacement policy.
+- `TextForSpeech.Profile` values also carry reusable custom replacement policy.
 - `TextForSpeech.Runtime` exposes grouped profile and persistence capabilities.
 - the built-in normalizer remains always on through the base profile and the concrete normalization passes.
 
@@ -40,6 +41,7 @@ Today that type is `TextForSpeech.Replacement`. Each replacement describes:
 - what text to match
 - what spoken text to substitute
 - how to match it
+- how to transform a match once it has been found
 - when to run it
 - which formats it applies to
 - how strongly it should win against other rules
@@ -103,20 +105,21 @@ It now exposes:
 
 The core runtime operations are:
 
-- `profiles.active(id:)`
+- `profiles.activeID`
+- `profiles.active()`
 - `profiles.effective(id:)`
 - `profiles.stored(id:)`
 - `profiles.list()`
-- `profiles.use(_:)`
+- `profiles.activate(id:)`
 - `profiles.store(_:)`
 - `profiles.create(id:name:replacements:)`
 - `profiles.delete(id:)`
 - `profiles.add(_:)`
-- `profiles.add(_:toStoredProfileID:)`
+- `profiles.add(_:toProfileID:)`
 - `profiles.replace(_:)`
-- `profiles.replace(_:inStoredProfileID:)`
+- `profiles.replace(_:inProfileID:)`
 - `profiles.removeReplacement(id:)`
-- `profiles.removeReplacement(id:fromStoredProfileID:)`
+- `profiles.removeReplacement(id:fromProfileID:)`
 - `persistence.state`
 - `persistence.load()`
 - `persistence.save()`
@@ -136,17 +139,18 @@ Value-style setup still works:
 
 1. build a `TextForSpeech.Profile`
 2. put `TextForSpeech.Replacement` values into its `replacements` array
-3. hand that profile to `TextForSpeech.Runtime` through `profiles.use(_:)` or `profiles.store(_:)`
+3. hand that profile to `TextForSpeech.Runtime` through `profiles.store(_:)`
+4. activate it with `profiles.activate(id:)` when it should become the active custom layer
 
 The runtime-owned editing path is now available too:
 
 - `profiles.create(id:name:replacements:)`
 - `profiles.add(_:)`
-- `profiles.add(_:toStoredProfileID:)`
+- `profiles.add(_:toProfileID:)`
 - `profiles.replace(_:)`
-- `profiles.replace(_:inStoredProfileID:)`
+- `profiles.replace(_:inProfileID:)`
 - `profiles.removeReplacement(id:)`
-- `profiles.removeReplacement(id:fromStoredProfileID:)`
+- `profiles.removeReplacement(id:fromProfileID:)`
 
 That means callers no longer have to rebuild whole profile values for every small persisted edit.
 
@@ -154,16 +158,20 @@ That means callers no longer have to rebuild whole profile values for every smal
 
 There are now two profile concepts that matter publicly:
 
+- `TextForSpeech.Profile.base`
+  The static always-on base profile that ships with the package.
 - `TextForSpeech.Profile.default`
-  The default empty custom profile.
+  The default empty custom profile value.
+- `TextForSpeech.Runtime.profiles.activeID`
+  The id of the currently active stored custom profile.
 - `TextForSpeech.Runtime.profiles.active()`
-  The currently active custom profile for a runtime.
+  The currently active stored custom profile for a runtime.
 
-The effective profile for a job is the internal built-in normalization layer merged with either the selected stored profile or the active custom profile.
+The effective profile for a job is always `Profile.base` merged with the active stored custom profile.
 
 ## Persistence
 
-Yes, `TextForSpeech` profiles are now persisted by the package when a runtime is configured with a `persistenceURL`.
+Yes, `TextForSpeech` profiles are now persisted by default by the package. A runtime uses Application Support automatically unless a persistence URL override is provided.
 
 Persistence is JSON-backed today through:
 
@@ -205,12 +213,16 @@ The concise model to keep in your head is:
   The explicit source-language family for the source lane.
 - `profiles`
   The runtime profile capability handle.
-- `profiles.active(id:)`
+- `Profile.base`
+  The always-on built-in profile value.
+- `profiles.activeID`
+  The id of the active stored custom profile.
+- `profiles.active()`
   The active editable custom layer for a runtime.
 - `Replacement`
   One custom rewrite rule inside a profile.
-- `profiles.effective(id:)`
-  The built-in merged profile captured for one job.
+- `profiles.effective()`
+  The merged base-plus-active profile captured for one job.
 - `persistence`
   The runtime persistence capability handle.
 - `Section` and `SectionWindow`

@@ -37,11 +37,23 @@ extension TextNormalizer {
         return result
     }
 
+    static func transformLines(in text: String, transform: (String) -> String?) -> String {
+        text
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map { line in
+                let rawLine = String(line)
+                return transform(rawLine) ?? rawLine
+            }
+            .joined(separator: "\n")
+    }
+
     static func applyReplacementRules(
         _ text: String,
         profile: TextForSpeech.Profile,
         format: NormalizationFormat,
-        phase: TextForSpeech.Replacement.Phase
+        phase: TextForSpeech.Replacement.Phase,
+        context: TextForSpeech.Context? = nil,
+        nestedFormat: TextForSpeech.SourceFormat? = nil
     ) -> String {
         let replacements: [TextForSpeech.Replacement] = switch format {
         case .text(let textFormat):
@@ -51,7 +63,13 @@ extension TextNormalizer {
         }
 
         return replacements.reduce(text) { partial, rule in
-            applyReplacementRule(rule, to: partial)
+            applyReplacementRule(
+                rule,
+                to: partial,
+                context: context,
+                format: format,
+                nestedFormat: nestedFormat
+            )
         }
     }
 
@@ -109,24 +127,102 @@ extension TextNormalizer {
 
     private static func applyReplacementRule(
         _ rule: TextForSpeech.Replacement,
-        to text: String
+        to text: String,
+        context: TextForSpeech.Context?,
+        format: NormalizationFormat,
+        nestedFormat: TextForSpeech.SourceFormat?
     ) -> String {
-        guard !rule.text.isEmpty else { return text }
-
         switch rule.match {
         case .exactPhrase:
+            guard !rule.text.isEmpty else { return text }
             return text.replacingOccurrences(
                 of: rule.text,
-                with: rule.replacement,
+                with: resolvedReplacement(
+                    for: rule.text,
+                    rule: rule,
+                    context: context,
+                    format: format,
+                    nestedFormat: nestedFormat
+                ),
                 options: rule.isCaseSensitive ? [] : [.caseInsensitive]
             )
 
         case .wholeToken:
+            guard !rule.text.isEmpty else { return text }
             return transformTokens(in: text) { token in
                 tokenMatches(rule.text, token: token, caseSensitive: rule.isCaseSensitive)
-                    ? rule.replacement
+                    ? resolvedReplacement(
+                        for: token,
+                        rule: rule,
+                        context: context,
+                        format: format,
+                        nestedFormat: nestedFormat
+                    )
                     : nil
             }
+
+        case .token(let tokenKind):
+            return transformTokens(in: text) { token in
+                tokenMatches(tokenKind, token: token)
+                    ? resolvedReplacement(
+                        for: token,
+                        rule: rule,
+                        context: context,
+                        format: format,
+                        nestedFormat: nestedFormat
+                    )
+                    : nil
+            }
+
+        case .line(let lineKind):
+            return transformLines(in: text) { line in
+                lineMatches(lineKind, line: line)
+                    ? resolvedReplacement(
+                        for: line,
+                        rule: rule,
+                        context: context,
+                        format: format,
+                        nestedFormat: nestedFormat
+                    )
+                    : nil
+            }
+        }
+    }
+
+    private static func resolvedReplacement(
+        for text: String,
+        rule: TextForSpeech.Replacement,
+        context: TextForSpeech.Context?,
+        format: NormalizationFormat,
+        nestedFormat: TextForSpeech.SourceFormat?
+    ) -> String {
+        switch rule.transform {
+        case .literal(let replacement):
+            replacement
+
+        case .spokenPath:
+            spokenPath(text, context: context)
+
+        case .spokenURL:
+            spokenURL(text)
+
+        case .spokenIdentifier:
+            spokenIdentifier(text)
+
+        case .spokenCode:
+            switch format {
+            case .source(let sourceFormat):
+                spokenSource(text, format: sourceFormat)
+            case .text:
+                if let nestedFormat {
+                    spokenSource(text, format: nestedFormat)
+                } else {
+                    spokenCode(text)
+                }
+            }
+
+        case .spellOut:
+            spelledOut(trimmedCandidateToken(text))
         }
     }
 
@@ -134,5 +230,39 @@ extension TextNormalizer {
         caseSensitive
             ? token == expected
             : token.compare(expected, options: [.caseInsensitive]) == .orderedSame
+    }
+
+    private static func tokenMatches(
+        _ tokenKind: TextForSpeech.Replacement.TokenKind,
+        token: String
+    ) -> Bool {
+        switch tokenKind {
+        case .filePath:
+            isLikelyFilePath(token)
+        case .url:
+            isLikelyURL(token)
+        case .dottedIdentifier:
+            isLikelyDottedIdentifier(token)
+        case .snakeCaseIdentifier:
+            isLikelySnakeCaseIdentifier(token)
+        case .dashedIdentifier:
+            isLikelyDashedIdentifier(token)
+        case .camelCaseIdentifier:
+            isLikelyCamelCaseIdentifier(token)
+        case .repeatedLetterRun:
+            containsRepeatedLetterRun(trimmedCandidateToken(token))
+        }
+    }
+
+    private static func lineMatches(
+        _ lineKind: TextForSpeech.Replacement.LineKind,
+        line: String
+    ) -> Bool {
+        switch lineKind {
+        case .codeLike:
+            isLikelyCodeLine(line)
+        case .nonEmpty:
+            !line.trimmingCharacters(in: .whitespaces).isEmpty
+        }
     }
 }

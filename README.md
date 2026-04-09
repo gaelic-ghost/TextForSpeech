@@ -14,7 +14,7 @@ A Swift package for turning code-heavy or path-heavy source text into speech-saf
 
 ## Overview
 
-`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` consumes as an external package. It keeps the always-on built-in normalization passes in one reusable package, then layers optional profile-driven replacements and runtime persistence on top so callers can tune pronunciation without reimplementing the core pipeline.
+`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` consumes as an external package. It keeps the always-on built-in normalization rules in one reusable `Profile.base` value, then layers persisted custom profiles on top so callers can tune pronunciation without reimplementing the core pipeline.
 
 ### Motivation
 
@@ -44,7 +44,7 @@ After adding the dependency, import `TextForSpeech` in the targets that need nor
 
 ## Usage
 
-Normalize mixed text directly when you just need the text lane with the merged built-in behavior and an optional context:
+Normalize mixed text directly when you just need the text lane with the always-on base profile and an optional context:
 
 ```swift
 import TextForSpeech
@@ -95,27 +95,25 @@ let normalized = TextForSpeech.Normalize.source(
 
 Right now the source lane is explicit but still generic. It normalizes whole-source input more consistently than the mixed-text lane, but SwiftSyntax-backed Swift-specific structure is still planned future work rather than current behavior.
 
-Use `TextForSpeech.Runtime` when you need an observable owner for editable custom profiles, stored profiles, and JSON-backed persistence:
+Use `TextForSpeech.Runtime` when you need an observable owner for editable custom profiles, stored profile ids, and default-on JSON-backed persistence in Application Support:
 
 ```swift
 import Foundation
 import TextForSpeech
 
-let fileURL = URL(fileURLWithPath: "/tmp/text-profiles.json")
-let runtime = TextForSpeech.Runtime(persistenceURL: fileURL)
+let runtime = try TextForSpeech.Runtime()
 
 try runtime.profiles.create(id: "logs", name: "Logs")
 try runtime.profiles.add(
     TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
-    toStoredProfileID: "logs"
+    toProfileID: "logs"
 )
+try runtime.profiles.activate(id: "logs")
 
 let normalized = TextForSpeech.Normalize.text(
     "stderr and stdout",
-    profile: runtime.profiles.effective(id: "logs") ?? .default
+    profile: runtime.profiles.effective()
 )
-
-try runtime.persistence.save()
 ```
 
 The package also exposes forensic helpers when a caller needs to inspect how an input was shaped or segmented:
@@ -146,14 +144,16 @@ let sections = TextForSpeech.Forensics.sections(originalText: original)
 - `TextForSpeech.Forensics.features(originalText:normalizedText:)`, `sections(originalText:)`, and `sectionWindows(originalText:totalDurationMS:totalChunkCount:)` support post-normalization inspection and chunk planning.
 - `TextForSpeech.Runtime` exposes grouped `profiles` and `persistence` capabilities instead of one flat mutation surface.
 
-The current profile model is intentionally hybrid:
+The current profile model is intentionally explicit:
 
-- `TextForSpeech.Profile.default` is the empty custom profile.
-- `TextForSpeech.Runtime.profiles.active()` reads the active editable custom layer, or a stored layer when passed an `id`.
-- `TextForSpeech.Runtime.profiles.effective(id:)` reads the built-in merged profile view used for normalization.
-- `TextForSpeech.Runtime.profiles` manages stored custom layers keyed by profile `id`.
+- `TextForSpeech.Profile.base` is the always-on in-memory base profile that ships with the package.
+- `TextForSpeech.Profile.default` is the empty default custom profile value.
+- `TextForSpeech.Runtime.profiles.activeID` points at the active stored custom profile.
+- `TextForSpeech.Runtime.profiles.active()` reads the active stored custom profile.
+- `TextForSpeech.Runtime.profiles.effective()` reads the merged `base + active custom` profile used for normalization.
+- `TextForSpeech.Runtime.profiles.stored(id:)` reads a named stored custom profile without activating it.
 
-The built-in normalization layer is internal and always applied. A normalization job merges that built-in layer with either the active custom profile or the caller-supplied custom profile.
+`TextForSpeech.Runtime` persists profiles by default to Application Support. It uses the host bundle identifier to namespace that storage location when available, and falls back to `TextForSpeech` when it is not.
 
 The current roadmap keeps the text/source split in place and tracks structured Swift normalization as a distinct next milestone in [ROADMAP.md](ROADMAP.md).
 

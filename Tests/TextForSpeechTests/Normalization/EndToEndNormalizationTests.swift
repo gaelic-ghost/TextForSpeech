@@ -103,7 +103,7 @@ import Testing
 
     let normalized = TextForSpeech.Normalize.text(
         "Please say chrommmaticallly and snake_case_stuff once.",
-        profile: profile,
+        profile: .base.merged(with: profile),
         format: .plain
     )
 

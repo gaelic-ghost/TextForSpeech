@@ -4,9 +4,11 @@ import Foundation
 
 public extension TextForSpeech {
     struct Replacement: Codable, Sendable, Equatable, Identifiable {
-        public enum Match: String, Codable, Sendable {
-            case exactPhrase = "exact_phrase"
-            case wholeToken = "whole_token"
+        public enum Match: Codable, Sendable, Equatable {
+            case exactPhrase
+            case wholeToken
+            case token(TokenKind)
+            case line(LineKind)
         }
 
         public enum Phase: String, Codable, Sendable {
@@ -14,9 +16,33 @@ public extension TextForSpeech {
             case afterBuiltIns = "after_built_ins"
         }
 
+        public enum TokenKind: String, Codable, Sendable, CaseIterable {
+            case filePath = "file_path"
+            case url
+            case dottedIdentifier = "dotted_identifier"
+            case snakeCaseIdentifier = "snake_case_identifier"
+            case dashedIdentifier = "dashed_identifier"
+            case camelCaseIdentifier = "camel_case_identifier"
+            case repeatedLetterRun = "repeated_letter_run"
+        }
+
+        public enum LineKind: String, Codable, Sendable, CaseIterable {
+            case codeLike = "code_like"
+            case nonEmpty = "non_empty"
+        }
+
+        public enum Transform: Codable, Sendable, Equatable {
+            case literal(String)
+            case spokenPath
+            case spokenURL
+            case spokenIdentifier
+            case spokenCode
+            case spellOut
+        }
+
         public let id: String
         public let text: String
-        public let replacement: String
+        public let transform: Transform
         public let match: Match
         public let phase: Phase
         public let isCaseSensitive: Bool
@@ -37,7 +63,28 @@ public extension TextForSpeech {
         ) {
             self.id = id
             self.text = text
-            self.replacement = replacement
+            transform = .literal(replacement)
+            self.match = match
+            self.phase = phase
+            self.isCaseSensitive = isCaseSensitive
+            self.textFormats = textFormats
+            self.sourceFormats = sourceFormats
+            self.priority = priority
+        }
+
+        public init(
+            id: String = UUID().uuidString,
+            matching match: Match,
+            using transform: Transform,
+            during phase: Phase = .beforeBuiltIns,
+            caseSensitive isCaseSensitive: Bool = false,
+            forTextFormats textFormats: Set<TextFormat> = [],
+            forSourceFormats sourceFormats: Set<SourceFormat> = [],
+            priority: Int = 0
+        ) {
+            self.id = id
+            text = ""
+            self.transform = transform
             self.match = match
             self.phase = phase
             self.isCaseSensitive = isCaseSensitive
@@ -54,6 +101,11 @@ public extension TextForSpeech {
         public func applies(to format: SourceFormat) -> Bool {
             guard !textFormats.isEmpty || !sourceFormats.isEmpty else { return true }
             return sourceFormats.contains(.generic) || sourceFormats.contains(format)
+        }
+
+        public var replacement: String? {
+            guard case .literal(let replacement) = transform else { return nil }
+            return replacement
         }
     }
 }
