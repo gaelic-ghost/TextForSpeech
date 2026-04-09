@@ -5,7 +5,7 @@ import Testing
 // MARK: - Runtime
 
 @Test func runtimeMergesBaseAndCustomProfilesForSnapshots() {
-    let runtime = TextForSpeechRuntime(
+    let runtime = TextForSpeech.Runtime(
         customProfile: TextForSpeech.Profile(
             id: "custom",
             name: "Custom",
@@ -15,15 +15,15 @@ import Testing
         )
     )
 
-    let snapshot = runtime.profiles.snapshot()
+    let snapshot = runtime.profiles.effective()
 
-    #expect(snapshot.id == "custom")
-    #expect(snapshot.name == "Custom")
-    #expect(snapshot.replacements.map(\.id) == ["custom-rule"])
+    #expect(snapshot?.id == "custom")
+    #expect(snapshot?.name == "Custom")
+    #expect(snapshot?.replacements.map(\.id) == ["custom-rule"])
 }
 
 @Test func runtimeReturnsStableSnapshotsForLaterJobs() {
-    let runtime = TextForSpeechRuntime(
+    let runtime = TextForSpeech.Runtime(
         customProfile: TextForSpeech.Profile(
             id: "default",
             name: "Default",
@@ -33,7 +33,7 @@ import Testing
         )
     )
 
-    let firstSnapshot = runtime.profiles.snapshot()
+    let firstSnapshot = runtime.profiles.effective()
     runtime.profiles.use(
         TextForSpeech.Profile(
             id: "default",
@@ -43,16 +43,16 @@ import Testing
             ]
         )
     )
-    let secondSnapshot = runtime.profiles.snapshot()
+    let secondSnapshot = runtime.profiles.effective()
 
-    #expect(firstSnapshot.name == "Default")
-    #expect(firstSnapshot.replacements.last?.replacement == "bar")
-    #expect(secondSnapshot.name == "Updated")
-    #expect(secondSnapshot.replacements.last?.replacement == "baz")
+    #expect(firstSnapshot?.name == "Default")
+    #expect(firstSnapshot?.replacements.last?.replacement == "bar")
+    #expect(secondSnapshot?.name == "Updated")
+    #expect(secondSnapshot?.replacements.last?.replacement == "baz")
 }
 
 @Test func runtimeCanSnapshotStoredNamedProfiles() {
-    let runtime = TextForSpeechRuntime()
+    let runtime = TextForSpeech.Runtime()
     let logsProfile = TextForSpeech.Profile(
         id: "logs",
         name: "Logs",
@@ -62,14 +62,14 @@ import Testing
     )
 
     runtime.profiles.store(logsProfile)
-    let snapshot = runtime.profiles.snapshot(id: "logs")
+    let snapshot = runtime.profiles.effective(id: "logs")
 
-    #expect(snapshot.id == "logs")
-    #expect(snapshot.replacements.map(\.id) == ["logs-rule"])
+    #expect(snapshot?.id == "logs")
+    #expect(snapshot?.replacements.map(\.id) == ["logs-rule"])
 }
 
 @Test func runtimeCreatesProfilesAndListsThemInStableOrder() throws {
-    let runtime = TextForSpeechRuntime()
+    let runtime = TextForSpeech.Runtime()
 
     let zebra = try runtime.profiles.create(id: "zebra", name: "Zebra")
     let alpha = try runtime.profiles.create(id: "alpha", name: "Alpha")
@@ -80,7 +80,7 @@ import Testing
 }
 
 @Test func runtimeEditsCustomAndStoredProfileReplacements() throws {
-    let runtime = TextForSpeechRuntime(
+    let runtime = TextForSpeech.Runtime(
         customProfile: TextForSpeech.Profile(
             id: "default",
             name: "Default",
@@ -120,7 +120,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "text-profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let writer = TextForSpeechRuntime(persistenceURL: fileURL)
+    let writer = TextForSpeech.Runtime(persistenceURL: fileURL)
     writer.profiles.store(
         TextForSpeech.Profile(
             id: "logs",
@@ -142,16 +142,16 @@ import Testing
 
     try writer.persistence.save()
 
-    let reader = TextForSpeechRuntime(persistenceURL: fileURL)
+    let reader = TextForSpeech.Runtime(persistenceURL: fileURL)
     try reader.persistence.load()
 
-    #expect(reader.profiles.active.id == "ops")
-    #expect(reader.profiles.active.replacements.map(\.id) == ["ops-rule"])
+    #expect(reader.profiles.active()?.id == "ops")
+    #expect(reader.profiles.active()?.replacements.map(\.id) == ["ops-rule"])
     #expect(reader.profiles.stored(id: "logs")?.replacements.map(\.id) == ["logs-rule"])
 }
 
 @Test func runtimeRestoreRejectsUnsupportedPersistedStateVersion() {
-    let runtime = TextForSpeechRuntime()
+    let runtime = TextForSpeech.Runtime()
 
     #expect(throws: TextForSpeech.PersistenceError.self) {
         try runtime.persistence.restore(

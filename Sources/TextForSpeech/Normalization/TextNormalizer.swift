@@ -129,7 +129,7 @@ enum TextNormalizer {
             text,
             profile: profile,
             format: format,
-            phase: .beforeNormalization
+            phase: .beforeBuiltIns
         )
         let normalized = passes.reduce(seeded) { partial, pass in
             pass(partial, context, profile, format, nestedFormat)
@@ -139,7 +139,7 @@ enum TextNormalizer {
                 normalized,
                 profile: profile,
                 format: format,
-                phase: .afterNormalization
+                phase: .afterBuiltIns
             )
         )
         return finalized.isEmpty ? text : finalized

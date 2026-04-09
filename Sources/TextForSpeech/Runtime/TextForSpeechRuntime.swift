@@ -3,36 +3,38 @@ import Observation
 
 // MARK: - Runtime
 
-@Observable
-public final class TextForSpeechRuntime {
-    private enum Versioning {
-        static let currentPersistedStateVersion = 1
-    }
+public extension TextForSpeech {
+    @Observable
+    final class Runtime {
+        private enum Versioning {
+            static let currentPersistedStateVersion = 1
+        }
 
-    private var customProfile: TextForSpeech.Profile
-    private var storedProfilesByID: [String: TextForSpeech.Profile]
-    public let persistenceURL: URL?
-    private let fileManager: FileManager
+        private var customProfile: TextForSpeech.Profile
+        private var storedProfilesByID: [String: TextForSpeech.Profile]
+        public let persistenceURL: URL?
+        private let fileManager: FileManager
 
-    public init(
-        customProfile: TextForSpeech.Profile = .default,
-        profiles: [String: TextForSpeech.Profile] = [:],
-        persistenceURL: URL? = nil,
-        fileManager: FileManager = .default
-    ) {
-        self.customProfile = customProfile
-        storedProfilesByID = profiles
-        self.persistenceURL = persistenceURL?.standardizedFileURL
-        self.fileManager = fileManager
+        public init(
+            customProfile: TextForSpeech.Profile = .default,
+            profiles: [String: TextForSpeech.Profile] = [:],
+            persistenceURL: URL? = nil,
+            fileManager: FileManager = .default
+        ) {
+            self.customProfile = customProfile
+            storedProfilesByID = profiles
+            self.persistenceURL = persistenceURL?.standardizedFileURL
+            self.fileManager = fileManager
+        }
     }
 }
 
-public extension TextForSpeechRuntime {
+public extension TextForSpeech.Runtime {
     struct Profiles {
-        fileprivate let runtime: TextForSpeechRuntime
+        fileprivate let runtime: TextForSpeech.Runtime
 
-        public var active: TextForSpeech.Profile {
-            runtime.customProfile
+        public func active(id: String? = nil) -> TextForSpeech.Profile? {
+            id.flatMap { runtime.storedProfilesByID[$0] } ?? runtime.customProfile
         }
 
         public func stored(id: String) -> TextForSpeech.Profile? {
@@ -48,13 +50,9 @@ public extension TextForSpeechRuntime {
             }
         }
 
-        public func effective(id: String? = nil) -> TextForSpeech.Profile {
-            let selectedProfile = id.flatMap { runtime.storedProfilesByID[$0] } ?? runtime.customProfile
-            return TextForSpeech.Profile.base.merged(with: selectedProfile)
-        }
-
-        public func snapshot(id: String? = nil) -> TextForSpeech.Profile {
-            effective(id: id)
+        public func effective(id: String? = nil) -> TextForSpeech.Profile? {
+            guard let activeProfile = active(id: id) else { return nil }
+            return TextForSpeech.Profile.base.merged(with: activeProfile)
         }
 
         public func use(_ profile: TextForSpeech.Profile) {
@@ -161,7 +159,7 @@ public extension TextForSpeechRuntime {
     }
 
     struct Persistence {
-        fileprivate let runtime: TextForSpeechRuntime
+        fileprivate let runtime: TextForSpeech.Runtime
 
         public var state: TextForSpeech.PersistedState {
             TextForSpeech.PersistedState(

@@ -187,7 +187,7 @@ The simpler path considered first was keeping `TextForSpeech` as a mostly-standa
 - `TextForSpeech.Context`
 - `TextForSpeech.Replacement`
 - `TextForSpeech.Profile`
-- `TextForSpeechRuntime`
+- `TextForSpeech.Runtime`
 - the concrete text normalizer implementation
 - base-profile definition and effective-profile merging
 - profile persistence
@@ -248,7 +248,7 @@ The important outcome is:
 
 ### Runtime semantics
 
-`TextForSpeechRuntime` should own:
+`TextForSpeech.Runtime` should own:
 
 - the active custom profile
 - stored custom profiles
@@ -322,7 +322,7 @@ Exit criteria:
 
 In `../TextForSpeech`:
 
-1. Expand `TextForSpeechRuntime` so it owns:
+1. Expand `TextForSpeech.Runtime` so it owns:
    - base profile
    - active custom profile
    - stored custom profiles
@@ -348,7 +348,7 @@ In `SpeakSwiftly`:
 1. Add `TextForSpeech` as a package dependency.
 2. Remove duplicated local `TextForSpeech` model ownership.
 3. Remove duplicated local normalization implementation or leave only thin compatibility shims during migration, then delete them in the same pass.
-4. Wire `SpeakSwiftly.Runtime` to own a `TextForSpeechRuntime`.
+4. Wire `SpeakSwiftly.Runtime` to own a `TextForSpeech.Runtime`.
 5. Use request-time snapshots from that runtime when normalizing speech requests.
 
 Exit criteria:

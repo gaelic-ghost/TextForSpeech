@@ -114,14 +114,14 @@ extension TextNormalizer {
         guard !rule.text.isEmpty else { return text }
 
         switch rule.match {
-        case .phrase:
+        case .exactPhrase:
             return text.replacingOccurrences(
                 of: rule.text,
                 with: rule.replacement,
                 options: rule.isCaseSensitive ? [] : [.caseInsensitive]
             )
 
-        case .token:
+        case .wholeToken:
             return transformTokens(in: text) { token in
                 tokenMatches(rule.text, token: token, caseSensitive: rule.isCaseSensitive)
                     ? rule.replacement

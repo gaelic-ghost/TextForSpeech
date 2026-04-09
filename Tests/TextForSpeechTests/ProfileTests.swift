@@ -10,39 +10,39 @@ import Testing
                 "Thing",
                 with: "Swift thing",
                 id: "swift",
-                in: .beforeNormalization,
-                for: [],
-                sourceFormats: [.swift]
+                during: .beforeBuiltIns,
+                forTextFormats: [],
+                forSourceFormats: [.swift]
             ),
             TextForSpeech.Replacement(
                 "Thing",
                 with: "Any source thing",
                 id: "source",
-                in: .beforeNormalization,
-                for: [],
-                sourceFormats: [.generic],
+                during: .beforeBuiltIns,
+                forTextFormats: [],
+                forSourceFormats: [.generic],
                 priority: 10
             ),
             TextForSpeech.Replacement(
                 "Thing",
                 with: "Final thing",
                 id: "final",
-                in: .afterNormalization
+                during: .afterBuiltIns
             ),
         ]
     )
 
-    let beforeNormalization = profile.replacements(
-        for: TextForSpeech.Replacement.Phase.beforeNormalization,
+    let beforeBuiltIns = profile.replacements(
+        for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
         in: TextForSpeech.SourceFormat.swift
     )
-    let afterNormalization = profile.replacements(
-        for: TextForSpeech.Replacement.Phase.afterNormalization,
+    let afterBuiltIns = profile.replacements(
+        for: TextForSpeech.Replacement.Phase.afterBuiltIns,
         in: TextForSpeech.SourceFormat.swift
     )
 
-    #expect(beforeNormalization.map(\.id) == ["source", "swift"])
-    #expect(afterNormalization.map(\.id) == ["final"])
+    #expect(beforeBuiltIns.map(\.id) == ["source", "swift"])
+    #expect(afterBuiltIns.map(\.id) == ["final"])
 }
 
 @Test func profileFiltersTextScopedReplacementsIndependentlyFromSourceScopedOnes() {
@@ -52,29 +52,29 @@ import Testing
                 "Thing",
                 with: "Markdown thing",
                 id: "markdown",
-                in: .beforeNormalization,
-                for: [.markdown]
+                during: .beforeBuiltIns,
+                forTextFormats: [.markdown]
             ),
             TextForSpeech.Replacement(
                 "Thing",
                 with: "Swift thing",
                 id: "swift",
-                in: .beforeNormalization,
-                for: [],
-                sourceFormats: [.swift]
+                during: .beforeBuiltIns,
+                forTextFormats: [],
+                forSourceFormats: [.swift]
             ),
         ]
     )
 
     #expect(
         profile.replacements(
-            for: TextForSpeech.Replacement.Phase.beforeNormalization,
+            for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
             in: TextForSpeech.TextFormat.markdown
         ).map(\.id) == ["markdown"]
     )
     #expect(
         profile.replacements(
-            for: TextForSpeech.Replacement.Phase.beforeNormalization,
+            for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
             in: TextForSpeech.SourceFormat.swift
         ).map(\.id) == ["swift"]
     )
@@ -87,22 +87,22 @@ import Testing
                 "Thing",
                 with: "Any source thing",
                 id: "source",
-                in: .beforeNormalization,
-                for: [],
-                sourceFormats: [.generic]
+                during: .beforeBuiltIns,
+                forTextFormats: [],
+                forSourceFormats: [.generic]
             )
         ]
     )
 
     #expect(
         profile.replacements(
-            for: TextForSpeech.Replacement.Phase.beforeNormalization,
+            for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
             in: TextForSpeech.SourceFormat.swift
         ).map(\.id) == ["source"]
     )
     #expect(
         profile.replacements(
-            for: TextForSpeech.Replacement.Phase.beforeNormalization,
+            for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
             in: TextForSpeech.SourceFormat.python
         ).map(\.id) == ["source"]
     )

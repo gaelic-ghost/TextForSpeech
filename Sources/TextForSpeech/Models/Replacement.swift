@@ -5,13 +5,13 @@ import Foundation
 public extension TextForSpeech {
     struct Replacement: Codable, Sendable, Equatable, Identifiable {
         public enum Match: String, Codable, Sendable {
-            case phrase = "exact_phrase"
-            case token = "whole_token"
+            case exactPhrase = "exact_phrase"
+            case wholeToken = "whole_token"
         }
 
         public enum Phase: String, Codable, Sendable {
-            case beforeNormalization = "before_built_ins"
-            case afterNormalization = "after_built_ins"
+            case beforeBuiltIns = "before_built_ins"
+            case afterBuiltIns = "after_built_ins"
         }
 
         public let id: String
@@ -28,11 +28,11 @@ public extension TextForSpeech {
             _ text: String,
             with replacement: String,
             id: String = UUID().uuidString,
-            as match: Match = .phrase,
-            in phase: Phase = .beforeNormalization,
+            matching match: Match = .exactPhrase,
+            during phase: Phase = .beforeBuiltIns,
             caseSensitive isCaseSensitive: Bool = false,
-            for textFormats: Set<TextFormat> = [],
-            sourceFormats: Set<SourceFormat> = [],
+            forTextFormats textFormats: Set<TextFormat> = [],
+            forSourceFormats sourceFormats: Set<SourceFormat> = [],
             priority: Int = 0
         ) {
             self.id = id

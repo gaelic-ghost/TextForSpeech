@@ -28,7 +28,7 @@ That keeps the responsibilities clean:
 
 - `TextForSpeech.Context` carries request-local environment like `cwd`, `repoRoot`, and optional format hints.
 - `TextForSpeech.Profile` carries the reusable custom replacement policy.
-- `TextForSpeechRuntime` exposes grouped profile and persistence capabilities.
+- `TextForSpeech.Runtime` exposes grouped profile and persistence capabilities.
 - the built-in normalizer remains always on through the base profile and the concrete normalization passes.
 
 ## Text replacements
@@ -52,12 +52,12 @@ The simplest way to think about a replacement is:
 
 The phase split is still the part that matters most architecturally.
 
-`beforeNormalization` means:
+`beforeBuiltIns` means:
 
 - run this rule before the built-in normalizer rewrites paths, identifiers, links, and code-ish text
 - use this when you need to protect or rename hard-to-speak source text before the built-ins touch it
 
-`afterNormalization` means:
+`afterBuiltIns` means:
 
 - run this rule after the built-in normalizer has already made the text more speakable
 - use this when you want final-pass polish on the spoken output
@@ -93,7 +93,7 @@ Callers can provide those when they know better, but the package can still detec
 
 ## Runtime ownership
 
-The runtime-owned profile holder is `TextForSpeechRuntime`.
+The runtime-owned profile holder is `TextForSpeech.Runtime`.
 
 It now exposes:
 
@@ -103,8 +103,8 @@ It now exposes:
 
 The core runtime operations are:
 
-- `profiles.active`
-- `profiles.snapshot(id:)`
+- `profiles.active(id:)`
+- `profiles.effective(id:)`
 - `profiles.stored(id:)`
 - `profiles.list()`
 - `profiles.use(_:)`
@@ -136,7 +136,7 @@ Value-style setup still works:
 
 1. build a `TextForSpeech.Profile`
 2. put `TextForSpeech.Replacement` values into its `replacements` array
-3. hand that profile to `TextForSpeechRuntime` through `profiles.use(_:)` or `profiles.store(_:)`
+3. hand that profile to `TextForSpeech.Runtime` through `profiles.use(_:)` or `profiles.store(_:)`
 
 The runtime-owned editing path is now available too:
 
@@ -156,7 +156,7 @@ There are now two profile concepts that matter publicly:
 
 - `TextForSpeech.Profile.default`
   The default empty custom profile.
-- `TextForSpeechRuntime.profiles.active`
+- `TextForSpeech.Runtime.profiles.active()`
   The currently active custom profile for a runtime.
 
 The effective profile for a job is the internal built-in normalization layer merged with either the selected stored profile or the active custom profile.
@@ -169,9 +169,9 @@ Persistence is JSON-backed today through:
 
 - `TextForSpeech.PersistedState`
 - `TextForSpeech.PersistenceError`
-- `TextForSpeechRuntime.persistence.load()`
-- `TextForSpeechRuntime.persistence.save()`
-- `TextForSpeechRuntime.persistence.restore(_:)`
+- `TextForSpeech.Runtime.persistence.load()`
+- `TextForSpeech.Runtime.persistence.save()`
+- `TextForSpeech.Runtime.persistence.restore(_:)`
 
 YAML and hot reload are still future work.
 
@@ -205,12 +205,12 @@ The concise model to keep in your head is:
   The explicit source-language family for the source lane.
 - `profiles`
   The runtime profile capability handle.
-- `profiles.active`
+- `profiles.active(id:)`
   The active editable custom layer for a runtime.
 - `Replacement`
   One custom rewrite rule inside a profile.
-- `profiles.snapshot(id:)`
-  The effective profile captured for one job.
+- `profiles.effective(id:)`
+  The built-in merged profile captured for one job.
 - `persistence`
   The runtime persistence capability handle.
 - `Section` and `SectionWindow`

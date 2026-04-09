@@ -95,14 +95,14 @@ let normalized = TextForSpeech.Normalize.source(
 
 Right now the source lane is explicit but still generic. It normalizes whole-source input more consistently than the mixed-text lane, but SwiftSyntax-backed Swift-specific structure is still planned future work rather than current behavior.
 
-Use `TextForSpeechRuntime` when you need an observable owner for editable custom profiles, stored profiles, and JSON-backed persistence:
+Use `TextForSpeech.Runtime` when you need an observable owner for editable custom profiles, stored profiles, and JSON-backed persistence:
 
 ```swift
 import Foundation
 import TextForSpeech
 
 let fileURL = URL(fileURLWithPath: "/tmp/text-profiles.json")
-let runtime = TextForSpeechRuntime(persistenceURL: fileURL)
+let runtime = TextForSpeech.Runtime(persistenceURL: fileURL)
 
 try runtime.profiles.create(id: "logs", name: "Logs")
 try runtime.profiles.add(
@@ -112,7 +112,7 @@ try runtime.profiles.add(
 
 let normalized = TextForSpeech.Normalize.text(
     "stderr and stdout",
-    profile: runtime.profiles.snapshot(id: "logs")
+    profile: runtime.profiles.effective(id: "logs") ?? .default
 )
 
 try runtime.persistence.save()
@@ -144,13 +144,14 @@ let sections = TextForSpeech.Forensics.sections(originalText: original)
 - `TextForSpeech.Normalize.source(_:as:context:profile:)` is the explicit whole-source lane for callers that already know the source language.
 - `TextForSpeech.Normalize.detectTextFormat(in:)` identifies likely outer text formats such as markdown, log, CLI output, or list-like text.
 - `TextForSpeech.Forensics.features(originalText:normalizedText:)`, `sections(originalText:)`, and `sectionWindows(originalText:totalDurationMS:totalChunkCount:)` support post-normalization inspection and chunk planning.
-- `TextForSpeechRuntime` exposes grouped `profiles` and `persistence` capabilities instead of one flat mutation surface.
+- `TextForSpeech.Runtime` exposes grouped `profiles` and `persistence` capabilities instead of one flat mutation surface.
 
 The current profile model is intentionally hybrid:
 
 - `TextForSpeech.Profile.default` is the empty custom profile.
-- `TextForSpeechRuntime.profiles.active` is the active editable custom layer.
-- `TextForSpeechRuntime.profiles` manages stored custom layers keyed by profile `id`.
+- `TextForSpeech.Runtime.profiles.active()` reads the active editable custom layer, or a stored layer when passed an `id`.
+- `TextForSpeech.Runtime.profiles.effective(id:)` reads the built-in merged profile view used for normalization.
+- `TextForSpeech.Runtime.profiles` manages stored custom layers keyed by profile `id`.
 
 The built-in normalization layer is internal and always applied. A normalization job merges that built-in layer with either the active custom profile or the caller-supplied custom profile.
 

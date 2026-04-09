@@ -90,13 +90,13 @@ import Testing
             TextForSpeech.Replacement(
                 "chrommmaticallly",
                 with: "chromatically",
-                in: .beforeNormalization
+                during: .beforeBuiltIns
             ),
             TextForSpeech.Replacement(
                 "snake case stuff",
                 with: "settings token",
-                in: .afterNormalization,
-                for: [.plain]
+                during: .afterBuiltIns,
+                forTextFormats: [.plain]
             ),
         ]
     )
