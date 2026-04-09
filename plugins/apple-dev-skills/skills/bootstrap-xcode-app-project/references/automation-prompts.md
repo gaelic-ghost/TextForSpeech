@@ -61,7 +61,7 @@ Create a new app project with:
 Execution requirements:
 1) Stop immediately if this is really a Swift package request instead of an app-project request.
 2) Refuse to overwrite a non-empty target directory.
-3) Prefer the documented XcodeGen path when <PROJECT_GENERATOR> is `xcodegen`.
+3) Run `uv run scripts/run_workflow.py` so the documented customization defaults and inline `PyYAML` dependency metadata are honored.
 4) If <PROJECT_GENERATOR> is `xcode`, return the documented guided next step instead of pretending a safe GUI automation path exists.
 5) Keep changes scoped to <DESTINATION_DIR>/<PROJECT_NAME>.
 
@@ -81,7 +81,7 @@ Return the documented contract only:
 Use $bootstrap-xcode-app-project for a deterministic CLI automation run.
 
 Task:
-Bootstrap one native Apple app project with:
+Bootstrap one native Apple app project using `uv run scripts/run_workflow.py` with:
 - `--name <PROJECT_NAME>`
 - `--destination <DESTINATION_DIR>`
 - `--project-kind <PROJECT_KIND>`

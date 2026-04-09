@@ -35,7 +35,13 @@ Use this snippet in repository `AGENTS.md` files when you want baseline standard
 - Keep code compliant with Swift 6 language mode.
 - Keep strict concurrency checking enabled.
 - Prefer modern structured concurrency (`async`/`await`, task groups, actors) over legacy async patterns when it keeps the flow clearer and more direct.
+- Make async APIs cancellation-aware, propagate cancellation promptly, and avoid detached tasks unless severing actor, priority, and task-local context is the explicit goal.
+- Prefer clear `Sendable` boundaries for values crossing task or actor isolation, and treat unchecked sendability as a last resort that must be justified locally.
+- Prefer direct async tests over expectation-heavy indirection when the code already exposes async entry points.
 - Prefer Swift Testing (`import Testing`) as the default test framework, and use XCTest only when a dependency or platform constraint requires it.
+- Use Swift Testing suites, tags, parameterized tests, and `@Test` functions as the default package-testing surface on current toolchains.
+- For asynchronous event-driven tests in Swift Testing, prefer `confirmation(...)` with an explicit expected count or count range instead of ad hoc sleeps or polling loops.
+- Keep XCTest for integration points that still require it, for legacy package surfaces that have not migrated yet, or when a dependency or platform toolchain still expects XCTest.
 - Prefer first-party and top-tier Swift ecosystem packages from Apple, `swiftlang`, the Swift Server Work Group, and similarly trusted core Swift projects when they simplify the code and make it easier to reason about.
 - Commonly approved examples include `swift-configuration` and `swift-async-algorithms` when they reduce bespoke code and improve readability.
 - For packages, server-side, or cross-platform Swift, prefer Swift Logging as the primary logging API.
@@ -48,6 +54,17 @@ Use this snippet in repository `AGENTS.md` files when you want baseline standard
 - Use Swift Package Manager as the source of truth for package structure and dependencies outside Xcode-managed app workflows.
 - Prefer `swift package` subcommands for dependency, target, and manifest-adjacent changes before hand-editing `Package.swift`.
 - Keep package graph updates cohesive across `Package.swift`, `Package.resolved`, and related source or test targets.
+- Keep package resources under the owning target directory, typically below `Sources/<TargetName>/Resources` or `Tests/<TargetName>Tests/Resources`, so target membership stays obvious.
+- Declare non-automatic resources intentionally with `Resource.process(...)`, `Resource.copy(...)`, or `Resource.embedInCode(...)` according to the distribution need.
+- Prefer `Resource.process(...)` when platform-aware processing or optimization is desired, and prefer `Resource.copy(...)` when the bytes or directory layout must be preserved exactly.
+- Use `exclude` intentionally when files live under a target tree but should not be bundled as package resources.
+- Load bundled package resources through `Bundle.module`, and expose higher-level typed accessors when that makes downstream use easier to read.
+- Keep test fixtures as test-target resources instead of relying on unstable working-directory assumptions.
+- Bundle precompiled Metal artifacts such as `.metallib` files as explicit package resources, and prefer `.copy(...)` when exact distribution matters more than resource processing.
+- When the requested work requires compiling Metal shaders, validating Apple-platform bundle integration, or inspecting Apple-managed components such as the Metal toolchain, hand off to the Xcode-aware workflow instead of assuming plain `swift build` is sufficient.
 - Run `swift build` and `swift test` as the default validation checks after package-level changes.
+- Use `xcodebuild` for package validation when configuration-specific Apple-platform behavior matters, when test plans must be exercised, or when package builds depend on Xcode-managed SDK or Metal-toolchain behavior.
+- When package test plans are part of the contract, keep `.xctestplan` files versioned alongside the package-facing Xcode integration and exercise them explicitly with `xcodebuild -showTestPlans` and `xcodebuild -testPlan ...`.
+- Validate both Debug and Release paths when behavior or optimization differences matter, and treat tagged releases as a signal to verify both the everyday Debug developer path and the Release artifact path before publishing.
 - Keep toolchain selection explicit and reproducible across local development and CI when supporting multiple Swift versions or platforms.
 - Prefer portable SwiftPM and CLI workflows for server-side or cross-platform Swift code, and avoid assuming Apple-only SDKs or Xcode-only behavior unless the project explicitly requires them.

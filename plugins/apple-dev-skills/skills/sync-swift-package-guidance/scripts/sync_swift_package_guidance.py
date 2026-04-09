@@ -8,14 +8,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 from pathlib import Path
 
 
 REQUIRED_STRINGS = [
     "bootstrap-swift-package",
     "sync-swift-package-guidance",
+    "swift-package-build-run-workflow",
+    "swift-package-testing-workflow",
     "swift build",
     "swift test",
+    "scripts/repo-maintenance/validate-all.sh",
+    "scripts/repo-maintenance/sync-shared.sh",
+    "scripts/repo-maintenance/release.sh",
 ]
 
 
@@ -161,6 +167,38 @@ def main() -> int:
             return 1
         validation_result = "validated"
 
+    installer = Path(__file__).with_name("install_repo_maintenance_toolkit.py")
+    proc_install_toolkit = subprocess.run(
+        [
+            str(installer),
+            "--repo-root",
+            str(repo_root),
+            "--operation",
+            "refresh",
+            "--profile",
+            "swift-package",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc_install_toolkit.returncode != 0:
+        payload = {
+            "status": "failed",
+            "path_type": "primary",
+            "repo_root": str(repo_root),
+            "agents_path": str(agents_path),
+            "detected_state": detected_state,
+            "validation_result": validation_result,
+            "actions": actions,
+            "stdout": proc_install_toolkit.stdout,
+            "stderr": proc_install_toolkit.stderr,
+            "next_step": "Fix the repo-maintenance toolkit refresh failure and rerun the workflow.",
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 1
+    actions.append("refreshed the swift-package repo-maintenance toolkit profile")
+
     payload = {
         "status": "success",
         "path_type": "primary",
@@ -169,7 +207,7 @@ def main() -> int:
         "detected_state": detected_state,
         "validation_result": validation_result,
         "actions": actions,
-        "next_step": "Use swift build and swift test for ordinary package work, and use xcode-app-project-workflow only when package work needs Xcode-managed tooling.",
+        "next_step": "Use swift-package-build-run-workflow or swift-package-testing-workflow for ordinary package work, rerun sync-swift-package-guidance after substantial plugin updates, and use xcode-build-run-workflow or xcode-testing-workflow only when package work needs Xcode-managed tooling.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

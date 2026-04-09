@@ -19,8 +19,8 @@ import Testing
     Also say chrommmaticallly and qqqwweerrtyy once.
     """
 
-    let normalized = TextForSpeech.normalize(original)
-    let features = TextForSpeech.forensicFeatures(originalText: original, normalizedText: normalized)
+    let normalized = TextForSpeech.Normalize.text(original)
+    let features = TextForSpeech.Forensics.features(originalText: original, normalizedText: normalized)
 
     #expect(features.originalCharacterCount > 0)
     #expect(features.normalizedCharacterCount > 0)
@@ -46,7 +46,7 @@ import Testing
     Another paragraph.
     """
 
-    let sections = TextForSpeech.sections(originalText: original)
+    let sections = TextForSpeech.Forensics.sections(originalText: original)
 
     #expect(sections.count == 2)
     #expect(sections.map(\.kind) == [.markdownHeader, .markdownHeader])
@@ -75,13 +75,13 @@ import Testing
     End this probe clearly and without looping.
     """
 
-    let sections = TextForSpeech.sections(originalText: original)
+    let sections = TextForSpeech.Forensics.sections(originalText: original)
     #expect(sections.map(\.title) == ["Section One", "Section Two", "Section Three", "Footer"])
     #expect(sections.allSatisfy { $0.kind == .markdownHeader })
     #expect(sections.allSatisfy { $0.normalizedCharacterCount > 0 })
     #expect(abs(sections.map(\.normalizedCharacterShare).reduce(0, +) - 1.0) < 0.0001)
 
-    let windows = TextForSpeech.sectionWindows(
+    let windows = TextForSpeech.Forensics.sectionWindows(
         originalText: original,
         totalDurationMS: 12_000,
         totalChunkCount: 75
@@ -106,7 +106,7 @@ import Testing
     Paragraph two.
     """
 
-    let windows = TextForSpeech.sectionWindows(
+    let windows = TextForSpeech.Forensics.sectionWindows(
         originalText: original,
         totalDurationMS: 1000,
         totalChunkCount: 10

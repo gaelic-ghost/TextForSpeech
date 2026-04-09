@@ -25,19 +25,6 @@ public extension TextForSpeech {
             self.nestedSourceFormat = nestedSourceFormat
         }
 
-        public init(
-            cwd: String? = nil,
-            repoRoot: String? = nil,
-            format: Format? = nil
-        ) {
-            self.init(
-                cwd: cwd,
-                repoRoot: repoRoot,
-                textFormat: format?.textFormat,
-                nestedSourceFormat: format?.sourceFormat
-            )
-        }
-
         // MARK: Helpers
 
         private static func normalizedPath(_ path: String?) -> String? {
@@ -48,21 +35,5 @@ public extension TextForSpeech {
             let standardized = NSString(string: trimmed).standardizingPath
             return standardized.isEmpty ? nil : standardized
         }
-    }
-}
-
-public extension TextForSpeech.Context {
-    // MARK: Legacy Compatibility
-
-    var format: TextForSpeech.Format? {
-        if let textFormat {
-            return TextForSpeech.Format(textFormat)
-        }
-
-        if let nestedSourceFormat {
-            return TextForSpeech.Format(nestedSourceFormat)
-        }
-
-        return nil
     }
 }

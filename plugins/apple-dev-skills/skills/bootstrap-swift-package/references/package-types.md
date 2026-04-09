@@ -46,9 +46,16 @@ Executable and tool package templates may still require follow-up test-target al
 ## Build Path Guidance
 
 - Use `swift build` and `swift test` by default for ordinary Swift package work.
-- Hand off to `xcode-app-project-workflow` when the package build needs Xcode-managed SDK or toolchain behavior, such as builds that depend on Xcode-only components or Apple toolchain paths that are more reliable through `xcodebuild`.
+- Keep package resources under their owning target trees and prefer explicit `Resource.process(...)`, `Resource.copy(...)`, `Resource.embedInCode(...)`, `exclude`, and `Bundle.module` usage over working-directory assumptions.
+- Bundle precompiled Metal artifacts such as `.metallib` files as explicit package resources when they ship with the package, and prefer `.copy(...)` when byte-exact distribution matters.
+- Hand off to `xcode-build-run-workflow` when the package build needs Xcode-managed SDK or toolchain behavior, such as builds that depend on Xcode-only components or Apple toolchain paths that are more reliable through `xcodebuild`.
 - In those cases, confirm package scheme visibility first with `xcodebuild -list -json`, then use package-oriented `xcodebuild` commands such as:
   - `xcodebuild -scheme <PackageName> -destination 'generic/platform=macOS' build`
   - `xcodebuild -scheme <PackageName> -destination 'platform=macOS' test`
+  - `xcodebuild -scheme <PackageName> -showTestPlans`
+  - `xcodebuild -scheme <PackageName> -testPlan <Plan> test`
+  - `xcodebuild -scheme <PackageName> -configuration Release build`
 
 This path is especially relevant when the active Xcode toolchain is responsible for components like the Metal toolchain or other Apple-managed build assets that plain SwiftPM invocation may not surface the same way.
+
+Treat tagged releases as a cue to validate both the normal Debug developer path and the Release artifact path before publishing.

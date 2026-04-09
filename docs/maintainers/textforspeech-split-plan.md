@@ -7,7 +7,7 @@ As of `2026-04-05`, the core split described here is functionally complete:
 - `TextForSpeech` is the source of truth for text normalization models, runtime state, persistence, and normalization execution.
 - `SpeakSwiftly` depends on `TextForSpeech` by local package path during development.
 - `SpeakSwiftly.Runtime` exposes public text-profile inspection, editing, persistence, and request-time selection APIs.
-- The current always-on base normalization behavior is preserved in `TextForSpeech.Profile.base`.
+- The current always-on base normalization behavior is preserved as an internal built-in profile layer inside `TextForSpeech`.
 
 The remaining work from this plan has shifted from extraction to refinement:
 
@@ -31,7 +31,7 @@ At the end of this work:
 
 ## New API direction
 
-The next durable building-block change is to stop forcing mixed text and whole source files through one ambiguous `normalize` entrypoint.
+The next durable building-block change was to stop forcing mixed text and whole source files through one ambiguous `normalize` entrypoint.
 
 There are two real caller modes:
 
@@ -40,20 +40,23 @@ There are two real caller modes:
 
 The simpler path considered first was adding only `nestedFormat:` to the existing API. That helps mixed documents, but it still leaves whole-file source normalization trapped in the generic text lane.
 
-That is not enough for the Xcode Source Extension case, so the package should move to an explicit split:
+That was not enough for the Xcode Source Extension case, so the package moved to an explicit split:
 
-- `normalizeText(...)`
-- `normalizeSource(... as: ...)`
+- `TextForSpeech.Normalize.text(...)`
+- `TextForSpeech.Normalize.source(... as: ...)`
 
 ## Target public API
 
-The intended public surface should converge on:
+The intended public surface now centers on:
 
-- `normalizeText(_:, context:, profile:, format:, nestedFormat:)`
-- `normalizeSource(_:, as:, context:, profile:)`
-- `detectTextFormat(in:)`
+- `TextForSpeech.Normalize.text(_:, context:, profile:, format:, nestedFormat:)`
+- `TextForSpeech.Normalize.source(_:, as:, context:, profile:)`
+- `TextForSpeech.Normalize.detectTextFormat(in:)`
+- `TextForSpeech.Forensics.features(originalText:normalizedText:)`
+- `TextForSpeech.Forensics.sections(originalText:)`
+- `TextForSpeech.Forensics.sectionWindows(originalText:totalDurationMS:totalChunkCount:)`
 
-The old `normalize(_:, context:, profile:, as:)` and `detectFormat(in:)` APIs should remain only as compatibility surfaces while callers migrate.
+The old compatibility surfaces are gone. The split text/source API is now the only public direction.
 
 ## Format model direction
 
@@ -72,7 +75,7 @@ The public format model should be split into:
   - `python`
   - `rust`
 
-The old umbrella `Format` enum can remain temporarily as a compatibility bridge for persisted replacement rules and older call sites.
+The old umbrella `Format` enum has been removed so the public model stays aligned with the split text/source lanes.
 
 ## Lane responsibilities
 
@@ -140,10 +143,8 @@ The migration path should stay explicit and temporary:
 
 1. add `TextFormat` and `SourceFormat`
 2. add `normalizeText(...)`, `normalizeSource(...)`, and `detectTextFormat(in:)`
-3. keep the old `Format` enum as a bridge for replacement persistence and older callers
-4. keep the old `normalize(...)` and `detectFormat(...)` entrypoints as forwarding compatibility shims
-5. migrate package docs and tests to the new APIs
-6. remove the old compatibility surface only when downstream callers are actually updated
+3. migrate package docs and tests to the new APIs
+4. remove the old compatibility surface once downstream callers are updated
 
 ## Non-negotiable behavior
 
@@ -184,7 +185,6 @@ The simpler path considered first was keeping `TextForSpeech` as a mostly-standa
 `TextForSpeech` should own:
 
 - `TextForSpeech.Context`
-- `TextForSpeech.Format`
 - `TextForSpeech.Replacement`
 - `TextForSpeech.Profile`
 - `TextForSpeechRuntime`
@@ -211,7 +211,7 @@ The simpler path considered first was keeping `TextForSpeech` as a mostly-standa
 
 ### Base profile
 
-`TextForSpeech` should define a public base profile that captures the current built-in normalization behavior.
+`TextForSpeech` should define an internal built-in profile that captures the current built-in normalization behavior.
 
 This base profile is not the same thing as an empty default profile.
 

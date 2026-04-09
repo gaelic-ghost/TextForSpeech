@@ -7,7 +7,7 @@ description: Bootstrap new Swift Package Manager repositories with consistent de
 
 ## Purpose
 
-Create a new Swift package repository with one top-level entry point and a simplicity-first Swift baseline. `scripts/run_workflow.py` is the runtime wrapper, and `scripts/bootstrap_swift_package.sh` is the deterministic implementation core for scaffold creation, testing-mode selection, and validation.
+Create a new Swift package repository with one top-level entry point, a simplicity-first Swift baseline, and a local-first maintainer toolkit. `scripts/run_workflow.py` is the runtime wrapper, and `scripts/bootstrap_swift_package.sh` is the deterministic implementation core for scaffold creation, testing-mode selection, validation, and `swift-package` repo-maintenance toolkit installation.
 
 ## When To Use
 
@@ -16,7 +16,9 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - Use this skill when the user wants to customize the documented bootstrap defaults for future runs.
 - Do not use this skill as the default path for normal Xcode app collaboration work.
 - Do not use this skill as the default path for guidance sync inside an already-existing Swift package repo.
-- Recommend `xcode-app-project-workflow` when the user is working in an existing Xcode project or needs Apple-platform execution after bootstrap.
+- Recommend `swift-package-build-run-workflow` or `swift-package-testing-workflow` when the user is doing ordinary package development after bootstrap.
+- Recommend `xcode-build-run-workflow` when the user is working in an existing Xcode project or needs Xcode-managed Apple-platform build, run, toolchain, Metal, or mutation work after bootstrap.
+- Recommend `xcode-testing-workflow` when the user needs Xcode-managed Apple-platform test execution after bootstrap.
 - Recommend `sync-swift-package-guidance` when an existing Swift package repo needs `AGENTS.md` or workflow-guidance alignment rather than fresh bootstrap.
 - Recommend `explore-apple-swift-docs` when the user needs Apple or Swift docs exploration, Dash-compatible lookup, or Dash follow-up work.
 
@@ -52,6 +54,8 @@ Create a new Swift package repository with one top-level entry point and a simpl
    - `Package.swift`
    - `.git`
    - `AGENTS.md`
+   - `scripts/repo-maintenance/validate-all.sh`
+   - `scripts/repo-maintenance/release.sh`
    - `Tests/`
    - `swift build` and `swift test` unless `--skip-validation` was requested
 7. Ensure the generated guidance encodes the shared Swift policy:
@@ -61,7 +65,8 @@ Create a new Swift package repository with one top-level entry point and a simpl
 8. Hand off package execution guidance cleanly:
    - use `swift build` and `swift test` by default
    - recommend `sync-swift-package-guidance` when a later repo-guidance refresh or merge is needed for the created package repo
-   - recommend `xcode-app-project-workflow` for package builds that need Xcode-managed toolchain behavior, such as package builds that depend on Xcode-provided Metal or other Apple-managed build assets
+   - recommend `swift-package-build-run-workflow` or `swift-package-testing-workflow` for ordinary package development after bootstrap
+   - recommend `xcode-build-run-workflow` for package builds that need Xcode-managed toolchain behavior, such as package builds that depend on Xcode-provided Metal or other Apple-managed build assets
 9. Return one JSON execution summary with the created path, normalized options, and validation result.
 
 ## Inputs
@@ -83,6 +88,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
   - `testing_mode` defaults to `swift-testing`
   - validation runs unless `--skip-validation` is passed
   - supported and validated Swift toolchain floor is `5.10+`
+  - the repo-maintenance toolkit is installed into `scripts/repo-maintenance/` on successful mutating runs
 
 ## Outputs
 
@@ -98,6 +104,7 @@ Create a new Swift package repository with one top-level entry point and a simpl
   - normalized inputs
   - resolved `testing_strategy`
   - detected `swift_toolchain` on real runs
+  - installed repo-maintenance toolkit paths
   - validation result
   - one concise next step
 
@@ -118,10 +125,13 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - Use manual `swift package init` guidance only when the script is unavailable or the user explicitly asks for the manual path.
 - `tool` is an advanced explicit passthrough, not a default branch of the workflow.
 - Within the supported `Swift 5.10+` floor, prefer current `swift package init` testing flags when the active toolchain exposes them; only rely on the older default XCTest template when `xctest` is requested and the active `swift package init` command exposes no testing-selection flags at all.
-- After a successful scaffold, hand off build, test, or Xcode-managed package execution tasks to `xcode-app-project-workflow`.
+- After a successful scaffold, hand off ordinary package execution tasks to `swift-package-build-run-workflow` or `swift-package-testing-workflow`.
+- After a successful scaffold, hand off Xcode-managed package build or run tasks to `xcode-build-run-workflow`.
+- After a successful scaffold, hand off Xcode-managed package test tasks to `xcode-testing-workflow`.
+- After a successful scaffold, use `scripts/repo-maintenance/validate-all.sh` for local maintainer validation and `scripts/repo-maintenance/release.sh` for releases.
 - After a successful scaffold, hand off later repo-guidance alignment work to `sync-swift-package-guidance`.
 - For ordinary package work, prefer `swift build` and `swift test`.
-- For package builds that need Xcode-managed SDK or toolchain behavior, use `xcode-app-project-workflow` and `xcodebuild` guidance instead of stretching the bootstrap skill into an execution skill.
+- For package builds that need Xcode-managed SDK or toolchain behavior, use `xcode-build-run-workflow` and `xcodebuild` guidance instead of stretching the bootstrap skill into an execution skill.
 - Recommend `explore-apple-swift-docs` directly when the user’s next step is Apple or Swift docs exploration or Dash-compatible docs management.
 - `scripts/run_workflow.py` is the top-level runtime entrypoint and converts the shell script result into the documented JSON contract.
 
@@ -131,6 +141,8 @@ Create a new Swift package repository with one top-level entry point and a simpl
 - `scripts/customization_config.py` stores and reports customization state.
 - `scripts/run_workflow.py` loads runtime-safe defaults from customization state before invoking the shell script.
 - `scripts/bootstrap_swift_package.sh` now honors the wrapper's git and `AGENTS.md` copy flags.
+- Run the Python wrapper and customization entrypoints through `uv`, because they rely on inline `PyYAML` script metadata rather than a repo-global Python environment.
+- In consuming repos, the supported path is `uv run scripts/run_workflow.py ...` and `uv run scripts/customization_config.py ...`; do not assume plain `python` or `python3` will have the needed YAML dependency installed.
 
 ## References
 
@@ -153,4 +165,5 @@ Create a new Swift package repository with one top-level entry point and a simpl
 
 - `scripts/run_workflow.py`
 - `scripts/bootstrap_swift_package.sh`
+- `scripts/install_repo_maintenance_toolkit.py`
 - `scripts/customization_config.py`

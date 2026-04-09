@@ -22,7 +22,7 @@ Speech models do poorly with raw developer text such as file paths, identifiers,
 
 ## Setup
 
-`TextForSpeech` is a Swift Package Manager library product that currently targets macOS 15 and Swift 6 language mode.
+`TextForSpeech` is a Swift Package Manager library product that currently targets iOS 17, macOS 14, and Swift 6 language mode.
 
 During local development, add it to another package with a local path dependency:
 
@@ -49,7 +49,7 @@ Normalize mixed text directly when you just need the text lane with the merged b
 ```swift
 import TextForSpeech
 
-let normalized = TextForSpeech.normalizeText(
+let normalized = TextForSpeech.Normalize.text(
     "stderr: /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
     context: TextForSpeech.Context(
         cwd: "/Users/galew/Workspace/SpeakSwiftly",
@@ -65,7 +65,7 @@ When the outer document is mixed text but the embedded code language is known, p
 ```swift
 import TextForSpeech
 
-let normalized = TextForSpeech.normalizeText(
+let normalized = TextForSpeech.Normalize.text(
     """
     Read this first:
 
@@ -83,7 +83,7 @@ Use the source lane when the whole input is a source file or editor buffer and t
 ```swift
 import TextForSpeech
 
-let normalized = TextForSpeech.normalizeSource(
+let normalized = TextForSpeech.Normalize.source(
     """
     struct WorkerRuntime {
         let sampleRate: Int
@@ -104,18 +104,18 @@ import TextForSpeech
 let fileURL = URL(fileURLWithPath: "/tmp/text-profiles.json")
 let runtime = TextForSpeechRuntime(persistenceURL: fileURL)
 
-try runtime.createProfile(id: "logs", named: "Logs")
-try runtime.addReplacement(
+try runtime.profiles.create(id: "logs", name: "Logs")
+try runtime.profiles.add(
     TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
-    toStoredProfileNamed: "logs"
+    toStoredProfileID: "logs"
 )
 
-let normalized = TextForSpeech.normalizeText(
+let normalized = TextForSpeech.Normalize.text(
     "stderr and stdout",
-    profile: runtime.snapshot(named: "logs")
+    profile: runtime.profiles.snapshot(id: "logs")
 )
 
-try runtime.save()
+try runtime.persistence.save()
 ```
 
 The package also exposes forensic helpers when a caller needs to inspect how an input was shaped or segmented:
@@ -128,35 +128,33 @@ let original = """
 Please read /tmp/Thing and NSApplication.didFinishLaunchingNotification.
 """
 
-let normalized = TextForSpeech.normalizeText(original)
-let features = TextForSpeech.forensicFeatures(
+let normalized = TextForSpeech.Normalize.text(original)
+let features = TextForSpeech.Forensics.features(
     originalText: original,
     normalizedText: normalized
 )
-let sections = TextForSpeech.sections(originalText: original)
+let sections = TextForSpeech.Forensics.sections(originalText: original)
 ```
 
 ## API Notes
 
 `TextForSpeech` currently exposes one library product with a small public surface:
 
-- `TextForSpeech.normalizeText(_:context:profile:format:nestedFormat:)` handles prose, markdown, logs, lists, HTML, and other mixed-document inputs.
-- `TextForSpeech.normalizeSource(_:as:context:profile:)` is the explicit whole-source lane for callers that already know the source language.
-- `TextForSpeech.detectTextFormat(in:)` identifies likely outer text formats such as markdown, log, CLI output, or list-like text.
-- `TextForSpeech.detectFormat(in:)` remains available as the legacy umbrella detector for older callers.
-- `TextForSpeech.forensicFeatures(originalText:normalizedText:)`, `sections(originalText:)`, and `sectionWindows(originalText:totalDurationMS:totalChunkCount:)` support post-normalization inspection and chunk planning.
-- `TextForSpeechRuntime` owns `baseProfile`, `customProfile`, stored named profiles, and JSON-backed `load()`, `save()`, and `restore(_:)`.
+- `TextForSpeech.Normalize.text(_:context:profile:format:nestedFormat:)` handles prose, markdown, logs, lists, HTML, and other mixed-document inputs.
+- `TextForSpeech.Normalize.source(_:as:context:profile:)` is the explicit whole-source lane for callers that already know the source language.
+- `TextForSpeech.Normalize.detectTextFormat(in:)` identifies likely outer text formats such as markdown, log, CLI output, or list-like text.
+- `TextForSpeech.Forensics.features(originalText:normalizedText:)`, `sections(originalText:)`, and `sectionWindows(originalText:totalDurationMS:totalChunkCount:)` support post-normalization inspection and chunk planning.
+- `TextForSpeechRuntime` exposes grouped `profiles` and `persistence` capabilities instead of one flat mutation surface.
 
 The current profile model is intentionally hybrid:
 
-- `TextForSpeech.Profile.base` is the always-on built-in normalization layer.
 - `TextForSpeech.Profile.default` is the empty custom profile.
-- `TextForSpeechRuntime.customProfile` is the active editable custom layer.
-- `TextForSpeechRuntime.profiles` stores named custom layers.
+- `TextForSpeechRuntime.profiles.active` is the active editable custom layer.
+- `TextForSpeechRuntime.profiles` manages stored custom layers keyed by profile `id`.
 
-The effective profile for a normalization job is the base profile merged with either the selected stored profile or the active custom profile.
+The built-in normalization layer is internal and always applied. A normalization job merges that built-in layer with either the active custom profile or the caller-supplied custom profile.
 
-The current roadmap keeps the text/source split in place and tracks structured Swift normalization as a distinct next milestone in [ROADMAP.md](/Users/galew/Workspace/TextForSpeech/ROADMAP.md).
+The current roadmap keeps the text/source split in place and tracks structured Swift normalization as a distinct next milestone in [ROADMAP.md](ROADMAP.md).
 
 ## Development
 
@@ -167,7 +165,7 @@ swift build
 swift test
 ```
 
-The package source lives under [`Sources/TextForSpeech`](/Users/galew/Workspace/TextForSpeech/Sources/TextForSpeech), and the current test coverage lives under [`Tests/TextForSpeechTests`](/Users/galew/Workspace/TextForSpeech/Tests/TextForSpeechTests).
+The package source lives under [`Sources/TextForSpeech`](Sources/TextForSpeech), and the current test coverage lives under [`Tests/TextForSpeechTests`](Tests/TextForSpeechTests).
 
 ## Verification
 
@@ -182,4 +180,4 @@ The test suite covers end-to-end normalization behavior, runtime profile managem
 
 ## License
 
-This project is licensed under the Apache License 2.0. See [`LICENSE`](/Users/galew/Workspace/TextForSpeech/LICENSE) for the full text.
+This project is licensed under the Apache License 2.0. See [`LICENSE`](LICENSE) for the full text.

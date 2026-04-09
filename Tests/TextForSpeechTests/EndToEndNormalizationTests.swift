@@ -8,7 +8,7 @@ import Testing
     Please read /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift, NSApplication.didFinishLaunchingNotification, camelCaseStuff, snake_case_stuff, and `profile?.sampleRate ?? 24000`.
     """
 
-    let normalized = TextForSpeech.normalizeText(original)
+    let normalized = TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
     #expect(normalized.contains("NSApplication dot did Finish Launching Notification"))
@@ -28,7 +28,7 @@ import Testing
     Also say chrommmaticallly once.
     """
 
-    let normalized = TextForSpeech.normalizeText(original)
+    let normalized = TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("the docs, link example dot com slash docs"))
     #expect(normalized.contains("Code sample."))
@@ -39,7 +39,7 @@ import Testing
 @Test func normalizeHandlesStandaloneUrlsBeforePathPasses() {
     let original = "Open https://example.com/docs/path_now before /tmp/Thing."
 
-    let normalized = TextForSpeech.normalizeText(original)
+    let normalized = TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("example dot com slash docs slash path now"))
     #expect(normalized.contains("tmp slash Thing"))
@@ -48,7 +48,7 @@ import Testing
 @Test func repeatedUnderscoresCollapseToSpeechSafeSpacing() {
     let original = "Read snake___case and /tmp/path___now once."
 
-    let normalized = TextForSpeech.normalizeText(original)
+    let normalized = TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("snake case"))
     #expect(normalized.contains("tmp slash path now"))
@@ -59,7 +59,7 @@ import Testing
 @Test func repeatedDashesCollapseToSpeechSafeSpacing() {
     let original = "Read kebab---case and /tmp/path---now once."
 
-    let normalized = TextForSpeech.normalizeText(original)
+    let normalized = TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("kebab case"))
     #expect(normalized.contains("tmp slash path now"))
@@ -70,7 +70,7 @@ import Testing
 @Test func normalizeUsesContextAwareFilePathShortening() {
     let original = "Please read /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift."
 
-    let normalized = TextForSpeech.normalizeText(
+    let normalized = TextForSpeech.Normalize.text(
         original,
         context: TextForSpeech.Context(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
@@ -101,7 +101,7 @@ import Testing
         ]
     )
 
-    let normalized = TextForSpeech.normalizeText(
+    let normalized = TextForSpeech.Normalize.text(
         "Please say chrommmaticallly and snake_case_stuff once.",
         profile: profile,
         format: .plain
@@ -113,23 +113,14 @@ import Testing
     #expect(!normalized.contains("snake case stuff"))
 }
 
-@Test func detectTextFormatFindsMarkdownAndLegacyDetectionStillFindsSwiftSource() {
+@Test func detectTextFormatFindsMarkdown() {
     let markdown = """
     # Header
 
     Read `code` and [docs](https://example.com).
     """
-    let swift = """
-    import Foundation
 
-    struct Thing {
-        let value: String
-    }
-    """
-
-    #expect(TextForSpeech.detectTextFormat(in: markdown) == .markdown)
-    #expect(TextForSpeech.detectFormat(in: markdown) == .markdown)
-    #expect(TextForSpeech.detectFormat(in: swift) == .swift)
+    #expect(TextForSpeech.Normalize.detectTextFormat(in: markdown) == .markdown)
 }
 
 @Test func detectTextFormatFindsListHtmlCliAndLogInputs() {
@@ -141,10 +132,10 @@ import Testing
     let cli = "$ swift test"
     let log = "2026-04-05 18:00:00 ERROR Worker failed"
 
-    #expect(TextForSpeech.detectTextFormat(in: list) == .list)
-    #expect(TextForSpeech.detectTextFormat(in: html) == .html)
-    #expect(TextForSpeech.detectTextFormat(in: cli) == .cli)
-    #expect(TextForSpeech.detectTextFormat(in: log) == .log)
+    #expect(TextForSpeech.Normalize.detectTextFormat(in: list) == .list)
+    #expect(TextForSpeech.Normalize.detectTextFormat(in: html) == .html)
+    #expect(TextForSpeech.Normalize.detectTextFormat(in: cli) == .cli)
+    #expect(TextForSpeech.Normalize.detectTextFormat(in: log) == .log)
 }
 
 @Test func contextFormatOverridesAutomaticDetection() {
@@ -155,7 +146,7 @@ import Testing
     - Second
     """
 
-    let normalized = TextForSpeech.normalizeText(
+    let normalized = TextForSpeech.Normalize.text(
         text,
         context: TextForSpeech.Context(textFormat: .list)
     )
@@ -170,7 +161,7 @@ import Testing
     ```
     """
 
-    let normalized = TextForSpeech.normalizeText(
+    let normalized = TextForSpeech.Normalize.text(
         original,
         format: .markdown,
         nestedFormat: .swift
@@ -188,7 +179,7 @@ import Testing
     ```
     """
 
-    let normalized = TextForSpeech.normalizeText(
+    let normalized = TextForSpeech.Normalize.text(
         original,
         context: TextForSpeech.Context(
             textFormat: .markdown,
@@ -207,20 +198,7 @@ import Testing
     }
     """
 
-    let normalized = TextForSpeech.normalizeSource(source, as: .swift)
-
-    #expect(normalized.contains("open brace"))
-    #expect(normalized.contains("sample Rate"))
-}
-
-@Test func legacyNormalizeStillAcceptsSourceFormats() {
-    let source = """
-    struct WorkerRuntime {
-        let sampleRate: Int
-    }
-    """
-
-    let normalized = TextForSpeech.normalize(source, as: .swift)
+    let normalized = TextForSpeech.Normalize.source(source, as: .swift)
 
     #expect(normalized.contains("open brace"))
     #expect(normalized.contains("sample Rate"))

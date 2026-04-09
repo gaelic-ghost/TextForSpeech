@@ -35,7 +35,13 @@ Use this snippet in repository `AGENTS.md` files when you want baseline standard
 - Keep code compliant with Swift 6 language mode.
 - Keep strict concurrency checking enabled.
 - Prefer modern structured concurrency (`async`/`await`, task groups, actors) over legacy async patterns when it keeps the flow clearer and more direct.
+- Make async code cancellation-aware and keep actor or task boundaries explicit instead of hiding them behind detached tasks or queue wrappers.
+- Prefer clear `Sendable` boundaries for values that cross task or actor isolation, and keep unchecked sendability exceptional and justified locally.
 - Prefer Swift Testing (`import Testing`) as the default test framework, and use XCTest only when a dependency or platform constraint requires it.
+- Prefer Swift Testing for unit-style and package-style test surfaces in modern Xcode projects, including suites, tags, parameterized tests, and direct async tests.
+- Use XCTest when the platform surface, dependency graph, or Apple tooling still expects it, and keep XCTest and Swift Testing responsibilities clearly separated when both coexist.
+- Use XCUITest for UI automation, and prefer explicit element wait APIs such as `waitForExistence(timeout:)`, `waitForNonExistence(timeout:)`, and related state waits over fixed sleeps.
+- Keep `.xctestplan` files versioned when test configurations, diagnostics, sanitizers, locale coverage, or selective plan execution matter, and inspect or run them explicitly with `xcodebuild -showTestPlans` and `xcodebuild -testPlan ...`.
 - Prefer first-party and top-tier Swift ecosystem packages from Apple, `swiftlang`, the Swift Server Work Group, and similarly trusted core Swift projects when they simplify the code and make it easier to reason about.
 - Commonly approved examples include `swift-configuration` and `swift-async-algorithms` when they reduce bespoke code and improve readability.
 - For Apple app projects, prefer Apple-native logging facilities first and allow Swift Logging where it makes the project API clearer.
@@ -65,5 +71,9 @@ Use this snippet in repository `AGENTS.md` files when you want baseline standard
 - Prefer edits through Xcode-aware project structure and keep project file changes intentional and reviewed closely.
 - Use `xcodebuild` for Apple platform integration validation, including scheme, destination or SDK, and configuration-specific build or test runs.
 - Keep `xcodebuild` invocations reproducible in automation by passing explicit schemes, destinations or SDKs, and configurations when relevant.
+- When scripts or terminal workflows add files on disk, verify that Xcode project membership, target membership, build-phase membership, and resource-bundle inclusion all match the intended result; files appearing in the directory tree alone are not enough.
+- Direct filesystem edits outside `.pbxproj` are generally safe when Xcode is closed or when the current project is not open in Xcode, but still verify that the Xcode project picks up the intended files and memberships afterward.
+- Prefer Debug builds for everyday edit-build-test loops, but validate Release builds explicitly when optimization, packaging, launch behavior, watchdog timing, or deployment realism matters.
+- Treat tagged releases as a signal to validate both the normal Debug path and a Release artifact path, and when shipping apps or deliverables test the Release behavior without relying on an attached debugger.
 - Prefer direct filesystem edits in Xcode-managed scope only when the workflow already accounts for project-file and scheme integrity.
 - Never edit `.pbxproj` files directly. If a project-file change is needed and no safe project-aware tool is available, stop and ask for an Xcode-mediated project change instead.

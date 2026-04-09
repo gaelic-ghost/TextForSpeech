@@ -74,6 +74,7 @@ swift_major_version=""
 swift_minor_version=""
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 agents_template="$script_dir/../assets/AGENTS.md"
+repo_maintenance_installer="$script_dir/install_repo_maintenance_toolkit.py"
 
 is_ignorable_directory_entry() {
   local entry_name="$1"
@@ -444,6 +445,12 @@ mkdir -p "$target_dir"
 
   if [[ "$copy_agents" == "true" ]]; then
     cp "$agents_template" AGENTS.md
+  fi
+
+  if [[ -x "$repo_maintenance_installer" ]]; then
+    "$repo_maintenance_installer" --repo-root "$target_dir" --operation install --profile swift-package >/dev/null
+  else
+    failed "Validation failed: repo-maintenance toolkit installer missing at $repo_maintenance_installer."
   fi
 
   ensure_test_target "$testing_mode" "$name"

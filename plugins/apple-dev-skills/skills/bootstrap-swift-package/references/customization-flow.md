@@ -8,8 +8,6 @@ Adjust the documented bootstrap defaults while keeping runtime behavior grounded
 
 | Knob | Default | Status | Effect |
 | --- | --- | --- | --- |
-| `defaultPackageType` | `library` | `runtime-enforced` | Sets the runtime default scaffold type used by `scripts/run_workflow.py`. |
-| `defaultPlatformPreset` | `multiplatform` | `runtime-enforced` | Sets the runtime default platform preset used by `scripts/run_workflow.py`. |
 | `defaultVersionProfile` | `current-minus-one` | `runtime-enforced` | Sets the runtime default version profile used by `scripts/run_workflow.py`. |
 | `defaultTestingMode` | `swift-testing` | `runtime-enforced` | Sets the runtime default testing mode used by `scripts/run_workflow.py`. |
 | `initializeGit` | `true` | `runtime-enforced` | Controls whether the wrapper asks the shell script to initialize git. |
@@ -19,16 +17,20 @@ Adjust the documented bootstrap defaults while keeping runtime behavior grounded
 
 - `scripts/customization_config.py` reads, writes, resets, and reports customization state.
 - `scripts/run_workflow.py` loads the effective merged customization state at runtime.
+- Both Python entrypoints are `uv` scripts with inline `PyYAML` dependency metadata.
+- In consuming repos, prefer `uv run scripts/customization_config.py ...` and `uv run scripts/run_workflow.py ...` so YAML support is provisioned correctly.
+- Package type and platform preset are now inference-first workflow choices or explicit CLI inputs rather than durable user customization.
 - `scripts/bootstrap_swift_package.sh` remains the implementation core and now honors the wrapper's git and `AGENTS.md` copy flags.
 
 ## Update Flow
 
 1. Inspect current settings with `scripts/customization_config.py effective`.
+   Supported invocation: `uv run scripts/customization_config.py effective`
 2. Update `SKILL.md`, `references/package-types.md`, and `references/automation-prompts.md` to reflect the approved policy change.
 3. Persist the metadata change with `scripts/customization_config.py apply --input <yaml-file>`.
 4. Re-run `scripts/customization_config.py effective` and confirm the stored values match the docs.
 5. Use `scripts/customization_config.py reset` only when the user explicitly wants to clear customization state.
-6. Verify runtime defaults with `scripts/run_workflow.py --name DemoPkg --dry-run`.
+6. Verify runtime defaults with `uv run scripts/run_workflow.py --name DemoPkg --dry-run`.
 
 ## Validation
 

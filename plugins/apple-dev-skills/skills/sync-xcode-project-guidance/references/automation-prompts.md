@@ -26,5 +26,11 @@ Goals:
 - detect whether this is an existing Xcode app repo
 - add or merge AGENTS.md guidance if needed
 - keep the result bounded and idempotent
-- hand off active engineering work to xcode-app-project-workflow afterward
+- hand off active Xcode build or run work to xcode-build-run-workflow afterward
+- hand off active Xcode testing work to xcode-testing-workflow afterward
+
+Execution:
+- run `uv run scripts/run_workflow.py --repo-root <REPO_ROOT>` and add `--workspace-path <WORKSPACE_PATH_OR_BLANK>` only when the workspace path is provided
+- add `--skip-validation` only when `skip_validation` is `true`
+- add `--dry-run` only when `dry_run` is `true`
 ```

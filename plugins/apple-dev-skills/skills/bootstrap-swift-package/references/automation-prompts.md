@@ -51,7 +51,7 @@ Create a Swift package with:
 - Skip validation: <SKIP_VALIDATION>
 
 Execution requirements:
-1) Run `scripts/bootstrap_swift_package.sh` with the mapped flags.
+1) Run `uv run scripts/run_workflow.py` with the mapped flags so the documented customization defaults and inline `PyYAML` dependency metadata are honored.
 2) Refuse to overwrite a non-empty target directory.
 3) Stop immediately if `swift`, `git`, or `assets/AGENTS.md` is missing.
 4) If `<SKIP_VALIDATION>` is `false`, require `swift build` and `swift test` to pass.
@@ -72,7 +72,7 @@ Return the documented contract only:
 Use $bootstrap-swift-package for a deterministic CLI automation run.
 
 Task:
-Bootstrap one Swift package using `scripts/bootstrap_swift_package.sh` with:
+Bootstrap one Swift package using `uv run scripts/run_workflow.py` with:
 - `--name <PACKAGE_NAME>`
 - `--type <PACKAGE_TYPE>`
 - `--destination <DESTINATION_DIR>`

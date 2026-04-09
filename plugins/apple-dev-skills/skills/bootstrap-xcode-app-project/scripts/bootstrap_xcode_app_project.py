@@ -187,6 +187,35 @@ def main() -> int:
             shutil.copyfile(agents_template, target_dir / "AGENTS.md")
             agents_copied = True
 
+    installer = Path(__file__).with_name("install_repo_maintenance_toolkit.py")
+    proc_install_toolkit = subprocess.run(
+        [
+            str(installer),
+            "--repo-root",
+            str(target_dir),
+            "--operation",
+            "install",
+            "--profile",
+            "xcode-app",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if proc_install_toolkit.returncode != 0:
+        payload = {
+            "status": "failed",
+            "path_type": "primary",
+            "resolved_path": str(target_dir),
+            "normalized_inputs": normalized_inputs,
+            "validation_result": "failed (repo-maintenance toolkit install)",
+            "stdout": proc_install_toolkit.stdout,
+            "stderr": proc_install_toolkit.stderr,
+            "next_step": "Fix the repo-maintenance toolkit install failure and rerun the workflow.",
+        }
+        print(json.dumps(payload, indent=2, sort_keys=True))
+        return 1
+
     proc_generate = subprocess.run(
         [xcodegen, "generate", "--spec", "project.yml"],
         cwd=target_dir,
@@ -249,9 +278,9 @@ def main() -> int:
         "generator": "xcodegen",
         "project_file": str(target_dir / f"{args.name}.xcodeproj"),
         "agents_copied": agents_copied,
-        "stdout": proc_generate.stdout + validation_stdout,
-        "stderr": proc_generate.stderr + validation_stderr,
-        "next_step": "Use xcode-app-project-workflow for normal work inside the generated project.",
+        "stdout": proc_install_toolkit.stdout + proc_generate.stdout + validation_stdout,
+        "stderr": proc_install_toolkit.stderr + proc_generate.stderr + validation_stderr,
+        "next_step": "Use xcode-build-run-workflow for normal build or run work inside the generated project, and use xcode-testing-workflow when the task is primarily about tests.",
     }
     print(json.dumps(payload, indent=2, sort_keys=True))
     return 0

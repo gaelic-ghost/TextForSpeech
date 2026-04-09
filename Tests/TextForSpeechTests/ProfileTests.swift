@@ -108,9 +108,8 @@ import Testing
     )
 }
 
-@Test func baseProfileAndDefaultProfileStayDistinct() {
-    #expect(TextForSpeech.Profile.base.id == "base")
+@Test func defaultProfileStartsEmpty() {
     #expect(TextForSpeech.Profile.default.id == "default")
-    #expect(TextForSpeech.Profile.base.name == "Base")
     #expect(TextForSpeech.Profile.default.name == "Default")
+    #expect(TextForSpeech.Profile.default.replacements.isEmpty)
 }

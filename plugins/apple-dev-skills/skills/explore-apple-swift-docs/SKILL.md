@@ -15,7 +15,8 @@ Explore Apple and Swift documentation through one top-level entry point. `script
 - Use this skill for Apple or Swift guide, tutorial, symbol, or concept search requests.
 - Use this skill when the user wants local docs first, wants official docs first, or wants to compare available Apple or Swift docs sources.
 - Use this skill when the user wants Dash-compatible Apple or Swift docs access, install guidance for a missing Dash docset, or generation guidance when a Dash docset is unavailable.
-- Recommend `xcode-app-project-workflow` when the user needs Apple or Swift execution, diagnostics, build or test work, toolchain help, or mutation decisions inside an existing project.
+- Recommend `xcode-build-run-workflow` when the user needs Apple or Swift execution, diagnostics, build, run, toolchain help, or mutation decisions inside an existing Xcode project.
+- Recommend `xcode-testing-workflow` when the user needs Swift Testing, XCTest, XCUITest, `.xctestplan`, or test diagnosis inside an existing Xcode project.
 - Recommend `bootstrap-xcode-app-project` when the user is starting a brand new native Apple app project.
 - Recommend `sync-xcode-project-guidance` when an existing Xcode app repo needs `AGENTS.md` or workflow-guidance alignment rather than docs exploration.
 
@@ -82,7 +83,8 @@ Explore Apple and Swift documentation through one top-level entry point. `script
 - Explicit user preference overrides the default source order when that preference is usable.
 - `dash-install` hands off to `dash-generate` when no installable catalog match exists.
 - `dash-generate` falls back from stable automation guidance to deterministic manual guidance.
-- Recommend `xcode-app-project-workflow` directly when the user’s task shifts from docs exploration to Apple or Swift execution work.
+- Recommend `xcode-build-run-workflow` directly when the user’s task shifts from docs exploration to Apple or Swift build, run, diagnostics, toolchain, or mutation work.
+- Recommend `xcode-testing-workflow` directly when the user’s task shifts from docs exploration to Apple or Swift test work.
 - Recommend `bootstrap-xcode-app-project` directly when the user needs new native app scaffolding.
 - Recommend `sync-xcode-project-guidance` directly when an existing Xcode app repo needs guidance sync rather than docs help.
 - `scripts/run_workflow.py` is the only local runtime entrypoint for docs source selection, install gating, and follow-up behavior; helper scripts remain implementation details behind it.

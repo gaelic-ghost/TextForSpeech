@@ -20,7 +20,8 @@ public extension TextForSpeech {
         public let match: Match
         public let phase: Phase
         public let isCaseSensitive: Bool
-        public let formats: Set<Format>
+        public let textFormats: Set<TextFormat>
+        public let sourceFormats: Set<SourceFormat>
         public let priority: Int
 
         public init(
@@ -30,7 +31,8 @@ public extension TextForSpeech {
             as match: Match = .phrase,
             in phase: Phase = .beforeNormalization,
             caseSensitive isCaseSensitive: Bool = false,
-            for formats: Set<Format> = [],
+            for textFormats: Set<TextFormat> = [],
+            sourceFormats: Set<SourceFormat> = [],
             priority: Int = 0
         ) {
             self.id = id
@@ -39,46 +41,19 @@ public extension TextForSpeech {
             self.match = match
             self.phase = phase
             self.isCaseSensitive = isCaseSensitive
-            self.formats = formats
+            self.textFormats = textFormats
+            self.sourceFormats = sourceFormats
             self.priority = priority
         }
 
-        public init(
-            _ text: String,
-            with replacement: String,
-            id: String = UUID().uuidString,
-            as match: Match = .phrase,
-            in phase: Phase = .beforeNormalization,
-            caseSensitive isCaseSensitive: Bool = false,
-            for textFormats: Set<TextFormat>,
-            sourceFormats: Set<SourceFormat> = [],
-            priority: Int = 0
-        ) {
-            self.init(
-                text,
-                with: replacement,
-                id: id,
-                as: match,
-                in: phase,
-                caseSensitive: isCaseSensitive,
-                for: Set(textFormats.map(Format.init) + sourceFormats.map(Format.init)),
-                priority: priority
-            )
-        }
-
-        public func applies(to format: Format) -> Bool {
-            guard !formats.isEmpty else { return true }
-            return formats.contains(where: { $0.matches(format) })
-        }
-
         public func applies(to format: TextFormat) -> Bool {
-            guard !formats.isEmpty else { return true }
-            return formats.contains(Format(format))
+            guard !textFormats.isEmpty || !sourceFormats.isEmpty else { return true }
+            return textFormats.contains(format)
         }
 
         public func applies(to format: SourceFormat) -> Bool {
-            guard !formats.isEmpty else { return true }
-            return formats.contains(.source) || formats.contains(Format(format))
+            guard !textFormats.isEmpty || !sourceFormats.isEmpty else { return true }
+            return sourceFormats.contains(.generic) || sourceFormats.contains(format)
         }
     }
 }
