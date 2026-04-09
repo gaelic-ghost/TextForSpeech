@@ -7,28 +7,30 @@
 ## Product principles
 
 - [ ] Keep normalization deterministic and reusable across callers instead of duplicating speech-cleanup rules in app code.
-- [ ] Keep the built-in normalization layer and custom profile layer explicit so callers can reason about what is always on versus what they changed.
+- [x] Keep the built-in normalization layer internal but consistently merged so callers get one reliable normalization pipeline.
 - [ ] Keep forensic APIs honest about what they measure and separate from the production normalization path unless shared primitives clearly belong in both places.
+- [ ] Keep the public Swift surface grouped by capability, with namespace-first entrypoints and runtime handles that stay easy to discover in SourceKit.
 
 ## Milestone Progress
 
 - [x] M1 Core normalization package
 - [x] M2 Runtime profiles and persistence
 - [x] M3 Text and source lane API split
-- [ ] M4 Structured source normalization
-- [ ] M5 Forensic surface cleanup
+- [ ] M4 Runtime lookup and profile ergonomics
+- [ ] M5 Structured source normalization
+- [ ] M6 Forensic surface cleanup
 
 ## M1 Core normalization package
 
 ### Scope
 
-- [x] Ship the `TextForSpeech` library product for macOS 15 through Swift Package Manager.
+- [x] Ship the `TextForSpeech` library product for iOS 17 and macOS 14 through Swift Package Manager.
 - [x] Normalize paths, identifiers, markdown, URLs, repeated separators, and repeated-letter runs through one package API.
 
 ### Tickets
 
-- [x] Keep the main normalization entrypoint centered on `TextForSpeech.normalize(_:context:profile:as:)`.
-- [x] Preserve format detection through `TextForSpeech.detectFormat(in:)`.
+- [x] Keep the main library namespace centered on `TextForSpeech`.
+- [x] Preserve normalization through focused capability entrypoints instead of a broad flat API.
 - [x] Cover mixed-input normalization behavior with Swift Testing.
 
 ### Exit criteria
@@ -45,13 +47,13 @@
 
 ### Tickets
 
-- [x] Keep `TextForSpeechRuntime` as the owner of `baseProfile`, `customProfile`, and stored profile state.
+- [x] Keep `TextForSpeech.Runtime` as the owner of the active custom profile and stored profile state.
 - [x] Support profile creation, storage, replacement updates, and removal through the runtime API.
 - [x] Keep persistence errors descriptive and tied to concrete file operations.
 
 ### Exit criteria
 
-- [x] A caller can create or edit stored profiles, snapshot an effective profile, and persist state to disk.
+- [x] A caller can create or edit stored profiles, read the active and effective profile views, and persist state to disk.
 - [x] Runtime behavior is covered by the current Swift Testing suite.
 
 ## M3 Text and source lane API split
@@ -59,23 +61,43 @@
 ### Scope
 
 - [x] Split mixed-text normalization from whole-source normalization at the public API level.
-- [x] Preserve legacy callers through compatibility forwarding while downstream packages migrate.
+- [x] Finish the split in one pass instead of leaving compatibility shims behind.
 - [x] Let mixed documents carry an explicit nested source hint for embedded code.
 
 ### Tickets
 
-- [x] Add `normalizeText(...)`, `normalizeSource(...)`, and `detectTextFormat(in:)`.
+- [x] Add `TextForSpeech.Normalize.text(...)`, `source(...)`, and `detectTextFormat(in:)`.
 - [x] Split the public format model into `TextFormat` and `SourceFormat`.
-- [x] Keep the old `normalize(... as:)` and `detectFormat(in:)` entrypoints as compatibility shims.
+- [x] Remove the old `normalize(... as:)` and `detectFormat(in:)` compatibility surface.
 - [x] Update package docs and tests to reflect the new API shape.
 
 ### Exit criteria
 
 - [x] Callers can choose a text lane or a source lane explicitly.
 - [x] Mixed markdown-like inputs can route embedded snippets through an explicit nested source format.
-- [x] The package still validates cleanly with backward-compatibility coverage in place.
+- [x] The package validates cleanly without compatibility shims or duplicate codepaths.
 
-## M4 Structured source normalization
+## M4 Runtime lookup and profile ergonomics
+
+### Scope
+
+- [ ] Tighten the profile lookup story so active, stored, and effective views are easy to reason about at the call site.
+- [ ] Keep the runtime grouped by capability without making callers bounce between near-duplicate lookup methods.
+- [ ] Preserve the current always-on base-profile merge behavior while clarifying raw custom-layer access.
+
+### Tickets
+
+- [ ] Decide whether `profiles.stored(id:)` and `profiles.active(id:)` should collapse into one lookup API or stay intentionally distinct.
+- [ ] Review whether `profiles.active(id:)` should keep returning an optional when the active custom layer always exists.
+- [ ] Add focused docs and tests around the raw custom-layer view versus the built-in merged effective view.
+
+### Exit criteria
+
+- [ ] The runtime profile lookup story reads naturally at the call site without redundant concepts.
+- [ ] Docs and tests explain the distinction between raw custom profiles and effective merged profiles clearly.
+- [ ] `SpeakSwiftly` integration can choose a profile view without adapter glue or naming confusion.
+
+## M5 Structured source normalization
 
 ### Scope
 
@@ -95,7 +117,7 @@
 - [ ] The package documents the current structured-source coverage honestly.
 - [ ] Future language-specific source lanes can be added without reshaping the public API again.
 
-## M5 Forensic surface cleanup
+## M6 Forensic surface cleanup
 
 ### Scope
 

@@ -4,11 +4,15 @@ import NaturalLanguage
 // MARK: - Parsing Utilities
 
 extension TextNormalizer {
+    // MARK: Link Parsing
+
     struct MarkdownLinkMatch {
         let fullRange: Range<String.Index>
         let label: String
         let destination: String
     }
+
+    // MARK: Code Span Extraction
 
     static func fencedCodeBlockBodies(in text: String) -> [String] {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -61,6 +65,8 @@ extension TextNormalizer {
         return bodies
     }
 
+    // MARK: Markdown Parsing
+
     static func markdownLinks(in text: String) -> [MarkdownLinkMatch] {
         var matches: [MarkdownLinkMatch] = []
         var cursor = text.startIndex
@@ -91,6 +97,8 @@ extension TextNormalizer {
 
         return matches
     }
+
+    // MARK: Token Candidates
 
     static func candidateTokens(in text: String) -> [String] {
         text
@@ -136,6 +144,8 @@ extension TextNormalizer {
 
         return fragments
     }
+
+    // MARK: Natural Language Tokens
 
     static func naturalLanguageTokenRanges(in text: String) -> [Range<String.Index>] {
         let tokenizer = NLTokenizer(unit: .word)

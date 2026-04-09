@@ -4,16 +4,24 @@ import Observation
 // MARK: - Runtime
 
 public extension TextForSpeech {
+    // MARK: Runtime Type
+
     @Observable
     final class Runtime {
+        // MARK: Versioning
+
         private enum Versioning {
             static let currentPersistedStateVersion = 1
         }
+
+        // MARK: Stored State
 
         private var customProfile: TextForSpeech.Profile
         private var storedProfilesByID: [String: TextForSpeech.Profile]
         public let persistenceURL: URL?
         private let fileManager: FileManager
+
+        // MARK: Lifecycle
 
         public init(
             customProfile: TextForSpeech.Profile = .default,
@@ -30,8 +38,12 @@ public extension TextForSpeech {
 }
 
 public extension TextForSpeech.Runtime {
+    // MARK: Profiles Handle
+
     struct Profiles {
         fileprivate let runtime: TextForSpeech.Runtime
+
+        // MARK: Reads
 
         public func active(id: String? = nil) -> TextForSpeech.Profile? {
             id.flatMap { runtime.storedProfilesByID[$0] } ?? runtime.customProfile
@@ -54,6 +66,8 @@ public extension TextForSpeech.Runtime {
             guard let activeProfile = active(id: id) else { return nil }
             return TextForSpeech.Profile.base.merged(with: activeProfile)
         }
+
+        // MARK: Writes
 
         public func use(_ profile: TextForSpeech.Profile) {
             runtime.customProfile = profile
@@ -150,6 +164,8 @@ public extension TextForSpeech.Runtime {
             runtime.customProfile = .default
         }
 
+        // MARK: Helpers
+
         private func storedProfile(id: String) throws -> TextForSpeech.Profile {
             guard let profile = runtime.storedProfilesByID[id] else {
                 throw TextForSpeech.RuntimeError.profileNotFound(id)
@@ -158,8 +174,12 @@ public extension TextForSpeech.Runtime {
         }
     }
 
+    // MARK: Persistence Handle
+
     struct Persistence {
         fileprivate let runtime: TextForSpeech.Runtime
+
+        // MARK: State
 
         public var state: TextForSpeech.PersistedState {
             TextForSpeech.PersistedState(
@@ -169,6 +189,8 @@ public extension TextForSpeech.Runtime {
             )
         }
 
+        // MARK: Restore
+
         public func restore(_ state: TextForSpeech.PersistedState) throws {
             guard state.version == Versioning.currentPersistedStateVersion else {
                 throw TextForSpeech.PersistenceError.unsupportedPersistedStateVersion(state.version)
@@ -177,6 +199,8 @@ public extension TextForSpeech.Runtime {
             runtime.customProfile = state.customProfile
             runtime.storedProfilesByID = state.profiles
         }
+
+        // MARK: Loading
 
         public func load() throws {
             guard let persistenceURL = runtime.persistenceURL else {
@@ -212,6 +236,8 @@ public extension TextForSpeech.Runtime {
 
             try restore(state)
         }
+
+        // MARK: Saving
 
         public func save() throws {
             guard let persistenceURL = runtime.persistenceURL else {
@@ -259,6 +285,8 @@ public extension TextForSpeech.Runtime {
             }
         }
     }
+
+    // MARK: Accessors
 
     var profiles: Profiles {
         Profiles(runtime: self)

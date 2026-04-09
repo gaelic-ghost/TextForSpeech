@@ -5,6 +5,8 @@ import RegexBuilder
 // MARK: - Normalizer
 
 enum TextNormalizer {
+    // MARK: Pass Types
+
     typealias NormalizationPass = (String) -> String
     typealias ContextualNormalizationPass =
         (
@@ -14,6 +16,8 @@ enum TextNormalizer {
             NormalizationFormat,
             TextForSpeech.SourceFormat?
         ) -> String
+
+    // MARK: Detection Markers
 
     static var codeMarkerRegex: Regex<Substring> {
         Regex {
@@ -44,6 +48,8 @@ enum TextNormalizer {
             }
         }
     }
+
+    // MARK: Pass Pipelines
 
     static var normalizationPasses: [ContextualNormalizationPass] {
         [
@@ -82,7 +88,7 @@ enum TextNormalizer {
         ]
     }
 
-    // MARK: Public API
+    // MARK: Public Entry Points
 
     static func normalizeText(
         _ text: String,
@@ -117,6 +123,8 @@ enum TextNormalizer {
         )
     }
 
+    // MARK: Pipeline Driver
+
     private static func normalize(
         _ text: String,
         context: TextForSpeech.Context?,
@@ -144,5 +152,4 @@ enum TextNormalizer {
         )
         return finalized.isEmpty ? text : finalized
     }
-
 }

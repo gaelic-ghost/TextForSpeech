@@ -3,6 +3,8 @@ import Foundation
 // MARK: - Normalization Passes
 
 extension TextNormalizer {
+    // MARK: Source Line Normalization
+
     static func normalizeStructuredSourceLines(
         _ text: String,
         format: TextForSpeech.SourceFormat
@@ -17,6 +19,8 @@ extension TextNormalizer {
             }
             .joined(separator: "\n")
     }
+
+    // MARK: Markdown Code Normalization
 
     static func normalizeFencedCodeBlocks(
         _ text: String,
@@ -120,6 +124,8 @@ extension TextNormalizer {
         return result
     }
 
+    // MARK: Token-Level Passes
+
     static func normalizeURLs(_ text: String) -> String {
         transformTokens(in: text) { token in
             guard isLikelyURL(token) else { return nil }
@@ -174,6 +180,8 @@ extension TextNormalizer {
         }
     }
 
+    // MARK: Code-Like Line Passes
+
     static func normalizeCodeHeavyLines(
         _ text: String,
         format: NormalizationFormat,
@@ -195,6 +203,8 @@ extension TextNormalizer {
         }.joined(separator: "\n")
     }
 
+    // MARK: Natural Language Passes
+
     static func normalizeSpiralProneWords(_ text: String) -> String {
         let tokens = naturalLanguageTokenRanges(in: text)
         guard !tokens.isEmpty else { return text }
@@ -212,6 +222,8 @@ extension TextNormalizer {
         result += text[cursor...]
         return result
     }
+
+    // MARK: Format Heuristics
 
     static func looksLikeHTML(_ text: String) -> Bool {
         text.contains(/<([A-Za-z][A-Za-z0-9:-]*)(\s[^>]*)?>/) && text.contains("</")
