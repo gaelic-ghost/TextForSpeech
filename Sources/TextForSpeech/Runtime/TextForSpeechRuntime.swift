@@ -10,8 +10,8 @@ public extension TextForSpeech {
             static let currentPersistedStateVersion = 1
         }
 
-        public let baseProfile: TextForSpeech.Profile
         public let persistenceURL: URL
+        public var builtInStyle: TextForSpeech.BuiltInProfileStyle
 
         internal let fileManager: FileManager
 
@@ -19,11 +19,12 @@ public extension TextForSpeech {
         internal var storedCustomProfilesByID: [String: TextForSpeech.Profile]
 
         public init(
+            builtInStyle: TextForSpeech.BuiltInProfileStyle = .balanced,
             persistenceURL: URL? = nil,
             fileManager: FileManager = .default,
             bundle: Bundle = .main
         ) throws {
-            baseProfile = .base
+            self.builtInStyle = builtInStyle
             self.fileManager = fileManager
             self.persistenceURL = persistenceURL?.standardizedFileURL
                 ?? Self.defaultPersistenceURL(bundle: bundle)
@@ -32,6 +33,10 @@ public extension TextForSpeech {
 
             try loadPersistedStateIfPresent()
             try repairProfileState(persistIfChanged: true)
+        }
+
+        public var baseProfile: TextForSpeech.Profile {
+            .builtInBase(style: builtInStyle)
         }
     }
 }

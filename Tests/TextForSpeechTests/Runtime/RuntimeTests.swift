@@ -11,6 +11,7 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
 
+    #expect(runtime.profiles.builtInStyle == .balanced)
     #expect(runtime.profiles.activeID == "default")
     #expect(runtime.profiles.active().id == "default")
     #expect(runtime.profiles.stored(id: "default") == .default)
@@ -36,6 +37,7 @@ import Testing
 
     let snapshot = runtime.profiles.effective()
 
+    #expect(runtime.baseProfile == .base)
     #expect(snapshot.id == "custom")
     #expect(snapshot.name == "Custom")
     #expect(snapshot.replacements.contains(where: { $0.id == "custom-rule" }))
@@ -99,6 +101,23 @@ import Testing
     #expect(snapshot?.id == "logs")
     #expect(snapshot?.replacements.contains(where: { $0.id == "logs-rule" }) == true)
     #expect(runtime.profiles.activeID == "default")
+}
+
+@Test func runtimeCanSwitchBuiltInStyleAndPersistIt() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let writer = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    try writer.profiles.setBuiltInStyle(.compact)
+
+    #expect(writer.profiles.builtInStyle == .compact)
+    #expect(writer.baseProfile == .builtInBase(style: .compact))
+
+    let reader = try TextForSpeech.Runtime(persistenceURL: fileURL)
+
+    #expect(reader.profiles.builtInStyle == .compact)
+    #expect(reader.baseProfile == .builtInBase(style: .compact))
 }
 
 @Test func runtimeCreatesProfilesAndListsThemInStableOrder() throws {
@@ -197,6 +216,7 @@ import Testing
 
     let state = TextForSpeech.PersistedState(
         version: 1,
+        builtInStyle: .balanced,
         activeCustomProfileID: "missing",
         profiles: [
             "default": .default,
@@ -250,6 +270,7 @@ import Testing
         try runtime.persistence.restore(
             TextForSpeech.PersistedState(
                 version: 99,
+                builtInStyle: .balanced,
                 activeCustomProfileID: "default",
                 profiles: [:]
             )

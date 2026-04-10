@@ -13,6 +13,7 @@ public extension TextForSpeech.Runtime {
         public var state: TextForSpeech.PersistedState {
             TextForSpeech.PersistedState(
                 version: TextForSpeech.Runtime.Versioning.currentPersistedStateVersion,
+                builtInStyle: runtime.builtInStyle,
                 activeCustomProfileID: runtime.activeCustomProfileID,
                 profiles: runtime.storedCustomProfilesByID
             )
@@ -23,6 +24,7 @@ public extension TextForSpeech.Runtime {
                 throw TextForSpeech.PersistenceError.unsupportedPersistedStateVersion(state.version)
             }
 
+            runtime.builtInStyle = state.builtInStyle
             runtime.activeCustomProfileID = state.activeCustomProfileID
             runtime.storedCustomProfilesByID = state.profiles
             try runtime.repairProfileState(persistIfChanged: false)

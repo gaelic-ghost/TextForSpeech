@@ -23,7 +23,7 @@ The main architectural pivots from the original split plan are now in place:
 - `TextForSpeech.Normalize.text(...)` and `TextForSpeech.Normalize.source(...)` are the public lane split.
 - `TextFormat` and `SourceFormat` replaced the old umbrella format model.
 - runtime persistence defaults to Application Support.
-- the built-in normalization policy moved into `TextForSpeech.Profile.base`.
+- the built-in normalization policy moved into composable built-in profile layers with a selectable style preset.
 
 The simpler path considered first was leaving the old hard-coded built-ins in the normalizer while only extracting the models. That path was rejected because it would have preserved a split package where only one side really owned the behavior that mattered.
 
@@ -57,7 +57,7 @@ The normalization engine is now split by role instead of collecting all helpers 
 - `MarkdownNormalizationPasses.swift`
   Fenced-code, inline-code, and markdown-link transforms.
 - `TokenNormalizationPasses.swift`
-  Built-in lexical pass wrappers that route through `Profile.base`.
+  Built-in lexical pass wrappers that route through the default balanced built-in base.
 - `FormatDetection.swift`
   Text and source-lane heuristics.
 - `ReplacementRuleEngine.swift`
@@ -102,7 +102,7 @@ Sectioning and forensic feature support:
 The package is easier to maintain when these boundaries stay explicit:
 
 - structural parsing and routing stay in normalization code
-- durable lexical policy lives in `Profile.base`
+- durable lexical policy lives in the built-in profile layers
 - app- or user-owned pronunciation policy lives in stored custom profiles
 - persistence and active-profile identity live in `Runtime`
 - forensic helpers stay separate from the production normalization path unless a primitive is genuinely shared
@@ -121,7 +121,7 @@ The next real package work is no longer “finish the split.” It is:
 When adding new work:
 
 - prefer extending the current role-based source layout instead of growing a new oversized catch-all file
-- keep `Profile.base` focused on durable shipped lexical policy
+- keep `semanticCore` focused on always-on shipped semantics and keep built-in style presets focused on presentation policy
 - keep normalization-entry routing and structural parsing in normalization code
 - keep persistence-path and active-profile decisions in runtime code
 - update README, roadmap, and maintainer notes together when the public API or ownership model changes

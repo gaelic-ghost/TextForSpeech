@@ -15,7 +15,7 @@ A Swift package for turning code-heavy, path-heavy, and markdown-heavy developer
 
 ## Overview
 
-`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` consumes as an external package. It ships one always-on built-in `Profile.base`, then layers persisted custom profiles on top so callers can tune pronunciation without reimplementing the core normalization pipeline.
+`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` consumes as an external package. It ships one semantic built-in core plus a selectable built-in `style`, then layers persisted custom profiles on top so callers can tune pronunciation without reimplementing the core normalization pipeline.
 
 The package currently has three main responsibilities:
 
@@ -51,7 +51,7 @@ Then import `TextForSpeech` in the targets that need normalization or runtime-ma
 
 ## Usage
 
-Normalize mixed text directly when you just need the text lane with the always-on base profile and an optional path context:
+Normalize mixed text directly when you want the default built-in `.balanced` style and an optional path context:
 
 ```swift
 import TextForSpeech
@@ -66,6 +66,18 @@ let normalized = TextForSpeech.Normalize.text(
 ```
 
 If you omit `format`, `TextForSpeech` detects a likely outer text format before running the text normalization pipeline.
+
+If you want a different shipped listening mode, pass `style:`:
+
+```swift
+import TextForSpeech
+
+let normalized = TextForSpeech.Normalize.source(
+    sourceText,
+    as: .swift,
+    style: .compact
+)
+```
 
 When the outer document is mixed text but the embedded code language is known, pass `nestedFormat` so fenced or inline code can route through the source lane:
 
@@ -122,13 +134,14 @@ let sections = TextForSpeech.Forensics.sections(originalText: original)
 
 ## Runtime Profiles
 
-Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, and default-on JSON-backed persistence in Application Support:
+Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, one selected built-in style, and default-on JSON-backed persistence in Application Support:
 
 ```swift
 import TextForSpeech
 
-let runtime = try TextForSpeech.Runtime()
+let runtime = try TextForSpeech.Runtime(builtInStyle: .balanced)
 
+try runtime.profiles.setBuiltInStyle(.compact)
 try runtime.profiles.create(id: "logs", name: "Logs")
 try runtime.profiles.add(
     TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
@@ -138,20 +151,25 @@ try runtime.profiles.activate(id: "logs")
 
 let normalized = TextForSpeech.Normalize.text(
     "stderr and stdout",
-    profile: runtime.profiles.effective()
+    customProfile: runtime.profiles.active(),
+    style: runtime.profiles.builtInStyle
 )
 ```
 
 The runtime model is intentionally explicit:
 
-- `TextForSpeech.Profile.base` is the static built-in profile that ships with the package.
+- `TextForSpeech.Profile.semanticCore` is the always-on semantic built-in layer.
+- `TextForSpeech.Profile.builtInStyle(_:)` returns one shipped style preset.
+- `TextForSpeech.Profile.builtInBase(style:)` composes `semanticCore + style preset`.
+- `TextForSpeech.Profile.base` is the default `.balanced` built-in base for convenience.
 - `TextForSpeech.Profile.default` is the empty default custom profile value.
+- `runtime.profiles.builtInStyle` is the currently selected shipped style preset.
 - `runtime.profiles.activeID` is the stored custom profile id currently selected by the runtime.
 - `runtime.profiles.active()` is the raw active custom profile.
-- `runtime.profiles.effective()` is always `base + active custom`.
+- `runtime.profiles.effective()` is always `builtInBase(style: builtInStyle) + active custom`.
 - `runtime.profiles.stored(id:)` reads a named stored custom profile without activating it.
 
-Persistence is default-on. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not.
+Persistence is default-on. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. The selected built-in style is persisted alongside the active custom profile id and stored custom profiles.
 
 ## Source Layout
 
@@ -171,7 +189,7 @@ The package source lives under `Sources/TextForSpeech` and is organized by respo
 The current source split keeps structural normalization logic separate from durable lexical policy:
 
 - structural work such as markdown parsing, code-span extraction, and format detection stays in code
-- durable lexical policy such as built-in aliases, identifier speaking, path speaking, URL speaking, and repeated-letter-run handling lives in `Profile.base`
+- durable lexical policy such as built-in aliases, identifier speaking, path speaking, URL speaking, repeated-letter-run handling, and style-specific speaking policy lives in the built-in profile layers
 
 Tests live under `Tests/TextForSpeechTests` and are grouped by role:
 

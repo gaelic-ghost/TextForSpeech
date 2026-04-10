@@ -113,3 +113,19 @@ import Testing
     #expect(TextForSpeech.Profile.default.name == "Default")
     #expect(TextForSpeech.Profile.default.replacements.isEmpty)
 }
+
+@Test func balancedBaseComposesSemanticCoreAndBalancedStyle() {
+    let balanced = TextForSpeech.Profile.builtInBase(style: .balanced)
+
+    #expect(TextForSpeech.Profile.base == balanced)
+    #expect(balanced.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(balanced.replacements.contains(where: { $0.id == "base-text-code-line" }))
+}
+
+@Test func compactStyleDropsBalancedCodeLineRulesButKeepsSemanticCore() {
+    let compact = TextForSpeech.Profile.builtInBase(style: .compact)
+
+    #expect(compact.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(!compact.replacements.contains(where: { $0.id == "base-text-code-line" }))
+    #expect(!compact.replacements.contains(where: { $0.id == "base-source-line" }))
+}

@@ -14,6 +14,10 @@ public extension TextForSpeech.Runtime {
             runtime.activeCustomProfileID
         }
 
+        public var builtInStyle: TextForSpeech.BuiltInProfileStyle {
+            runtime.builtInStyle
+        }
+
         public func active() -> TextForSpeech.Profile {
             runtime.storedCustomProfilesByID[runtime.activeCustomProfileID]
                 ?? .default
@@ -47,6 +51,11 @@ public extension TextForSpeech.Runtime {
             }
 
             runtime.activeCustomProfileID = id
+            try runtime.persistCurrentState()
+        }
+
+        public func setBuiltInStyle(_ style: TextForSpeech.BuiltInProfileStyle) throws {
+            runtime.builtInStyle = style
             try runtime.persistCurrentState()
         }
 

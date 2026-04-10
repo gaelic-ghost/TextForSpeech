@@ -1,9 +1,9 @@
 // MARK: - Built-in Profiles
 
 public extension TextForSpeech.Profile {
-    static let base = TextForSpeech.Profile(
-        id: "base",
-        name: "Base",
+    static let semanticCore = TextForSpeech.Profile(
+        id: "semantic-core",
+        name: "Semantic Core",
         replacements: [
             TextForSpeech.Replacement(
                 "galew",
@@ -56,6 +56,38 @@ public extension TextForSpeech.Profile {
                 priority: -70
             ),
             TextForSpeech.Replacement(
+                id: "base-repeated-letter-run",
+                matching: .token(.repeatedLetterRun),
+                using: .spellOut,
+                priority: -100
+            ),
+        ]
+    )
+
+    static func builtInStyle(_ style: TextForSpeech.BuiltInProfileStyle) -> TextForSpeech.Profile {
+        switch style {
+        case .balanced:
+            balancedBuiltInStyle
+        case .compact:
+            compactBuiltInStyle
+        case .explicit:
+            explicitBuiltInStyle
+        }
+    }
+
+    static func builtInBase(
+        style: TextForSpeech.BuiltInProfileStyle
+    ) -> TextForSpeech.Profile {
+        semanticCore.merged(with: builtInStyle(style))
+    }
+
+    static let base = builtInBase(style: .balanced)
+
+    private static let balancedBuiltInStyle = TextForSpeech.Profile(
+        id: "base",
+        name: "Balanced Built-In Style",
+        replacements: [
+            TextForSpeech.Replacement(
                 id: "base-text-code-line",
                 matching: .line(.codeLike),
                 using: .spokenCode,
@@ -69,13 +101,19 @@ public extension TextForSpeech.Profile {
                 forSourceFormats: [.generic],
                 priority: -90
             ),
-            TextForSpeech.Replacement(
-                id: "base-repeated-letter-run",
-                matching: .token(.repeatedLetterRun),
-                using: .spellOut,
-                priority: -100
-            ),
         ]
+    )
+
+    private static let compactBuiltInStyle = TextForSpeech.Profile(
+        id: "compact-built-in-style",
+        name: "Compact Built-In Style",
+        replacements: []
+    )
+
+    private static let explicitBuiltInStyle = TextForSpeech.Profile(
+        id: "explicit-built-in-style",
+        name: "Explicit Built-In Style",
+        replacements: balancedBuiltInStyle.replacements
     )
 
     static let `default` = TextForSpeech.Profile()

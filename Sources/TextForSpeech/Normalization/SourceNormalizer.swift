@@ -9,12 +9,13 @@ enum SourceNormalizer {
         _ source: String,
         as format: TextForSpeech.SourceFormat,
         context: TextForSpeech.Context? = nil,
-        profile: TextForSpeech.Profile = .base
+        profile: TextForSpeech.Profile = .default,
+        style: TextForSpeech.BuiltInProfileStyle = .balanced
     ) -> String {
         TextNormalizer.normalizeSource(
             source,
             context: context,
-            profile: profile,
+            profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: profile),
             format: format
         )
     }

@@ -103,7 +103,7 @@ import Testing
 
     let normalized = TextForSpeech.Normalize.text(
         "Please say chrommmaticallly and snake_case_stuff once.",
-        profile: .base.merged(with: profile),
+        customProfile: profile,
         format: .plain
     )
 
@@ -201,5 +201,22 @@ import Testing
     let normalized = TextForSpeech.Normalize.source(source, as: .swift)
 
     #expect(normalized.contains("open brace"))
+    #expect(normalized.contains("sample Rate"))
+}
+
+@Test func compactStyleKeepsWholeSourceMoreVisualAndLessSpoken() {
+    let source = """
+    struct WorkerRuntime {
+        let sampleRate: Int
+    }
+    """
+
+    let normalized = TextForSpeech.Normalize.source(
+        source,
+        as: .swift,
+        style: .compact
+    )
+
+    #expect(!normalized.contains("open brace"))
     #expect(normalized.contains("sample Rate"))
 }

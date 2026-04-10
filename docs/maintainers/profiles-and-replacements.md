@@ -15,14 +15,20 @@ Those concerns deliberately live in different places now. The package is easier 
 
 The current package model is:
 
-- `TextForSpeech.Profile.base`
-  The static always-on built-in profile that ships with the package.
+- `TextForSpeech.Profile.semanticCore`
+  The always-on built-in semantic layer.
+- `TextForSpeech.BuiltInProfileStyle`
+  The shipped style preset selector.
+- `TextForSpeech.Profile.builtInBase(style:)`
+  The composed built-in base for one style.
 - stored custom profiles
   Named user- or app-owned profiles persisted by `TextForSpeech.Runtime`.
+- built-in style
+  The one shipped style preset currently selected by the runtime.
 - active custom profile id
   The one stored custom profile currently selected by the runtime.
 - effective profile
-  The merged `base + active custom` profile used for runtime normalization work.
+  The merged `built-in base + active custom` profile used for runtime normalization work.
 
 The simpler extension path considered first was keeping one loose active custom profile value beside a stored profile dictionary. That was rejected because it made bootstrap, active-profile identity, and persistence semantics harder to reason about. The runtime now treats the active custom layer as a stored profile selected by id.
 
@@ -41,7 +47,8 @@ It does not carry request-local path context, detected formats, or runtime-owned
 That keeps responsibilities clean:
 
 - `TextForSpeech.Context` carries request-local environment such as `cwd`, `repoRoot`, and optional format hints.
-- `TextForSpeech.Profile.base` carries the built-in replacement policy.
+- `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
+- `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
 - `TextForSpeech.Runtime` owns persistence and active-profile selection.
 - the normalizer owns structural document parsing and pipeline routing.
@@ -86,19 +93,24 @@ The phase split is still architecturally important.
 - run this rule after the built-in lexical behavior has already made the text more speakable
 - use it for final-pass polish on the spoken output
 
-## What lives in `Profile.base`
+## What lives in the built-in profile layers
 
-The built-in profile now carries the durable lexical policy that used to be spread through hard-coded helpers.
+The built-in layers now carry the durable lexical policy that used to be spread through hard-coded helpers.
 
-That includes:
+The semantic core currently includes:
 
 - Gale alias replacements such as `galew` and `galem`
 - spoken URL conversion
 - spoken file-path conversion
 - spoken dotted, snake_case, dashed, and camelCase identifier conversion
+- repeated-letter-run spelling
+
+The balanced style layer currently includes:
+
 - line-based spoken code conversion for code-like text lines
 - line-based spoken code conversion for whole-source input
-- repeated-letter-run spelling
+
+The compact style currently drops those line-based spoken-code rules so source-like text stays more visual and less expanded.
 
 This change is a durable building-block change, not a cosmetic one. It unlocks inspectable built-in behavior, one merge story for base and custom rules, and better testability for shipped normalization policy.
 
@@ -122,6 +134,7 @@ Those are document-structure or routing decisions rather than durable lexical po
 `TextForSpeech.Runtime` owns:
 
 - `baseProfile`
+- `builtInStyle`
 - `persistenceURL`
 - `activeCustomProfileID`
 - `storedCustomProfilesByID`
@@ -133,12 +146,14 @@ Its public grouped surfaces are:
 
 The runtime profile API now centers on:
 
+- `profiles.builtInStyle`
 - `profiles.activeID`
 - `profiles.active()`
 - `profiles.effective()`
 - `profiles.effective(id:)`
 - `profiles.stored(id:)`
 - `profiles.list()`
+- `profiles.setBuiltInStyle(_:)`
 - `profiles.activate(id:)`
 - `profiles.store(_:)`
 - `profiles.create(id:name:replacements:)`
@@ -168,10 +183,11 @@ Startup behavior is:
 
 1. resolve the persistence URL, defaulting to Application Support
 2. load persisted state if the file exists
-3. ensure a stored `default` custom profile exists
-4. create and persist an empty `default` profile if it does not
-5. ensure `activeCustomProfileID` points at a real stored profile
-6. fall back to `default` if the saved active id is missing or invalid
+3. restore the persisted built-in style, defaulting to `.balanced` when older archives do not contain it
+4. ensure a stored `default` custom profile exists
+5. create and persist an empty `default` profile if it does not
+6. ensure `activeCustomProfileID` points at a real stored profile
+7. fall back to `default` if the saved active id is missing or invalid
 
 The Application Support namespace uses the host bundle identifier when available and falls back to `TextForSpeech` when it is not.
 
@@ -179,7 +195,8 @@ The Application Support namespace uses the host bundle identifier when available
 
 When touching profile behavior:
 
-- put durable shipped lexical behavior into `Profile.base`
+- put always-on semantic shipped behavior into `Profile.semanticCore`
+- put built-in presentation differences into shipped style presets
 - put request-local behavior into `Context`
 - keep structural parsing and routing logic in the normalizer
 - keep persistence and active-profile selection in `Runtime`
@@ -187,7 +204,7 @@ When touching profile behavior:
 When touching docs or tests:
 
 - describe the active profile as a stored custom profile selected by id
-- describe the effective profile as `base + active custom`
+- describe the effective profile as `builtInBase(style: builtInStyle) + active custom`
 - do not describe `Profile.default` as the built-in always-on layer
 - do not treat runtime persistence as caller-managed setup unless the caller explicitly overrides the path
 

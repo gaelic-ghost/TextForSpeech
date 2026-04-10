@@ -10,14 +10,15 @@ public extension TextForSpeech.Normalize {
     static func text(
         _ text: String,
         context: TextForSpeech.Context? = nil,
-        profile: TextForSpeech.Profile = .base,
+        customProfile: TextForSpeech.Profile = .default,
+        style: TextForSpeech.BuiltInProfileStyle = .balanced,
         format: TextForSpeech.TextFormat? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil
     ) -> String {
         TextNormalizer.normalizeText(
             text,
             context: context,
-            profile: profile,
+            profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: customProfile),
             format: format,
             nestedFormat: nestedFormat
         )
@@ -27,13 +28,15 @@ public extension TextForSpeech.Normalize {
         _ source: String,
         as format: TextForSpeech.SourceFormat,
         context: TextForSpeech.Context? = nil,
-        profile: TextForSpeech.Profile = .base
+        customProfile: TextForSpeech.Profile = .default,
+        style: TextForSpeech.BuiltInProfileStyle = .balanced
     ) -> String {
         SourceNormalizer.normalize(
             source,
             as: format,
             context: context,
-            profile: profile
+            profile: customProfile,
+            style: style
         )
     }
 
