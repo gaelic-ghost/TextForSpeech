@@ -120,22 +120,14 @@ let normalized = TextForSpeech.Normalize.source(
 
 The source lane is explicit today but still generic. It normalizes whole-source input more consistently than the mixed-text lane, but SwiftSyntax-backed Swift-specific structure is still future roadmap work rather than current behavior.
 
-The package also exposes forensic helpers when a caller needs to inspect how an input was segmented:
+The package also exposes one small lexical helper when a caller needs natural-language word tokenization:
 
 ```swift
 import TextForSpeech
 
-let original = """
-# Intro
-Please read /tmp/Thing and NSApplication.didFinishLaunchingNotification.
-"""
-
-let normalized = TextForSpeech.Normalize.text(original)
-let features = TextForSpeech.Forensics.features(
-    originalText: original,
-    normalizedText: normalized
+let words = TextForSpeech.Forensics.words(
+    in: "Please read /tmp/Thing and NSApplication.didFinishLaunchingNotification."
 )
-let sections = TextForSpeech.Forensics.sections(originalText: original)
 ```
 
 ## Runtime Profiles
@@ -189,9 +181,6 @@ The package source lives under `Sources/TextForSpeech` and is organized by respo
   The text lane, source lane, structural markdown parsing, replacement-rule engine, speech helpers, and format detection.
 - `Runtime/`
   Runtime ownership, grouped profile and persistence handles, persisted state, and runtime-facing errors.
-- `Forensics/`
-  Sectioning and feature extraction helpers used by the forensic surface.
-
 The current source split keeps structural normalization logic separate from durable lexical policy:
 
 - structural work such as markdown parsing, code-span extraction, and format detection stays in code
@@ -202,7 +191,7 @@ Tests live under `Tests/TextForSpeechTests` and are grouped by role:
 - `Models/`
 - `Normalization/`
 - `Runtime/`
-- top-level forensic coverage
+- top-level lexical helper coverage
 
 ## Development
 

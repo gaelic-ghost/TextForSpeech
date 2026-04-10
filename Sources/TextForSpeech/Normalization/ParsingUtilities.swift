@@ -158,4 +158,12 @@ extension TextNormalizer {
         tokenizer.string = text
         return tokenizer.tokens(for: text.startIndex..<text.endIndex).map { String(text[$0]) }
     }
+
+    static func markdownHeaderTitle(in line: String) -> String? {
+        let trimmed = line.trimmingCharacters(in: .whitespaces)
+        guard trimmed.first == "#" else { return nil }
+
+        let title = trimmed.drop(while: { $0 == "#" }).trimmingCharacters(in: .whitespaces)
+        return title.isEmpty ? nil : title
+    }
 }

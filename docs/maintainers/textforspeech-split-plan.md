@@ -11,7 +11,7 @@ As of `2026-04-09`, the package now owns:
 - runtime-owned stored custom profiles and active-profile selection
 - default-on profile persistence
 - mixed-text and whole-source normalization entrypoints
-- lightweight forensic helpers
+- lightweight lexical helpers
 
 The remaining work has shifted from package extraction to package refinement.
 
@@ -69,7 +69,7 @@ The normalization engine is now split by role instead of collecting all helpers 
 - `SpeechConversion.swift`
   Low-level spoken-form helpers.
 - `TextNormalizer+...`
-  Smaller focused helpers for heuristics, path context, speech helpers, forensics, and detection.
+  Smaller focused helpers for heuristics, path context, speech helpers, and detection.
 - `SourceNormalizer.swift`
   Source-lane routing.
 
@@ -92,10 +92,9 @@ Runtime code is now split by capability:
 
 ### `Sources/TextForSpeech/Forensics`
 
-Sectioning and forensic feature support:
+Small lexical helper APIs that still belong to the package:
 
-- `SectionSplitting.swift`
-- `Types.swift`
+- `ForensicsAPI.swift`
 
 ## Architectural boundaries
 
@@ -105,7 +104,7 @@ The package is easier to maintain when these boundaries stay explicit:
 - durable lexical policy lives in the built-in profile layers
 - app- or user-owned pronunciation policy lives in stored custom profiles
 - persistence and active-profile identity live in `Runtime`
-- forensic helpers stay separate from the production normalization path unless a primitive is genuinely shared
+- lightweight lexical helpers stay separate from the production normalization path unless a primitive is genuinely shared
 
 ## Remaining refinement work
 
@@ -113,7 +112,7 @@ The next real package work is no longer “finish the split.” It is:
 
 - tightening profile ergonomics and documentation
 - improving structured source normalization, starting with Swift
-- keeping the normalization and forensic boundaries honest as both surfaces grow
+- keeping the normalization and lexical-helper boundaries honest as both surfaces grow
 - preserving a clean file layout as features land so oversized files do not quietly grow back
 
 ## Maintainer checklist
