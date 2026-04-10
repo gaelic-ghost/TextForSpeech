@@ -151,7 +151,7 @@
 - [x] Split the runtime implementation into grouped profile, persistence, and storage files.
 - [x] Split normalization helpers by markdown passes, token passes, replacement engine, and format detection.
 - [x] Refresh README and maintainer docs to reflect the current runtime and normalization model.
-- [ ] Prepare the next minor release notes and tag plan.
+- [x] Prepare the next minor release notes and tag plan.
 
 ### Exit criteria
 
