@@ -143,4 +143,88 @@ extension TextNormalizer {
         flushBuffer()
         return collapseWhitespace(parts.joined(separator: " "))
     }
+
+    static func spokenFunctionCall(
+        _ text: String,
+        style: TextForSpeech.Replacement.Transform.FunctionCallStyle
+    ) -> String {
+        guard text.hasSuffix("()") else { return spokenIdentifier(text) }
+
+        let base = String(text.dropLast(2))
+        let spokenBase = spokenIdentifier(base)
+
+        switch style {
+        case .compact:
+            return spokenBase
+        case .balanced:
+            return "\(spokenBase) function"
+        case .explicit:
+            return "\(spokenBase) function call"
+        }
+    }
+
+    static func spokenIssueReference(
+        _ text: String,
+        style: TextForSpeech.Replacement.Transform.IssueReferenceStyle
+    ) -> String {
+        let digits = text.drop { $0 == "#" }
+        let number = String(digits)
+
+        switch style {
+        case .compact:
+            return number
+        case .balanced:
+            return "issue \(number)"
+        case .explicit:
+            return "issue number \(number)"
+        }
+    }
+
+    static func spokenFileReference(
+        _ text: String,
+        style: TextForSpeech.Replacement.Transform.FileReferenceStyle
+    ) -> String {
+        let parts = text.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count == 2 || parts.count == 3 else { return spokenPath(text) }
+
+        let file = spokenPath(parts[0])
+        let line = parts[1]
+        let column = parts.count == 3 ? parts[2] : nil
+
+        switch style {
+        case .compact:
+            if let column {
+                return "\(file) \(line) \(column)"
+            }
+            return "\(file) \(line)"
+        case .balanced:
+            if let column {
+                return "\(file) line \(line) column \(column)"
+            }
+            return "\(file) line \(line)"
+        case .explicit:
+            if let column {
+                return "file \(file) line \(line) column \(column)"
+            }
+            return "file \(file) line \(line)"
+        }
+    }
+
+    static func spokenCLIFlag(
+        _ text: String,
+        style: TextForSpeech.Replacement.Transform.CLIFlagStyle
+    ) -> String {
+        let isLongFlag = text.hasPrefix("--")
+        let body = String(text.drop { $0 == "-" })
+        let spokenBody = spokenSegment(body.replacingOccurrences(of: "-", with: " "))
+
+        switch style {
+        case .compact:
+            return spokenBody
+        case .balanced:
+            return isLongFlag ? "dash dash \(spokenBody)" : "dash \(spokenBody)"
+        case .explicit:
+            return isLongFlag ? "long flag \(spokenBody)" : "short flag \(spokenBody)"
+        }
+    }
 }

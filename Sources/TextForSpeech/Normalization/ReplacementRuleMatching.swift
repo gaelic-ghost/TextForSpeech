@@ -26,6 +26,14 @@ extension TextNormalizer {
             isLikelyDashedIdentifier(token)
         case .camelCaseIdentifier:
             isLikelyCamelCaseIdentifier(token)
+        case .functionCall:
+            isLikelyFunctionCall(token)
+        case .issueReference:
+            isLikelyIssueReference(token)
+        case .fileLineReference:
+            isLikelyFileLineReference(token)
+        case .cliFlag:
+            isLikelyCLIFlag(token)
         case .repeatedLetterRun:
             containsRepeatedLetterRun(trimmedCandidateToken(token))
         }

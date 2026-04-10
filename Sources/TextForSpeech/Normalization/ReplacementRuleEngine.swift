@@ -88,6 +88,12 @@ extension TextNormalizer {
 
         while end > start {
             let beforeEnd = rawToken.index(before: end)
+            if rawToken[beforeEnd] == ")" {
+                let openIndex = rawToken.index(before: beforeEnd)
+                if openIndex >= start, rawToken[openIndex] == "(" {
+                    break
+                }
+            }
             guard rawToken[beforeEnd].unicodeScalars.allSatisfy({ punctuation.contains($0) }) else {
                 break
             }
@@ -118,6 +124,12 @@ extension TextNormalizer {
 
         while end > start {
             let beforeEnd = token.index(before: end)
+            if token[beforeEnd] == ")" {
+                let openIndex = token.index(before: beforeEnd)
+                if openIndex >= start, token[openIndex] == "(" {
+                    break
+                }
+            }
             guard token[beforeEnd].unicodeScalars.allSatisfy({ punctuation.contains($0) }) else {
                 break
             }
@@ -224,6 +236,18 @@ extension TextNormalizer {
                     spokenCode(text)
                 }
             }
+
+        case .spokenFunctionCall(let style):
+            spokenFunctionCall(text, style: style)
+
+        case .spokenIssueReference(let style):
+            spokenIssueReference(text, style: style)
+
+        case .spokenFileReference(let style):
+            spokenFileReference(text, style: style)
+
+        case .spokenCLIFlag(let style):
+            spokenCLIFlag(text, style: style)
 
         case .spellOut:
             spelledOut(trimmedCandidateToken(text))

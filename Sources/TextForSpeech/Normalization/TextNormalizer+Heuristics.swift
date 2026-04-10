@@ -59,6 +59,47 @@ extension TextNormalizer {
         return hasLowerToUpperTransition(token)
     }
 
+    static func isLikelyFunctionCall(_ token: String) -> Bool {
+        guard token.hasSuffix("()") else { return false }
+        let base = String(token.dropLast(2))
+        guard !base.isEmpty else { return false }
+        guard !base.contains("/") else { return false }
+        guard !base.contains("://") else { return false }
+
+        let parts = base.split(separator: ".").map(String.init)
+        guard !parts.isEmpty else { return false }
+        return parts.allSatisfy(isIdentifierLike)
+    }
+
+    static func isLikelyIssueReference(_ token: String) -> Bool {
+        guard token.hasPrefix("#") else { return false }
+        let digits = token.dropFirst()
+        return !digits.isEmpty && digits.allSatisfy(\.isNumber)
+    }
+
+    static func isLikelyFileLineReference(_ token: String) -> Bool {
+        let parts = token.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
+        guard parts.count == 2 || parts.count == 3 else { return false }
+
+        let pathPart = parts[0]
+        guard !pathPart.isEmpty else { return false }
+        guard parts[1].allSatisfy(\.isNumber) else { return false }
+        if parts.count == 3, !parts[2].allSatisfy(\.isNumber) {
+            return false
+        }
+
+        return isLikelyFilePath(pathPart)
+            || pathPart.contains(".")
+    }
+
+    static func isLikelyCLIFlag(_ token: String) -> Bool {
+        guard token.hasPrefix("-") else { return false }
+        guard token != "-" && token != "--" else { return false }
+        let body = token.drop { $0 == "-" }
+        guard let first = body.first, first.isLetter else { return false }
+        return body.allSatisfy { $0.isLetter || $0.isNumber || $0 == "-" }
+    }
+
     static func isLikelyObjectiveCSymbol(_ token: String) -> Bool {
         if token.hasPrefix("NS"), token.dropFirst(2).first?.isUppercase == true {
             return true

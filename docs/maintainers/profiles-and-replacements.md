@@ -109,8 +109,26 @@ The balanced style layer currently includes:
 
 - line-based spoken code conversion for code-like text lines
 - line-based spoken code conversion for whole-source input
+- function-call speaking such as `foo()` -> `foo function`
+- issue-reference speaking such as `#123` -> `issue 123`
+- file-line-reference speaking such as `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift line 42 column 7`
+- CLI-flag speaking such as `--help` -> `dash dash help`
 
-The compact style currently drops those line-based spoken-code rules so source-like text stays more visual and less expanded.
+The compact style currently:
+
+- drops those line-based spoken-code rules so source-like text stays more visual and less expanded
+- compresses function calls such as `foo()` -> `foo`
+- compresses issue references such as `#123` -> `123`
+- compresses file references such as `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift 42 7`
+- compresses CLI flags such as `--help` -> `help`
+
+The explicit style currently:
+
+- keeps the same line-based spoken-code rules as the balanced style
+- expands function calls such as `foo()` -> `foo function call`
+- expands issue references such as `#123` -> `issue number 123`
+- expands file references such as `WorkerRuntime.swift:42:7` -> `file Worker Runtime dot swift line 42 column 7`
+- expands CLI flags such as `--help` -> `long flag help`
 
 This change is a durable building-block change, not a cosmetic one. It unlocks inspectable built-in behavior, one merge story for base and custom rules, and better testability for shipped normalization policy.
 

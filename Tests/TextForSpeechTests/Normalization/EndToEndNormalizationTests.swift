@@ -220,3 +220,40 @@ import Testing
     #expect(!normalized.contains("open brace"))
     #expect(normalized.contains("sample Rate"))
 }
+
+@Test func stylesDifferentiateFunctionCallsIssueReferencesFlagsAndFileRefs() {
+    let original = "Run foo() with --help and see #123 in WorkerRuntime.swift:42:7."
+
+    let compact = TextForSpeech.Normalize.text(
+        original,
+        style: .compact,
+        format: .plain
+    )
+    let balanced = TextForSpeech.Normalize.text(
+        original,
+        style: .balanced,
+        format: .plain
+    )
+    let explicit = TextForSpeech.Normalize.text(
+        original,
+        style: .explicit,
+        format: .plain
+    )
+
+    #expect(compact.contains("foo"))
+    #expect(!compact.contains("function call"))
+    #expect(compact.contains("help"))
+    #expect(!compact.contains("dash dash help"))
+    #expect(compact.contains("123"))
+    #expect(!compact.contains("issue 123"))
+
+    #expect(balanced.contains("foo function"))
+    #expect(balanced.contains("dash dash help"))
+    #expect(balanced.contains("issue 123"))
+    #expect(balanced.contains("Worker Runtime dot swift line 42 column 7"))
+
+    #expect(explicit.contains("foo function call"))
+    #expect(explicit.contains("long flag help"))
+    #expect(explicit.contains("issue number 123"))
+    #expect(explicit.contains("file Worker Runtime dot swift line 42 column 7"))
+}

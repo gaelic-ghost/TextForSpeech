@@ -23,6 +23,10 @@ public extension TextForSpeech {
             case snakeCaseIdentifier = "snake_case_identifier"
             case dashedIdentifier = "dashed_identifier"
             case camelCaseIdentifier = "camel_case_identifier"
+            case functionCall = "function_call"
+            case issueReference = "issue_reference"
+            case fileLineReference = "file_line_reference"
+            case cliFlag = "cli_flag"
             case repeatedLetterRun = "repeated_letter_run"
         }
 
@@ -32,11 +36,39 @@ public extension TextForSpeech {
         }
 
         public enum Transform: Codable, Sendable, Equatable {
+            public enum FunctionCallStyle: String, Codable, Sendable, Equatable {
+                case compact
+                case balanced
+                case explicit
+            }
+
+            public enum IssueReferenceStyle: String, Codable, Sendable, Equatable {
+                case compact
+                case balanced
+                case explicit
+            }
+
+            public enum FileReferenceStyle: String, Codable, Sendable, Equatable {
+                case compact
+                case balanced
+                case explicit
+            }
+
+            public enum CLIFlagStyle: String, Codable, Sendable, Equatable {
+                case compact
+                case balanced
+                case explicit
+            }
+
             case literal(String)
             case spokenPath
             case spokenURL
             case spokenIdentifier
             case spokenCode
+            case spokenFunctionCall(FunctionCallStyle)
+            case spokenIssueReference(IssueReferenceStyle)
+            case spokenFileReference(FileReferenceStyle)
+            case spokenCLIFlag(CLIFlagStyle)
             case spellOut
         }
 

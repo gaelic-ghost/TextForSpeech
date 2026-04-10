@@ -126,6 +126,15 @@ import Testing
     let compact = TextForSpeech.Profile.builtInBase(style: .compact)
 
     #expect(compact.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(compact.replacements.contains(where: { $0.id == "compact-function-call" }))
     #expect(!compact.replacements.contains(where: { $0.id == "base-text-code-line" }))
     #expect(!compact.replacements.contains(where: { $0.id == "base-source-line" }))
+}
+
+@Test func explicitStyleCarriesItsOwnStyleSpecificRules() {
+    let explicit = TextForSpeech.Profile.builtInBase(style: .explicit)
+
+    #expect(explicit.replacements.contains(where: { $0.id == "explicit-function-call" }))
+    #expect(explicit.replacements.contains(where: { $0.id == "explicit-cli-flag" }))
+    #expect(explicit.replacements.contains(where: { $0.id == "base-text-code-line" }))
 }
