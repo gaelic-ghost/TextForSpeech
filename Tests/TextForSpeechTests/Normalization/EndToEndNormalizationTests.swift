@@ -3,6 +3,10 @@ import Testing
 
 // MARK: - End-to-End Normalization
 
+private func occurrenceCount(of needle: String, in haystack: String) -> Int {
+    haystack.components(separatedBy: needle).count - 1
+}
+
 @Test func normalizePreservesMixedInputBehavior() {
     let original = """
     Please read /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift, NSApplication.didFinishLaunchingNotification, camelCaseStuff, snake_case_stuff, and `profile?.sampleRate ?? 24000`.
@@ -80,6 +84,37 @@ import Testing
 
     #expect(normalized.contains("current directory slash Sources slash Speak Swiftly"))
     #expect(!normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
+}
+
+@Test func normalizeCompactsRepeatedPathsInTheSameDirectory() {
+    let original = """
+    Compare /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift and /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift.
+    """
+
+    let normalized = TextForSpeech.Normalize.text(
+        original,
+        context: TextForSpeech.Context(
+            cwd: "/Users/galew/Workspace/SpeakSwiftly",
+            repoRoot: "/Users/galew/Workspace/SpeakSwiftly"
+        )
+    )
+
+    let sharedPrefix = "current directory slash Sources slash Speak Swiftly"
+    #expect(occurrenceCount(of: sharedPrefix, in: normalized) == 1)
+    #expect(normalized.contains("Speech Text Normalizer dot swift"))
+    #expect(normalized.contains("same directory, Worker Runtime dot swift"))
+}
+
+@Test func normalizeCompactsRepeatedExactPaths() {
+    let original = """
+    Read /tmp/Thing.swift, then read /tmp/Thing.swift again.
+    """
+
+    let normalized = TextForSpeech.Normalize.text(original)
+
+    #expect(normalized.contains("tmp slash Thing dot swift"))
+    #expect(normalized.contains("same path"))
+    #expect(occurrenceCount(of: "tmp slash Thing dot swift", in: normalized) == 1)
 }
 
 @Test func normalizeAppliesCustomReplacementsAroundBuiltIns() {

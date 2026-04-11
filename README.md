@@ -85,6 +85,8 @@ The shipped styles now differ in concrete coding-agent ways:
 - `.balanced` is the default general-purpose mode. It keeps spoken-code expansion for code-like lines and speaks common references more explicitly, such as `foo()` -> `foo function`, `#123` -> `issue 123`, and `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift line 42 column 7`.
 - `.explicit` is the audio-first mode. It keeps the same line-based spoken-code expansion as `.balanced`, but uses more narrated phrasing for common coding-agent shapes, such as `foo()` -> `foo function call`, `#123` -> `issue number 123`, and `--help` -> `long flag help`.
 
+For repeated file paths in the same utterance, the text lane now also compacts repeated anchors before the built-in path-speaking pass. The first path still speaks normally, but later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
+
 When the outer document is mixed text but the embedded code language is known, pass `nestedFormat` so fenced or inline code can route through the source lane:
 
 ```swift

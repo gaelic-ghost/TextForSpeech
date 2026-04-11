@@ -60,6 +60,9 @@ enum TextNormalizer {
                 normalizeInlineCodeSpans(text, nestedFormat: nestedFormat)
             },
             { text, _, _, _, _ in normalizeMarkdownLinks(text) },
+            { text, context, _, _, _ in
+                compactRepeatedFilePathPrefixes(text, context: context)
+            },
             { text, context, profile, format, nestedFormat in
                 applyReplacementRules(
                     text,

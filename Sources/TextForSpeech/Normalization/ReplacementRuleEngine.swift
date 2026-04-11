@@ -65,6 +65,35 @@ extension TextNormalizer {
         return result
     }
 
+    static func transformTokensStatefully<State>(
+        in text: String,
+        state: inout State,
+        transform: (String, inout State) -> String?
+    ) -> String {
+        var result = ""
+        var index = text.startIndex
+
+        while index < text.endIndex {
+            guard !text[index].isWhitespace else {
+                result.append(text[index])
+                index = text.index(after: index)
+                continue
+            }
+
+            let start = index
+            while index < text.endIndex, !text[index].isWhitespace {
+                index = text.index(after: index)
+            }
+
+            let rawToken = String(text[start..<index])
+            result += transformedToken(rawToken) { token in
+                transform(token, &state)
+            }
+        }
+
+        return result
+    }
+
     static func transformLines(in text: String, transform: (String) -> String?) -> String {
         text
             .split(separator: "\n", omittingEmptySubsequences: false)
