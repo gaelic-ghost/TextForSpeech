@@ -134,12 +134,15 @@ let words = TextForSpeech.Forensics.words(
 
 ## Runtime Profiles
 
-Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, one selected built-in style, and default-on JSON-backed persistence in Application Support:
+Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, one selected built-in style, and JSON-backed persistence configured through a small enum:
 
 ```swift
 import TextForSpeech
 
-let runtime = try TextForSpeech.Runtime(builtInStyle: .balanced)
+let runtime = try TextForSpeech.Runtime(
+    builtInStyle: .balanced,
+    persistence: .default
+)
 
 try runtime.profiles.setBuiltInStyle(.compact)
 try runtime.profiles.create(id: "logs", name: "Logs")
@@ -169,7 +172,7 @@ The runtime model is intentionally explicit:
 - `runtime.profiles.effective()` is always `builtInBase(style: builtInStyle) + active custom`.
 - `runtime.profiles.stored(id:)` reads a named stored custom profile without activating it.
 
-Persistence is default-on. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. The selected built-in style is persisted alongside the active custom profile id and stored custom profiles.
+Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default store uses `TextForSpeech-Debug` instead so local debug runs do not touch the production namespace. Callers that need an explicit location can pass `.file(url)`. The selected built-in style is persisted alongside the active custom profile id and stored custom profiles.
 
 ## Source Layout
 

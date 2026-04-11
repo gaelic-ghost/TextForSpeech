@@ -4,6 +4,7 @@ import Foundation
 
 internal extension TextForSpeech.Runtime {
     static func defaultPersistenceURL(bundleIdentifier: String?) -> URL {
+        let packageDirectoryName = defaultPersistenceDirectoryName
         let namespace = bundleIdentifier?
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .nonEmpty
@@ -12,9 +13,17 @@ internal extension TextForSpeech.Runtime {
             .appending(path: namespace, directoryHint: .isDirectory)
         let packageDirectory = bundleIdentifier == nil
             ? namespacedDirectory
-            : namespacedDirectory.appending(path: "TextForSpeech", directoryHint: .isDirectory)
+            : namespacedDirectory.appending(path: packageDirectoryName, directoryHint: .isDirectory)
 
         return packageDirectory.appending(path: "profiles.json", directoryHint: .notDirectory)
+    }
+
+    static var defaultPersistenceDirectoryName: String {
+        #if DEBUG
+            "TextForSpeech-Debug"
+        #else
+            "TextForSpeech"
+        #endif
     }
 
     func loadPersistedStateIfPresent() throws {

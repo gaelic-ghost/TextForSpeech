@@ -10,24 +10,35 @@ public extension TextForSpeech {
             static let currentPersistedStateVersion = 1
         }
 
-        public let persistenceURL: URL
+        public enum PersistenceConfiguration: Sendable {
+            case `default`
+            case file(URL)
+        }
+
+        public let persistenceConfiguration: PersistenceConfiguration
         public var builtInStyle: TextForSpeech.BuiltInProfileStyle
 
         internal let fileManager: FileManager
+        internal let persistenceURL: URL
 
         internal var activeCustomProfileID: String
         internal var storedCustomProfilesByID: [String: TextForSpeech.Profile]
 
         public init(
             builtInStyle: TextForSpeech.BuiltInProfileStyle = .balanced,
-            persistenceURL: URL? = nil,
+            persistence: PersistenceConfiguration = .default,
             fileManager: FileManager = .default,
             bundle: Bundle = .main
         ) throws {
             self.builtInStyle = builtInStyle
             self.fileManager = fileManager
-            self.persistenceURL = persistenceURL?.standardizedFileURL
-                ?? Self.defaultPersistenceURL(bundle: bundle)
+            persistenceConfiguration = persistence
+            persistenceURL = switch persistence {
+            case .default:
+                Self.defaultPersistenceURL(bundle: bundle)
+            case let .file(url):
+                url.standardizedFileURL
+            }
             activeCustomProfileID = TextForSpeech.Profile.default.id
             storedCustomProfilesByID = [:]
 

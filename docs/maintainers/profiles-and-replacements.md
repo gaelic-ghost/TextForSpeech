@@ -153,7 +153,7 @@ Those are document-structure or routing decisions rather than durable lexical po
 
 - `baseProfile`
 - `builtInStyle`
-- `persistenceURL`
+- `persistenceConfiguration`
 - `activeCustomProfileID`
 - `storedCustomProfilesByID`
 
@@ -199,15 +199,16 @@ The grouped persistence API centers on:
 
 Startup behavior is:
 
-1. resolve the persistence URL, defaulting to Application Support
-2. load persisted state if the file exists
-3. restore the persisted built-in style, defaulting to `.balanced` when older archives do not contain it
-4. ensure a stored `default` custom profile exists
-5. create and persist an empty `default` profile if it does not
-6. ensure `activeCustomProfileID` points at a real stored profile
-7. fall back to `default` if the saved active id is missing or invalid
+1. resolve the persistence configuration, defaulting to `.default`
+2. resolve the effective persistence URL from that configuration
+3. load persisted state if the file exists
+4. restore the persisted built-in style, defaulting to `.balanced` when older archives do not contain it
+5. ensure a stored `default` custom profile exists
+6. create and persist an empty `default` profile if it does not
+7. ensure `activeCustomProfileID` points at a real stored profile
+8. fall back to `default` if the saved active id is missing or invalid
 
-The Application Support namespace uses the host bundle identifier when available and falls back to `TextForSpeech` when it is not.
+The default Application Support namespace uses the host bundle identifier when available and falls back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default package directory name changes to `TextForSpeech-Debug` so debug sessions do not write into the bundled production namespace.
 
 ## Practical maintainer rules
 
@@ -224,7 +225,7 @@ When touching docs or tests:
 - describe the active profile as a stored custom profile selected by id
 - describe the effective profile as `builtInBase(style: builtInStyle) + active custom`
 - do not describe `Profile.default` as the built-in always-on layer
-- do not treat runtime persistence as caller-managed setup unless the caller explicitly overrides the path
+- do not treat runtime persistence as caller-managed setup unless the caller explicitly overrides the default configuration with `.file(url)`
 
 ## Related docs
 

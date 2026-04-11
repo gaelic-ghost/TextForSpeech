@@ -9,7 +9,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     #expect(runtime.profiles.builtInStyle == .balanced)
     #expect(runtime.profiles.activeID == "default")
@@ -23,7 +23,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
     try runtime.profiles.store(
         TextForSpeech.Profile(
             id: "custom",
@@ -49,7 +49,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
     try runtime.storeActiveProfile(
         TextForSpeech.Profile(
             id: "default",
@@ -85,7 +85,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
     try runtime.profiles.store(
         TextForSpeech.Profile(
             id: "logs",
@@ -108,13 +108,13 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let writer = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let writer = try TextForSpeech.Runtime(persistence: .file(fileURL))
     try writer.profiles.setBuiltInStyle(.compact)
 
     #expect(writer.profiles.builtInStyle == .compact)
     #expect(writer.baseProfile == .builtInBase(style: .compact))
 
-    let reader = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     #expect(reader.profiles.builtInStyle == .compact)
     #expect(reader.baseProfile == .builtInBase(style: .compact))
@@ -125,7 +125,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     let zebra = try runtime.profiles.create(id: "zebra", name: "Zebra")
     let alpha = try runtime.profiles.create(id: "alpha", name: "Alpha")
@@ -140,7 +140,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
     try runtime.storeActiveProfile(
         TextForSpeech.Profile(
             id: "default",
@@ -181,7 +181,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let writer = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let writer = try TextForSpeech.Runtime(persistence: .file(fileURL))
     try writer.profiles.store(
         TextForSpeech.Profile(
             id: "logs",
@@ -202,7 +202,7 @@ import Testing
     )
     try writer.profiles.activate(id: "ops")
 
-    let reader = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     #expect(reader.profiles.activeID == "ops")
     #expect(reader.profiles.active().replacement(id: "ops-rule")?.replacement == "standard output")
@@ -225,7 +225,7 @@ import Testing
     )
     try write(state: state, to: fileURL)
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     #expect(runtime.profiles.activeID == "default")
     #expect(runtime.profiles.active() == .default)
@@ -236,7 +236,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
     try runtime.profiles.store(TextForSpeech.Profile(id: "logs", name: "Logs"))
     try runtime.profiles.activate(id: "logs")
 
@@ -251,7 +251,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     try runtime.profiles.delete(id: "default")
 
@@ -264,7 +264,7 @@ import Testing
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
-    let runtime = try TextForSpeech.Runtime(persistenceURL: fileURL)
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     #expect(throws: TextForSpeech.PersistenceError.self) {
         try runtime.persistence.restore(
@@ -282,6 +282,16 @@ import Testing
     let url = TextForSpeech.Runtime.defaultPersistenceURL(bundle: .init())
 
     #expect(url.path.removingPercentEncoding?.contains("Application Support/TextForSpeech/profiles.json") == true)
+}
+
+@Test func defaultPersistenceURLUsesDebugDirectoryNameForBundledTargetsInDebugBuilds() {
+    let url = TextForSpeech.Runtime.defaultPersistenceURL(bundleIdentifier: "com.example.HostApp")
+
+    #if DEBUG
+        #expect(url.path.removingPercentEncoding?.contains("Application Support/com.example.HostApp/TextForSpeech-Debug/profiles.json") == true)
+    #else
+        #expect(url.path.removingPercentEncoding?.contains("Application Support/com.example.HostApp/TextForSpeech/profiles.json") == true)
+    #endif
 }
 
 private func write(state: TextForSpeech.PersistedState, to url: URL) throws {
