@@ -207,6 +207,8 @@ swift build
 swift test
 ```
 
+For repository workflow expectations, architecture boundaries, and doc-sync rules, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Verification
 
 The baseline verification path for this repository is:
