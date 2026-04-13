@@ -9,7 +9,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
 @Test func normalizePreservesMixedInputBehavior() {
     let original = """
-    Please read /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift, NSApplication.didFinishLaunchingNotification, camelCaseStuff, snake_case_stuff, and `profile?.sampleRate ?? 24000`.
+    Please read /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift, NSApplication.didFinishLaunchingNotification, camelCaseStuff, snake_case_stuff, f32, cosF32, and `profile?.sampleRate ?? 24000`.
     """
 
     let normalized = TextForSpeech.Normalize.text(original)
@@ -18,6 +18,8 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("NSApplication dot did Finish Launching Notification"))
     #expect(normalized.contains("camel Case Stuff"))
     #expect(normalized.contains("snake case stuff"))
+    #expect(normalized.contains("float thirty two"))
+    #expect(normalized.contains("cosine float thirty two"))
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
@@ -291,4 +293,22 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(explicit.contains("long flag help"))
     #expect(explicit.contains("issue number 123"))
     #expect(explicit.contains("file Worker Runtime dot swift line 42 column 7"))
+}
+
+@Test func stylesUseAtLineForLineOnlyFileReferences() {
+    let original = "See MarvisTTSModel.swift:208."
+
+    let balanced = TextForSpeech.Normalize.text(
+        original,
+        style: .balanced,
+        format: .plain
+    )
+    let explicit = TextForSpeech.Normalize.text(
+        original,
+        style: .explicit,
+        format: .plain
+    )
+
+    #expect(balanced.contains("Marvis TTS Model dot swift at line 208"))
+    #expect(explicit.contains("file Marvis TTS Model dot swift at line 208"))
 }

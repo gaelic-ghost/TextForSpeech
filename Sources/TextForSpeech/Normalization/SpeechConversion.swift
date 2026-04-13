@@ -201,12 +201,12 @@ extension TextNormalizer {
             if let column {
                 return "\(file) line \(line) column \(column)"
             }
-            return "\(file) line \(line)"
+            return "\(file) at line \(line)"
         case .explicit:
             if let column {
                 return "file \(file) line \(line) column \(column)"
             }
-            return "file \(file) line \(line)"
+            return "file \(file) at line \(line)"
         }
     }
 

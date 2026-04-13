@@ -104,6 +104,34 @@ import Testing
     #expect(normalized.contains("camel Case Stuff"))
 }
 
+@Test func mathAndTypedIdentifiersBecomeSpeechSafePhrases() {
+    let text = "Read cosF32, sinF64, and tanU32 once."
+
+    let normalized = TextForSpeech.Normalize.text(text, format: .plain)
+
+    #expect(normalized.contains("cosine float thirty two"))
+    #expect(normalized.contains("sine float sixty four"))
+    #expect(normalized.contains("tangent unsigned integer thirty two"))
+}
+
+@Test func standaloneTypedScalarTokensUseBasePronunciations() {
+    let text = "Use f32, i64, and usize once."
+
+    let normalized = TextForSpeech.Normalize.text(text, format: .plain)
+
+    #expect(normalized.contains("float thirty two"))
+    #expect(normalized.contains("signed integer sixty four"))
+    #expect(normalized.contains("unsigned integer size"))
+}
+
+@Test func lineOnlyFileReferencesUseAtLineNarration() {
+    let text = "Read MarvisTTSModel.swift:208 once."
+
+    let normalized = TextForSpeech.Normalize.text(text, format: .plain)
+
+    #expect(normalized.contains("Marvis TTS Model dot swift at line 208"))
+}
+
 @Test func codeHeavyLinesBecomeSpokenCode() {
     let text = #"let fallback = weirdWords.first(where: { $0.hasPrefix("q") }) ?? "nothing""#
 
