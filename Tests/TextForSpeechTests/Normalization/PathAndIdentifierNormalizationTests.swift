@@ -70,6 +70,46 @@ import Testing
     #expect(normalized.contains("gale wumbo"))
 }
 
+@Test func filePathsSpeakKnownExtensionAliasesNaturally() {
+    let text = """
+    Read /tmp/App.xcodeproj, project.pbxproj, Workspace.xcworkspace, Build.xcconfig, App.xcscheme, App.xctestplan, Run.xcresult, Assets.xcassets, Localizable.xcstrings, PrivacyInfo.xcprivacy, App.entitlements, App.dSYM, guide.mdx, page.tsx, widget.jsx, settings.jsonc, config.toml, workflow.yaml, workflow.yml, notebook.ipynb, module.wasm, cache.sqlite, and state.db.
+    """
+
+    let normalized = TextForSpeech.Normalize.text(text)
+
+    #expect(normalized.contains("App dot xcode project"))
+    #expect(normalized.contains("project dot xcode project file"))
+    #expect(normalized.contains("Workspace dot xcode workspace"))
+    #expect(normalized.contains("Build dot xcode config"))
+    #expect(normalized.contains("App dot xcode scheme"))
+    #expect(normalized.contains("App dot xcode test plan"))
+    #expect(normalized.contains("Run dot xcode result bundle"))
+    #expect(normalized.contains("Assets dot xcode asset catalog"))
+    #expect(normalized.contains("Localizable dot xcode string catalog"))
+    #expect(normalized.contains("Privacy Info dot privacy manifest"))
+    #expect(normalized.contains("App dot entitlements"))
+    #expect(normalized.contains("App dot debug symbols bundle"))
+    #expect(normalized.contains("guide dot markdown jsx"))
+    #expect(normalized.contains("page dot typescript jsx"))
+    #expect(normalized.contains("widget dot javascript jsx"))
+    #expect(normalized.contains("settings dot json with comments"))
+    #expect(normalized.contains("config dot toml"))
+    #expect(normalized.contains("workflow dot yaml"))
+    #expect(normalized.contains("notebook dot jupyter notebook"))
+    #expect(normalized.contains("module dot web assembly"))
+    #expect(normalized.contains("cache dot sqlite database"))
+    #expect(normalized.contains("state dot database"))
+}
+
+@Test func fileLineReferencesPreserveLineNarrationAfterExtensionAliases() {
+    let text = "Inspect project.pbxproj:42:7 and App.xcodeproj:18."
+
+    let normalized = TextForSpeech.Normalize.text(text, format: .plain)
+
+    #expect(normalized.contains("project dot xcode project file line 42 column 7"))
+    #expect(normalized.contains("App dot xcode project at line 18"))
+}
+
 // MARK: - Identifier and Code Speech
 
 @Test func dottedIdentifiersBecomeSpokenIdentifiers() {
@@ -78,6 +118,12 @@ import Testing
     let normalized = TextNormalizer.normalizeDottedIdentifiers(text)
 
     #expect(normalized.contains("NSApplication dot did Finish Launching Notification"))
+}
+
+@Test func dottedIdentifiersAcceptHyphenatedAliasSegments() {
+    let normalized = TextNormalizer.normalizeDottedIdentifiers("guide.markdown-jsx")
+
+    #expect(normalized.contains("guide dot markdown jsx"))
 }
 
 @Test func snakeCaseIdentifiersBecomeSpokenIdentifiers() {

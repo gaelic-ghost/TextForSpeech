@@ -87,6 +87,8 @@ The shipped styles now differ in concrete coding-agent ways:
 
 The built-in speech layer also expands common numeric scalar shorthands and math-heavy identifiers, so tokens such as `f32` become `float thirty two` and combinations such as `cosF32` become `cosine float thirty two`.
 
+The semantic core also ships extension aliases for especially speech-hostile file types. That includes Xcode-heavy forms such as `.xcodeproj`, `.pbxproj`, `.xcworkspace`, `.xcconfig`, `.xcscheme`, `.xctestplan`, `.xcresult`, `.xcassets`, `.xcstrings`, `.xcprivacy`, and `.dSYM`, plus mixed-stack formats such as `.mdx`, `.tsx`, `.jsx`, `.jsonc`, `.ipynb`, `.wasm`, `.sqlite`, and `.db`.
+
 For repeated file paths in the same utterance, the text lane now also compacts repeated anchors before the built-in path-speaking pass. The first path still speaks normally, but later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
 
 When the outer document is mixed text but the embedded code language is known, pass `nestedFormat` so fenced or inline code can route through the source lane:
@@ -183,7 +185,7 @@ The package source lives under `Sources/TextForSpeech` and is organized by respo
 - `API/`
   Public namespace-first entrypoints such as `Normalize` and `Forensics`.
 - `Models/`
-  Core value types such as `Profile`, `Replacement`, `Context`, and the built-in profiles.
+  Core value types such as `Profile`, `Replacement`, and `Context`, plus the built-in profile composition surface and the semantic-role fragments under `Models/BuiltInProfiles/`.
 - `Normalization/`
   The text lane, source lane, structural markdown parsing, replacement-rule engine, speech helpers, and format detection.
 - `Runtime/`
@@ -191,14 +193,14 @@ The package source lives under `Sources/TextForSpeech` and is organized by respo
 The current source split keeps structural normalization logic separate from durable lexical policy:
 
 - structural work such as markdown parsing, code-span extraction, and format detection stays in code
-- durable lexical policy such as built-in aliases, identifier speaking, path speaking, URL speaking, repeated-letter-run handling, and style-specific speaking policy lives in the built-in profile layers
+- durable lexical policy such as built-in aliases, extension aliases, identifier speaking, path speaking, URL speaking, repeated-letter-run handling, and style-specific speaking policy lives in the built-in profile layers
 
 Tests live under `Tests/TextForSpeechTests` and are grouped by role:
 
 - `Models/`
 - `Normalization/`
 - `Runtime/`
-- top-level lexical helper coverage
+- top-level lexical helper coverage, with focused normalization files for path and identifier behavior, markdown and URL behavior, and broader end-to-end flows
 
 ## Development
 

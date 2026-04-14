@@ -100,10 +100,24 @@ The built-in layers now carry the durable lexical policy that used to be spread 
 The semantic core currently includes:
 
 - Gale alias replacements such as `galew` and `galem`
+- extension aliases for hard-to-speak file types such as `.xcodeproj`, `.pbxproj`, `.xcworkspace`, `.xcconfig`, `.xcscheme`, `.xctestplan`, `.xcresult`, `.xcassets`, `.xcstrings`, `.xcprivacy`, `.dSYM`, `.mdx`, `.tsx`, `.jsx`, `.jsonc`, `.ipynb`, `.wasm`, `.sqlite`, and `.db`
 - spoken URL conversion
 - spoken file-path conversion
 - spoken dotted, snake_case, dashed, and camelCase identifier conversion
 - repeated-letter-run spelling
+
+The semantic core is now split by semantic role under `Sources/TextForSpeech/Models/BuiltInProfiles/`:
+
+- `BuiltInSemanticAliases.swift`
+  Stable lexical aliases for names that should be rewritten before broader token transforms.
+- `BuiltInScalarPronunciations.swift`
+  Whole-token scalar-width pronunciations such as `f32` and `usize`.
+- `BuiltInExtensionAliases.swift`
+  Literal extension aliases for suffixes that are too dense or awkward to read raw.
+- `BuiltInTokenTransforms.swift`
+  Broader spoken transforms for paths, URLs, identifiers, and repeated-letter runs.
+- `BuiltInStylePresets.swift`
+  Presentation-only shipped style presets such as `.balanced`, `.compact`, and `.explicit`.
 
 The balanced style layer currently includes:
 
@@ -219,6 +233,15 @@ When touching profile behavior:
 - put request-local behavior into `Context`
 - keep structural parsing and routing logic in the normalizer
 - keep persistence and active-profile selection in `Runtime`
+
+When deciding where a new built-in rule belongs:
+
+- use `BuiltInSemanticAliases.swift` when the text should always collapse to one stable spoken name before any other semantic pass
+- use `BuiltInScalarPronunciations.swift` when the rule is a durable whole-token pronunciation for terse typed-width or numeric forms
+- use `BuiltInExtensionAliases.swift` when the main problem is a raw file suffix that sounds bad before path or file-reference narration
+- use `BuiltInTokenTransforms.swift` when the rule is broad token-shape behavior rather than one literal vocabulary entry
+- use `BuiltInStylePresets.swift` only when the behavior is presentation policy and callers should be able to switch between `.balanced`, `.compact`, and `.explicit` without changing the underlying semantics
+- keep structural markdown, parsing, routing, or context-sensitive behavior out of these fragments and in `Normalization/`
 
 When touching docs or tests:
 

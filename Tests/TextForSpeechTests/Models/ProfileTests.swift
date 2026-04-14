@@ -122,6 +122,21 @@ import Testing
     #expect(balanced.replacements.contains(where: { $0.id == "base-text-code-line" }))
 }
 
+@Test func semanticCoreComposesSemanticRoleFragments() {
+    let semanticCore = TextForSpeech.Profile.semanticCore
+
+    #expect(semanticCore.replacements.contains(where: { $0.id == "base-galew" }))
+    #expect(semanticCore.replacements.contains(where: { $0.id == "base-f32" }))
+    #expect(semanticCore.replacements.contains(where: { $0.id == "base-xcodeproj-extension" }))
+    #expect(semanticCore.replacements.contains(where: { $0.id == "base-url" }))
+}
+
+@Test func builtInStyleLookupReturnsNamedPresetProfiles() {
+    #expect(TextForSpeech.Profile.builtInStyle(.balanced).id == "base")
+    #expect(TextForSpeech.Profile.builtInStyle(.compact).id == "compact-built-in-style")
+    #expect(TextForSpeech.Profile.builtInStyle(.explicit).id == "explicit-built-in-style")
+}
+
 @Test func compactStyleDropsBalancedCodeLineRulesButKeepsSemanticCore() {
     let compact = TextForSpeech.Profile.builtInBase(style: .compact)
 

@@ -27,7 +27,7 @@ extension TextNormalizer {
 
         let parts = token.split(separator: ".").map(String.init)
         guard parts.count >= 2 else { return false }
-        return parts.allSatisfy(isIdentifierLike)
+        return parts.allSatisfy(isDottedIdentifierSegmentLike)
     }
 
     static func isLikelySnakeCaseIdentifier(_ token: String) -> Bool {
@@ -113,6 +113,10 @@ extension TextNormalizer {
 
     static func isIdentifierLike(_ token: String) -> Bool {
         !token.isEmpty && token.allSatisfy { $0.isAlphaNumeric || $0 == "_" }
+    }
+
+    static func isDottedIdentifierSegmentLike(_ token: String) -> Bool {
+        !token.isEmpty && token.allSatisfy { $0.isAlphaNumeric || $0 == "_" || $0 == "-" }
     }
 
     static func hasLowerToUpperTransition(_ text: String) -> Bool {
