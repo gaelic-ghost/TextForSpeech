@@ -7,7 +7,6 @@ This note explains the current `TextForSpeech` model in maintainer terms, with s
 - structural normalization logic
 - built-in lexical normalization policy
 - runtime-owned custom profile state
-- lightweight lexical helpers
 
 Those concerns deliberately live in different places now. The package is easier to reason about when maintainers keep those boundaries straight.
 

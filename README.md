@@ -126,16 +126,6 @@ let normalized = TextForSpeech.Normalize.source(
 
 The source lane is explicit today but still generic. It normalizes whole-source input more consistently than the mixed-text lane, but SwiftSyntax-backed Swift-specific structure is still future roadmap work rather than current behavior.
 
-The package also exposes one small lexical helper when a caller needs natural-language word tokenization:
-
-```swift
-import TextForSpeech
-
-let words = TextForSpeech.Forensics.words(
-    in: "Please read /tmp/Thing and NSApplication.didFinishLaunchingNotification."
-)
-```
-
 ## Runtime Profiles
 
 Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, one selected built-in style, and JSON-backed persistence configured through a small enum:
@@ -183,7 +173,7 @@ Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Applicat
 The package source lives under `Sources/TextForSpeech` and is organized by responsibility:
 
 - `API/`
-  Public namespace-first entrypoints such as `Normalize` and `Forensics`.
+  Public namespace-first entrypoints such as `Normalize`.
 - `Models/`
   Core value types such as `Profile`, `Replacement`, and `Context`, plus the built-in profile composition surface and the semantic-role fragments under `Models/BuiltInProfiles/`.
 - `Normalization/`
@@ -200,7 +190,7 @@ Tests live under `Tests/TextForSpeechTests` and are grouped by role:
 - `Models/`
 - `Normalization/`
 - `Runtime/`
-- top-level lexical helper coverage, with focused normalization files for path and identifier behavior, markdown and URL behavior, and broader end-to-end flows
+- focused normalization files for path and identifier behavior, markdown and URL behavior, and broader end-to-end flows
 
 ## Development
 

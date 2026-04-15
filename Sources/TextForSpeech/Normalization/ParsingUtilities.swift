@@ -147,12 +147,6 @@ extension TextNormalizer {
 
     // MARK: Natural Language Tokens
 
-    static func naturalLanguageTokenRanges(in text: String) -> [Range<String.Index>] {
-        let tokenizer = NLTokenizer(unit: .word)
-        tokenizer.string = text
-        return tokenizer.tokens(for: text.startIndex..<text.endIndex)
-    }
-
     static func naturalLanguageWords(in text: String) -> [String] {
         let tokenizer = NLTokenizer(unit: .word)
         tokenizer.string = text
