@@ -3,7 +3,7 @@ import Testing
 
 // MARK: - Profiles
 
-@Test func profileFiltersReplacementsByPhaseAndFormat() {
+@Test func `profile filters replacements by phase and format`() {
     let profile = TextForSpeech.Profile(
         replacements: [
             TextForSpeech.Replacement(
@@ -12,7 +12,7 @@ import Testing
                 id: "swift",
                 during: .beforeBuiltIns,
                 forTextFormats: [],
-                forSourceFormats: [.swift]
+                forSourceFormats: [.swift],
             ),
             TextForSpeech.Replacement(
                 "Thing",
@@ -21,31 +21,31 @@ import Testing
                 during: .beforeBuiltIns,
                 forTextFormats: [],
                 forSourceFormats: [.generic],
-                priority: 10
+                priority: 10,
             ),
             TextForSpeech.Replacement(
                 "Thing",
                 with: "Final thing",
                 id: "final",
-                during: .afterBuiltIns
+                during: .afterBuiltIns,
             ),
-        ]
+        ],
     )
 
     let beforeBuiltIns = profile.replacements(
         for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
-        in: TextForSpeech.SourceFormat.swift
+        in: TextForSpeech.SourceFormat.swift,
     )
     let afterBuiltIns = profile.replacements(
         for: TextForSpeech.Replacement.Phase.afterBuiltIns,
-        in: TextForSpeech.SourceFormat.swift
+        in: TextForSpeech.SourceFormat.swift,
     )
 
     #expect(beforeBuiltIns.map(\.id) == ["source", "swift"])
     #expect(afterBuiltIns.map(\.id) == ["final"])
 }
 
-@Test func profileFiltersTextScopedReplacementsIndependentlyFromSourceScopedOnes() {
+@Test func `profile filters text scoped replacements independently from source scoped ones`() {
     let profile = TextForSpeech.Profile(
         replacements: [
             TextForSpeech.Replacement(
@@ -53,7 +53,7 @@ import Testing
                 with: "Markdown thing",
                 id: "markdown",
                 during: .beforeBuiltIns,
-                forTextFormats: [.markdown]
+                forTextFormats: [.markdown],
             ),
             TextForSpeech.Replacement(
                 "Thing",
@@ -61,26 +61,28 @@ import Testing
                 id: "swift",
                 during: .beforeBuiltIns,
                 forTextFormats: [],
-                forSourceFormats: [.swift]
+                forSourceFormats: [.swift],
             ),
-        ]
+        ],
     )
 
     #expect(
         profile.replacements(
             for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
-            in: TextForSpeech.TextFormat.markdown
-        ).map(\.id) == ["markdown"]
+            in: TextForSpeech.TextFormat.markdown,
+        )
+        .map(\.id) == ["markdown"],
     )
     #expect(
         profile.replacements(
             for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
-            in: TextForSpeech.SourceFormat.swift
-        ).map(\.id) == ["swift"]
+            in: TextForSpeech.SourceFormat.swift,
+        )
+        .map(\.id) == ["swift"],
     )
 }
 
-@Test func genericSourceScopedReplacementsApplyToSpecificSourceFormats() {
+@Test func `generic source scoped replacements apply to specific source formats`() {
     let profile = TextForSpeech.Profile(
         replacements: [
             TextForSpeech.Replacement(
@@ -89,32 +91,34 @@ import Testing
                 id: "source",
                 during: .beforeBuiltIns,
                 forTextFormats: [],
-                forSourceFormats: [.generic]
-            )
-        ]
+                forSourceFormats: [.generic],
+            ),
+        ],
     )
 
     #expect(
         profile.replacements(
             for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
-            in: TextForSpeech.SourceFormat.swift
-        ).map(\.id) == ["source"]
+            in: TextForSpeech.SourceFormat.swift,
+        )
+        .map(\.id) == ["source"],
     )
     #expect(
         profile.replacements(
             for: TextForSpeech.Replacement.Phase.beforeBuiltIns,
-            in: TextForSpeech.SourceFormat.python
-        ).map(\.id) == ["source"]
+            in: TextForSpeech.SourceFormat.python,
+        )
+        .map(\.id) == ["source"],
     )
 }
 
-@Test func defaultProfileStartsEmpty() {
+@Test func `default profile starts empty`() {
     #expect(TextForSpeech.Profile.default.id == "default")
     #expect(TextForSpeech.Profile.default.name == "Default")
     #expect(TextForSpeech.Profile.default.replacements.isEmpty)
 }
 
-@Test func balancedBaseComposesSemanticCoreAndBalancedStyle() {
+@Test func `balanced base composes semantic core and balanced style`() {
     let balanced = TextForSpeech.Profile.builtInBase(style: .balanced)
 
     #expect(TextForSpeech.Profile.base == balanced)
@@ -122,7 +126,7 @@ import Testing
     #expect(balanced.replacements.contains(where: { $0.id == "base-text-code-line" }))
 }
 
-@Test func semanticCoreComposesSemanticRoleFragments() {
+@Test func `semantic core composes semantic role fragments`() {
     let semanticCore = TextForSpeech.Profile.semanticCore
 
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-galew" }))
@@ -131,13 +135,13 @@ import Testing
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-url" }))
 }
 
-@Test func builtInStyleLookupReturnsNamedPresetProfiles() {
+@Test func `built in style lookup returns named preset profiles`() {
     #expect(TextForSpeech.Profile.builtInStyle(.balanced).id == "base")
     #expect(TextForSpeech.Profile.builtInStyle(.compact).id == "compact-built-in-style")
     #expect(TextForSpeech.Profile.builtInStyle(.explicit).id == "explicit-built-in-style")
 }
 
-@Test func compactStyleDropsBalancedCodeLineRulesButKeepsSemanticCore() {
+@Test func `compact style drops balanced code line rules but keeps semantic core`() {
     let compact = TextForSpeech.Profile.builtInBase(style: .compact)
 
     #expect(compact.replacements.contains(where: { $0.id == "base-url" }))
@@ -146,7 +150,7 @@ import Testing
     #expect(!compact.replacements.contains(where: { $0.id == "base-source-line" }))
 }
 
-@Test func explicitStyleCarriesItsOwnStyleSpecificRules() {
+@Test func `explicit style carries its own style specific rules`() {
     let explicit = TextForSpeech.Profile.builtInBase(style: .explicit)
 
     #expect(explicit.replacements.contains(where: { $0.id == "explicit-function-call" }))

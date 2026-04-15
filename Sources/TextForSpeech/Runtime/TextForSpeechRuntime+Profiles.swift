@@ -6,16 +6,16 @@ public extension TextForSpeech.Runtime {
     struct Profiles {
         fileprivate let runtime: TextForSpeech.Runtime
 
-        internal init(runtime: TextForSpeech.Runtime) {
-            self.runtime = runtime
-        }
-
         public var activeID: String {
             runtime.activeCustomProfileID
         }
 
         public var builtInStyle: TextForSpeech.BuiltInProfileStyle {
             runtime.builtInStyle
+        }
+
+        init(runtime: TextForSpeech.Runtime) {
+            self.runtime = runtime
         }
 
         public func active() -> TextForSpeech.Profile {
@@ -68,7 +68,7 @@ public extension TextForSpeech.Runtime {
         public func create(
             id: String,
             name: String,
-            replacements: [TextForSpeech.Replacement] = []
+            replacements: [TextForSpeech.Replacement] = [],
         ) throws -> TextForSpeech.Profile {
             guard runtime.storedCustomProfilesByID[id] == nil else {
                 throw TextForSpeech.RuntimeError.profileAlreadyExists(id)
@@ -77,7 +77,7 @@ public extension TextForSpeech.Runtime {
             let profile = TextForSpeech.Profile(
                 id: id,
                 name: name,
-                replacements: replacements
+                replacements: replacements,
             )
             runtime.storedCustomProfilesByID[id] = profile
             try runtime.persistCurrentState()
@@ -91,7 +91,7 @@ public extension TextForSpeech.Runtime {
 
         @discardableResult
         public func add(
-            _ replacement: TextForSpeech.Replacement
+            _ replacement: TextForSpeech.Replacement,
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = active().adding(replacement)
             runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
@@ -102,7 +102,7 @@ public extension TextForSpeech.Runtime {
         @discardableResult
         public func add(
             _ replacement: TextForSpeech.Replacement,
-            toProfileID id: String
+            toProfileID id: String,
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = try storedProfile(id: id).adding(replacement)
             runtime.storedCustomProfilesByID[id] = updatedProfile
@@ -112,7 +112,7 @@ public extension TextForSpeech.Runtime {
 
         @discardableResult
         public func replace(
-            _ replacement: TextForSpeech.Replacement
+            _ replacement: TextForSpeech.Replacement,
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = try active().replacing(replacement)
             runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
@@ -123,7 +123,7 @@ public extension TextForSpeech.Runtime {
         @discardableResult
         public func replace(
             _ replacement: TextForSpeech.Replacement,
-            inProfileID id: String
+            inProfileID id: String,
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = try storedProfile(id: id).replacing(replacement)
             runtime.storedCustomProfilesByID[id] = updatedProfile
@@ -133,7 +133,7 @@ public extension TextForSpeech.Runtime {
 
         @discardableResult
         public func removeReplacement(
-            id replacementID: String
+            id replacementID: String,
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = try active().removingReplacement(id: replacementID)
             runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
@@ -144,7 +144,7 @@ public extension TextForSpeech.Runtime {
         @discardableResult
         public func removeReplacement(
             id replacementID: String,
-            fromProfileID profileID: String
+            fromProfileID profileID: String,
         ) throws -> TextForSpeech.Profile {
             let updatedProfile = try storedProfile(id: profileID).removingReplacement(id: replacementID)
             runtime.storedCustomProfilesByID[profileID] = updatedProfile
@@ -164,6 +164,7 @@ public extension TextForSpeech.Runtime {
             guard let profile = runtime.storedCustomProfilesByID[id] else {
                 throw TextForSpeech.RuntimeError.profileNotFound(id)
             }
+
             return profile
         }
     }

@@ -23,7 +23,7 @@ extension TextNormalizer {
     static func looksLikeMarkdown(_ text: String) -> Bool {
         text.contains("```")
             || text.split(separator: "\n", omittingEmptySubsequences: false)
-                .contains(where: { markdownHeaderTitle(in: String($0)) != nil })
+            .contains(where: { markdownHeaderTitle(in: String($0)) != nil })
             || !markdownLinks(in: text).isEmpty
             || !inlineCodeBodies(in: text).isEmpty
     }

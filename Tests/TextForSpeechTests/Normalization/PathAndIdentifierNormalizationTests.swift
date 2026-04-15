@@ -3,7 +3,7 @@ import Testing
 
 // MARK: - File Paths and Names
 
-@Test func filePathsBecomeSpokenPaths() {
+@Test func `file paths become spoken paths`() {
     let text = "Path: /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift."
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
@@ -12,7 +12,7 @@ import Testing
     #expect(normalized.contains("Speech Text Normalizer dot swift"))
 }
 
-@Test func filePathsUseConfiguredGaleAliases() {
+@Test func `file paths use configured gale aliases`() {
     let text = "Path: /Users/galem/Workspace/SpeakSwiftly."
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
@@ -20,7 +20,7 @@ import Testing
     #expect(normalized.contains("gale mini slash Workspace slash Speak Swiftly"))
 }
 
-@Test func dashedFilePathsBecomeSpeechSafeSpacing() {
+@Test func `dashed file paths become speech safe spacing`() {
     let text = "Path: /tmp/speak-to-user/path-now."
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
@@ -29,15 +29,15 @@ import Testing
     #expect(!normalized.contains("dash"))
 }
 
-@Test func filePathsInsideCurrentDirectoryOmitTheAbsolutePrefix() {
+@Test func `file paths inside current directory omit the absolute prefix`() {
     let text = "Path: /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift."
 
     let normalized = TextNormalizer.normalizeFilePaths(
         text,
         context: TextForSpeech.Context(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
-            repoRoot: "/Users/galew/Workspace/SpeakSwiftly"
-        )
+            repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
+        ),
     )
 
     #expect(normalized.contains("current directory slash Sources slash Speak Swiftly"))
@@ -45,22 +45,22 @@ import Testing
     #expect(!normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
 }
 
-@Test func filePathsInsideRepoRootButOutsideCurrentDirectoryKeepRepoRootContext() {
+@Test func `file paths inside repo root but outside current directory keep repo root context`() {
     let text = "Path: /Users/galew/Workspace/SpeakSwiftly/README.md."
 
     let normalized = TextNormalizer.normalizeFilePaths(
         text,
         context: TextForSpeech.Context(
             cwd: "/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly",
-            repoRoot: "/Users/galew/Workspace/SpeakSwiftly"
-        )
+            repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
+        ),
     )
 
     #expect(normalized.contains("repo root slash README dot md"))
     #expect(!normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
 }
 
-@Test func standaloneGaleAliasesBecomeSpokenNames() {
+@Test func `standalone gale aliases become spoken names`() {
     let text = "Please ask galew, galem, and Galew again."
 
     let normalized = TextNormalizer.normalizeStandaloneGaleAliases(text)
@@ -70,7 +70,7 @@ import Testing
     #expect(normalized.contains("gale wumbo"))
 }
 
-@Test func filePathsSpeakKnownExtensionAliasesNaturally() {
+@Test func `file paths speak known extension aliases naturally`() {
     let text = """
     Read /tmp/App.xcodeproj, project.pbxproj, Workspace.xcworkspace, Build.xcconfig, App.xcscheme, App.xctestplan, Run.xcresult, Assets.xcassets, Localizable.xcstrings, PrivacyInfo.xcprivacy, App.entitlements, App.dSYM, guide.mdx, page.tsx, widget.jsx, settings.jsonc, config.toml, workflow.yaml, workflow.yml, notebook.ipynb, module.wasm, cache.sqlite, and state.db.
     """
@@ -101,7 +101,7 @@ import Testing
     #expect(normalized.contains("state dot database"))
 }
 
-@Test func fileLineReferencesPreserveLineNarrationAfterExtensionAliases() {
+@Test func `file line references preserve line narration after extension aliases`() {
     let text = "Inspect project.pbxproj:42:7 and App.xcodeproj:18."
 
     let normalized = TextForSpeech.Normalize.text(text, format: .plain)
@@ -112,7 +112,7 @@ import Testing
 
 // MARK: - Identifier and Code Speech
 
-@Test func dottedIdentifiersBecomeSpokenIdentifiers() {
+@Test func `dotted identifiers become spoken identifiers`() {
     let text = "Read NSApplication.didFinishLaunchingNotification once."
 
     let normalized = TextNormalizer.normalizeDottedIdentifiers(text)
@@ -120,13 +120,13 @@ import Testing
     #expect(normalized.contains("NSApplication dot did Finish Launching Notification"))
 }
 
-@Test func dottedIdentifiersAcceptHyphenatedAliasSegments() {
+@Test func `dotted identifiers accept hyphenated alias segments`() {
     let normalized = TextNormalizer.normalizeDottedIdentifiers("guide.markdown-jsx")
 
     #expect(normalized.contains("guide dot markdown jsx"))
 }
 
-@Test func snakeCaseIdentifiersBecomeSpokenIdentifiers() {
+@Test func `snake case identifiers become spoken identifiers`() {
     let text = "Read snake_case_stuff once."
 
     let normalized = TextNormalizer.normalizeSnakeCaseIdentifiers(text)
@@ -135,14 +135,14 @@ import Testing
     #expect(!normalized.contains("underscore"))
 }
 
-@Test func dashedIdentifiersBecomeSpeechSafeSpacing() {
+@Test func `dashed identifiers become speech safe spacing`() {
     let normalized = TextNormalizer.spokenIdentifier("kebab-case-stuff")
 
     #expect(normalized.contains("kebab case stuff"))
     #expect(!normalized.contains("dash"))
 }
 
-@Test func camelCaseIdentifiersBecomeSpokenIdentifiers() {
+@Test func `camel case identifiers become spoken identifiers`() {
     let text = "Read camelCaseStuff once."
 
     let normalized = TextNormalizer.normalizeCamelCaseIdentifiers(text)
@@ -150,7 +150,7 @@ import Testing
     #expect(normalized.contains("camel Case Stuff"))
 }
 
-@Test func mathAndTypedIdentifiersBecomeSpeechSafePhrases() {
+@Test func `math and typed identifiers become speech safe phrases`() {
     let text = "Read cosF32, sinF64, and tanU32 once."
 
     let normalized = TextForSpeech.Normalize.text(text, format: .plain)
@@ -160,7 +160,7 @@ import Testing
     #expect(normalized.contains("tangent unsigned integer thirty two"))
 }
 
-@Test func standaloneTypedScalarTokensUseBasePronunciations() {
+@Test func `standalone typed scalar tokens use base pronunciations`() {
     let text = "Use f32, i64, and usize once."
 
     let normalized = TextForSpeech.Normalize.text(text, format: .plain)
@@ -170,7 +170,7 @@ import Testing
     #expect(normalized.contains("unsigned integer size"))
 }
 
-@Test func lineOnlyFileReferencesUseAtLineNarration() {
+@Test func `line only file references use at line narration`() {
     let text = "Read MarvisTTSModel.swift:208 once."
 
     let normalized = TextForSpeech.Normalize.text(text, format: .plain)
@@ -178,19 +178,19 @@ import Testing
     #expect(normalized.contains("Marvis TTS Model dot swift at line 208"))
 }
 
-@Test func codeHeavyLinesBecomeSpokenCode() {
+@Test func `code heavy lines become spoken code`() {
     let text = #"let fallback = weirdWords.first(where: { $0.hasPrefix("q") }) ?? "nothing""#
 
     let normalized = TextNormalizer.normalizeCodeHeavyLines(
         text,
-        format: .source(.swift)
+        format: .source(.swift),
     )
 
     #expect(normalized.contains("open brace"))
     #expect(normalized.contains("nil coalescing"))
 }
 
-@Test func spiralProneWordsAreSpelledOut() {
+@Test func `spiral prone words are spelled out`() {
     let text = "Also say chrommmaticallly and qqqwweerrtyy once."
 
     let normalized = TextNormalizer.normalizeSpiralProneWords(text)

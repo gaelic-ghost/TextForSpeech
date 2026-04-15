@@ -89,8 +89,8 @@ extension TextNormalizer {
                 MarkdownLinkMatch(
                     fullRange: fullRange,
                     label: String(text[text.index(after: labelStart)..<labelEnd]),
-                    destination: String(text[destinationStart..<destinationEnd])
-                )
+                    destination: String(text[destinationStart..<destinationEnd]),
+                ),
             )
             cursor = fullRange.upperBound
         }

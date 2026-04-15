@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - Runtime Storage
 
-internal extension TextForSpeech.Runtime {
+extension TextForSpeech.Runtime {
     static func defaultPersistenceURL(bundleIdentifier: String?) -> URL {
         let packageDirectoryName = defaultPersistenceDirectoryName
         let namespace = bundleIdentifier?
@@ -19,11 +19,11 @@ internal extension TextForSpeech.Runtime {
     }
 
     static var defaultPersistenceDirectoryName: String {
-        #if DEBUG
-            "TextForSpeech-Debug"
-        #else
-            "TextForSpeech"
-        #endif
+#if DEBUG
+        "TextForSpeech-Debug"
+#else
+        "TextForSpeech"
+#endif
     }
 
     func loadPersistedStateIfPresent() throws {
@@ -47,7 +47,7 @@ internal extension TextForSpeech.Runtime {
             didChangeState = true
         }
 
-        if persistIfChanged && didChangeState {
+        if persistIfChanged, didChangeState {
             try persistCurrentState()
         }
     }

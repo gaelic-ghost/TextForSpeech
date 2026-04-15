@@ -20,12 +20,11 @@ public extension TextForSpeech {
             self == .generic || self == other
         }
     }
-
 }
 
-// MARK: - Internal Normalization Format
+// MARK: - NormalizationFormat
 
-enum NormalizationFormat: Sendable, Hashable {
+enum NormalizationFormat: Hashable {
     case text(TextForSpeech.TextFormat)
     case source(TextForSpeech.SourceFormat)
 }

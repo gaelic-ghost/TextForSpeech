@@ -11,43 +11,43 @@ extension TextNormalizer {
 
     static func tokenMatches(
         _ tokenKind: TextForSpeech.Replacement.TokenKind,
-        token: String
+        token: String,
     ) -> Bool {
         switch tokenKind {
-        case .filePath:
-            isLikelyFilePath(token)
-        case .url:
-            isLikelyURL(token)
-        case .dottedIdentifier:
-            isLikelyDottedIdentifier(token)
-        case .snakeCaseIdentifier:
-            isLikelySnakeCaseIdentifier(token)
-        case .dashedIdentifier:
-            isLikelyDashedIdentifier(token)
-        case .camelCaseIdentifier:
-            isLikelyCamelCaseIdentifier(token)
-        case .functionCall:
-            isLikelyFunctionCall(token)
-        case .issueReference:
-            isLikelyIssueReference(token)
-        case .fileLineReference:
-            isLikelyFileLineReference(token)
-        case .cliFlag:
-            isLikelyCLIFlag(token)
-        case .repeatedLetterRun:
-            containsRepeatedLetterRun(trimmedCandidateToken(token))
+            case .filePath:
+                isLikelyFilePath(token)
+            case .url:
+                isLikelyURL(token)
+            case .dottedIdentifier:
+                isLikelyDottedIdentifier(token)
+            case .snakeCaseIdentifier:
+                isLikelySnakeCaseIdentifier(token)
+            case .dashedIdentifier:
+                isLikelyDashedIdentifier(token)
+            case .camelCaseIdentifier:
+                isLikelyCamelCaseIdentifier(token)
+            case .functionCall:
+                isLikelyFunctionCall(token)
+            case .issueReference:
+                isLikelyIssueReference(token)
+            case .fileLineReference:
+                isLikelyFileLineReference(token)
+            case .cliFlag:
+                isLikelyCLIFlag(token)
+            case .repeatedLetterRun:
+                containsRepeatedLetterRun(trimmedCandidateToken(token))
         }
     }
 
     static func lineMatches(
         _ lineKind: TextForSpeech.Replacement.LineKind,
-        line: String
+        line: String,
     ) -> Bool {
         switch lineKind {
-        case .codeLike:
-            isLikelyCodeLine(line)
-        case .nonEmpty:
-            !line.trimmingCharacters(in: .whitespaces).isEmpty
+            case .codeLike:
+                isLikelyCodeLine(line)
+            case .nonEmpty:
+                !line.trimmingCharacters(in: .whitespaces).isEmpty
         }
     }
 }

@@ -14,7 +14,7 @@ enum TextNormalizer {
             TextForSpeech.Context?,
             TextForSpeech.Profile,
             NormalizationFormat,
-            TextForSpeech.SourceFormat?
+            TextForSpeech.SourceFormat?,
         ) -> String
 
     // MARK: Detection Markers
@@ -70,7 +70,7 @@ enum TextNormalizer {
                     format: format,
                     phase: .beforeBuiltIns,
                     context: context,
-                    nestedFormat: nestedFormat
+                    nestedFormat: nestedFormat,
                 )
             },
             { text, _, _, _, _ in collapseWhitespace(text) },
@@ -86,7 +86,7 @@ enum TextNormalizer {
                     format: format,
                     phase: .beforeBuiltIns,
                     context: context,
-                    nestedFormat: nestedFormat
+                    nestedFormat: nestedFormat,
                 )
             },
             { text, _, _, _, _ in collapseWhitespace(text) },
@@ -100,7 +100,7 @@ enum TextNormalizer {
         context: TextForSpeech.Context? = nil,
         profile: TextForSpeech.Profile = .default,
         format: TextForSpeech.TextFormat? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let resolvedFormat = format ?? context?.textFormat ?? detectTextFormat(in: text)
         return normalize(
@@ -109,7 +109,7 @@ enum TextNormalizer {
             profile: profile,
             format: .text(resolvedFormat),
             nestedFormat: nestedFormat ?? context?.nestedSourceFormat,
-            passes: normalizationPasses
+            passes: normalizationPasses,
         )
     }
 
@@ -117,14 +117,14 @@ enum TextNormalizer {
         _ source: String,
         context: TextForSpeech.Context? = nil,
         profile: TextForSpeech.Profile = .default,
-        format: TextForSpeech.SourceFormat
+        format: TextForSpeech.SourceFormat,
     ) -> String {
         normalize(
             canonicalize(source),
             context: context,
             profile: profile,
             format: .source(format),
-            passes: sourceNormalizationPasses
+            passes: sourceNormalizationPasses,
         )
     }
 
@@ -136,7 +136,7 @@ enum TextNormalizer {
         profile: TextForSpeech.Profile,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
-        passes: [ContextualNormalizationPass]
+        passes: [ContextualNormalizationPass],
     ) -> String {
         let normalized = passes.reduce(text) { partial, pass in
             pass(partial, context, profile, format, nestedFormat)
@@ -148,8 +148,8 @@ enum TextNormalizer {
                 format: format,
                 phase: .afterBuiltIns,
                 context: context,
-                nestedFormat: nestedFormat
-            )
+                nestedFormat: nestedFormat,
+            ),
         )
         return finalized.isEmpty ? text : finalized
     }

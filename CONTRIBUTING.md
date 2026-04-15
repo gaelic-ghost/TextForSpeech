@@ -15,6 +15,22 @@ swift test
 
 Keep Swift build and test processes serialized. Do not start a second SwiftPM or Xcode build or test command while another one is still running.
 
+## Formatting
+
+TextForSpeech uses the checked-in [.swiftformat](.swiftformat) file as the repository source of truth for Swift formatting and the checked-in [.swiftlint.yml](.swiftlint.yml) file for a small set of non-formatting policy checks.
+
+Use these commands from the package root:
+
+```bash
+swiftformat --lint --config .swiftformat .
+swiftformat --config .swiftformat .
+swiftlint lint --config .swiftlint.yml
+```
+
+Use the first `swiftformat` command when you want to inspect formatting drift without rewriting files. Use the second `swiftformat` command when you intentionally want to apply formatting changes. Use the SwiftLint command for the smaller safety and maintainability checks that intentionally stay outside SwiftFormat.
+
+Treat SwiftFormat as the primary style tool in this repository. Keep SwiftLint focused on non-formatting policy checks instead of duplicating formatter behavior.
+
 ## Coding Expectations
 
 Prefer the simplest correct Swift that is easiest to read, reason about, and maintain. Keep stable, source-of-truth naming across models, runtime state, and public APIs when the meaning has not changed.

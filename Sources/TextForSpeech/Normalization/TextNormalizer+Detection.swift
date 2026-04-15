@@ -27,5 +27,4 @@ extension TextNormalizer {
 
         return .plain
     }
-
 }

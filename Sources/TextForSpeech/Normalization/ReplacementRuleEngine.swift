@@ -20,13 +20,13 @@ extension TextNormalizer {
         format: NormalizationFormat,
         phase: TextForSpeech.Replacement.Phase,
         context: TextForSpeech.Context? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let replacements: [TextForSpeech.Replacement] = switch format {
-        case .text(let textFormat):
-            profile.replacements(for: phase, in: textFormat)
-        case .source(let sourceFormat):
-            profile.replacements(for: phase, in: sourceFormat)
+            case let .text(textFormat):
+                profile.replacements(for: phase, in: textFormat)
+            case let .source(sourceFormat):
+                profile.replacements(for: phase, in: sourceFormat)
         }
 
         return replacements.reduce(text) { partial, rule in
@@ -35,7 +35,7 @@ extension TextNormalizer {
                 to: partial,
                 context: context,
                 format: format,
-                nestedFormat: nestedFormat
+                nestedFormat: nestedFormat,
             )
         }
     }
@@ -68,7 +68,7 @@ extension TextNormalizer {
     static func transformTokensStatefully<State>(
         in text: String,
         state: inout State,
-        transform: (String, inout State) -> String?
+        transform: (String, inout State) -> String?,
     ) -> String {
         var result = ""
         var index = text.startIndex
@@ -110,8 +110,7 @@ extension TextNormalizer {
         var end = rawToken.endIndex
 
         while start < end,
-            rawToken[start].unicodeScalars.allSatisfy({ punctuation.contains($0) })
-        {
+              rawToken[start].unicodeScalars.allSatisfy({ punctuation.contains($0) }) {
             start = rawToken.index(after: start)
         }
 
@@ -126,6 +125,7 @@ extension TextNormalizer {
             guard rawToken[beforeEnd].unicodeScalars.allSatisfy({ punctuation.contains($0) }) else {
                 break
             }
+
             end = beforeEnd
         }
 
@@ -146,8 +146,7 @@ extension TextNormalizer {
         var end = token.endIndex
 
         while start < end,
-            token[start].unicodeScalars.allSatisfy({ punctuation.contains($0) })
-        {
+              token[start].unicodeScalars.allSatisfy({ punctuation.contains($0) }) {
             start = token.index(after: start)
         }
 
@@ -162,6 +161,7 @@ extension TextNormalizer {
             guard token[beforeEnd].unicodeScalars.allSatisfy({ punctuation.contains($0) }) else {
                 break
             }
+
             end = beforeEnd
         }
 
@@ -175,62 +175,64 @@ extension TextNormalizer {
         to text: String,
         context: TextForSpeech.Context?,
         format: NormalizationFormat,
-        nestedFormat: TextForSpeech.SourceFormat?
+        nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
         switch rule.match {
-        case .exactPhrase:
-            guard !rule.text.isEmpty else { return text }
-            return text.replacingOccurrences(
-                of: rule.text,
-                with: resolvedReplacement(
-                    for: rule.text,
-                    rule: rule,
-                    context: context,
-                    format: format,
-                    nestedFormat: nestedFormat
-                ),
-                options: rule.isCaseSensitive ? [] : [.caseInsensitive]
-            )
+            case .exactPhrase:
+                guard !rule.text.isEmpty else { return text }
 
-        case .wholeToken:
-            guard !rule.text.isEmpty else { return text }
-            return transformTokens(in: text) { token in
-                tokenMatches(rule.text, token: token, caseSensitive: rule.isCaseSensitive)
-                    ? resolvedReplacement(
-                        for: token,
+                return text.replacingOccurrences(
+                    of: rule.text,
+                    with: resolvedReplacement(
+                        for: rule.text,
                         rule: rule,
                         context: context,
                         format: format,
-                        nestedFormat: nestedFormat
-                    )
-                    : nil
-            }
+                        nestedFormat: nestedFormat,
+                    ),
+                    options: rule.isCaseSensitive ? [] : [.caseInsensitive],
+                )
 
-        case .token(let tokenKind):
-            return transformTokens(in: text) { token in
-                tokenMatches(tokenKind, token: token)
-                    ? resolvedReplacement(
-                        for: token,
-                        rule: rule,
-                        context: context,
-                        format: format,
-                        nestedFormat: nestedFormat
-                    )
-                    : nil
-            }
+            case .wholeToken:
+                guard !rule.text.isEmpty else { return text }
 
-        case .line(let lineKind):
-            return transformLines(in: text) { line in
-                lineMatches(lineKind, line: line)
-                    ? resolvedReplacement(
-                        for: line,
-                        rule: rule,
-                        context: context,
-                        format: format,
-                        nestedFormat: nestedFormat
-                    )
-                    : nil
-            }
+                return transformTokens(in: text) { token in
+                    tokenMatches(rule.text, token: token, caseSensitive: rule.isCaseSensitive)
+                        ? resolvedReplacement(
+                            for: token,
+                            rule: rule,
+                            context: context,
+                            format: format,
+                            nestedFormat: nestedFormat,
+                        )
+                        : nil
+                }
+
+            case let .token(tokenKind):
+                return transformTokens(in: text) { token in
+                    tokenMatches(tokenKind, token: token)
+                        ? resolvedReplacement(
+                            for: token,
+                            rule: rule,
+                            context: context,
+                            format: format,
+                            nestedFormat: nestedFormat,
+                        )
+                        : nil
+                }
+
+            case let .line(lineKind):
+                return transformLines(in: text) { line in
+                    lineMatches(lineKind, line: line)
+                        ? resolvedReplacement(
+                            for: line,
+                            rule: rule,
+                            context: context,
+                            format: format,
+                            nestedFormat: nestedFormat,
+                        )
+                        : nil
+                }
         }
     }
 
@@ -239,47 +241,47 @@ extension TextNormalizer {
         rule: TextForSpeech.Replacement,
         context: TextForSpeech.Context?,
         format: NormalizationFormat,
-        nestedFormat: TextForSpeech.SourceFormat?
+        nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
         switch rule.transform {
-        case .literal(let replacement):
-            replacement
+            case let .literal(replacement):
+                replacement
 
-        case .spokenPath:
-            spokenPath(text, context: context)
+            case .spokenPath:
+                spokenPath(text, context: context)
 
-        case .spokenURL:
-            spokenURL(text)
+            case .spokenURL:
+                spokenURL(text)
 
-        case .spokenIdentifier:
-            spokenIdentifier(text)
+            case .spokenIdentifier:
+                spokenIdentifier(text)
 
-        case .spokenCode:
-            switch format {
-            case .source(let sourceFormat):
-                spokenSource(text, format: sourceFormat)
-            case .text:
-                if let nestedFormat {
-                    spokenSource(text, format: nestedFormat)
-                } else {
-                    spokenCode(text)
+            case .spokenCode:
+                switch format {
+                    case let .source(sourceFormat):
+                        spokenSource(text, format: sourceFormat)
+                    case .text:
+                        if let nestedFormat {
+                            spokenSource(text, format: nestedFormat)
+                        } else {
+                            spokenCode(text)
+                        }
                 }
-            }
 
-        case .spokenFunctionCall(let style):
-            spokenFunctionCall(text, style: style)
+            case let .spokenFunctionCall(style):
+                spokenFunctionCall(text, style: style)
 
-        case .spokenIssueReference(let style):
-            spokenIssueReference(text, style: style)
+            case let .spokenIssueReference(style):
+                spokenIssueReference(text, style: style)
 
-        case .spokenFileReference(let style):
-            spokenFileReference(text, style: style)
+            case let .spokenFileReference(style):
+                spokenFileReference(text, style: style)
 
-        case .spokenCLIFlag(let style):
-            spokenCLIFlag(text, style: style)
+            case let .spokenCLIFlag(style):
+                spokenCLIFlag(text, style: style)
 
-        case .spellOut:
-            spelledOut(trimmedCandidateToken(text))
+            case .spellOut:
+                spelledOut(trimmedCandidateToken(text))
         }
     }
 }

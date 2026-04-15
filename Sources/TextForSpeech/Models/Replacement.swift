@@ -82,6 +82,12 @@ public extension TextForSpeech {
         public let sourceFormats: Set<SourceFormat>
         public let priority: Int
 
+        public var replacement: String? {
+            guard case let .literal(replacement) = transform else { return nil }
+
+            return replacement
+        }
+
         public init(
             _ text: String,
             with replacement: String,
@@ -91,7 +97,7 @@ public extension TextForSpeech {
             caseSensitive isCaseSensitive: Bool = false,
             forTextFormats textFormats: Set<TextFormat> = [],
             forSourceFormats sourceFormats: Set<SourceFormat> = [],
-            priority: Int = 0
+            priority: Int = 0,
         ) {
             self.id = id
             self.text = text
@@ -112,7 +118,7 @@ public extension TextForSpeech {
             caseSensitive isCaseSensitive: Bool = false,
             forTextFormats textFormats: Set<TextFormat> = [],
             forSourceFormats sourceFormats: Set<SourceFormat> = [],
-            priority: Int = 0
+            priority: Int = 0,
         ) {
             self.id = id
             text = ""
@@ -127,17 +133,14 @@ public extension TextForSpeech {
 
         public func applies(to format: TextFormat) -> Bool {
             guard !textFormats.isEmpty || !sourceFormats.isEmpty else { return true }
+
             return textFormats.contains(format)
         }
 
         public func applies(to format: SourceFormat) -> Bool {
             guard !textFormats.isEmpty || !sourceFormats.isEmpty else { return true }
-            return sourceFormats.contains(.generic) || sourceFormats.contains(format)
-        }
 
-        public var replacement: String? {
-            guard case .literal(let replacement) = transform else { return nil }
-            return replacement
+            return sourceFormats.contains(.generic) || sourceFormats.contains(format)
         }
     }
 }

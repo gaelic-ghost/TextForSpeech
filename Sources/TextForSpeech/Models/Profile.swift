@@ -9,18 +9,31 @@ public extension TextForSpeech {
         public init(
             id: String = "default",
             name: String = "Default",
-            replacements: [Replacement] = []
+            replacements: [Replacement] = [],
         ) {
             self.id = id
             self.name = name
             self.replacements = replacements
         }
 
+        // MARK: Sorting
+
+        private static func sortReplacements(
+            lhs: Replacement,
+            rhs: Replacement,
+        ) -> Bool {
+            if lhs.priority == rhs.priority {
+                return lhs.id < rhs.id
+            }
+
+            return lhs.priority > rhs.priority
+        }
+
         // MARK: Replacement Access
 
         public func replacements(
             for phase: Replacement.Phase,
-            in format: TextFormat
+            in format: TextFormat,
         ) -> [Replacement] {
             replacements
                 .filter { $0.phase == phase && $0.applies(to: format) }
@@ -29,7 +42,7 @@ public extension TextForSpeech {
 
         public func replacements(
             for phase: Replacement.Phase,
-            in format: SourceFormat
+            in format: SourceFormat,
         ) -> [Replacement] {
             replacements
                 .filter { $0.phase == phase && $0.applies(to: format) }
@@ -46,7 +59,7 @@ public extension TextForSpeech {
             Self(
                 id: custom.id,
                 name: custom.name,
-                replacements: replacements + custom.replacements
+                replacements: replacements + custom.replacements,
             )
         }
 
@@ -64,7 +77,7 @@ public extension TextForSpeech {
             guard replacements.contains(where: { $0.id == replacement.id }) else {
                 throw TextForSpeech.RuntimeError.replacementNotFound(
                     replacement.id,
-                    profileID: id
+                    profileID: id,
                 )
             }
 
@@ -73,7 +86,7 @@ public extension TextForSpeech {
                 name: name,
                 replacements: replacements.map { existing in
                     existing.id == replacement.id ? replacement : existing
-                }
+                },
             )
         }
 
@@ -81,28 +94,15 @@ public extension TextForSpeech {
             guard replacements.contains(where: { $0.id == replacementID }) else {
                 throw TextForSpeech.RuntimeError.replacementNotFound(
                     replacementID,
-                    profileID: id
+                    profileID: id,
                 )
             }
 
             return Self(
                 id: id,
                 name: name,
-                replacements: replacements.filter { $0.id != replacementID }
+                replacements: replacements.filter { $0.id != replacementID },
             )
-        }
-
-        // MARK: Sorting
-
-        private static func sortReplacements(
-            lhs: Replacement,
-            rhs: Replacement
-        ) -> Bool {
-            if lhs.priority == rhs.priority {
-                return lhs.id < rhs.id
-            }
-
-            return lhs.priority > rhs.priority
         }
     }
 }
