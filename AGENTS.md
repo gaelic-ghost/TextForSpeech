@@ -9,8 +9,8 @@
 
 ## Project-Specific Priorities
 
-- Keep `TextForSpeech` as the shared source of truth for speech-safe normalization of code-heavy text, profile-driven pronunciation overrides, and lightweight forensic inspection.
-- Preserve the namespace-first public surface centered on `TextForSpeech.Normalize`, `TextForSpeech.Forensics`, and `TextForSpeech.Runtime`.
+- Keep `TextForSpeech` as the shared source of truth for speech-safe normalization of code-heavy text and profile-driven pronunciation overrides.
+- Preserve the namespace-first public surface centered on `TextForSpeech.Normalize` and `TextForSpeech.Runtime`.
 - Prefer complete cleanup passes over incremental compatibility layers. Do not leave legacy shims, duplicate codepaths, or transitional wrappers behind unless the user explicitly approves that compromise.
 - Keep operator-facing errors, warnings, and log messages concrete, descriptive, and human-readable.
 
@@ -19,7 +19,7 @@
 - Keep structural parsing, routing, markdown handling, format detection, and normalization pipeline control in `Sources/TextForSpeech/Normalization`.
 - Keep durable built-in lexical policy in the built-in profile layers and related model definitions under `Sources/TextForSpeech/Models`.
 - Keep stored-profile ownership, active-profile identity, persistence, and runtime state repair in `Sources/TextForSpeech/Runtime`.
-- Keep forensic helpers honest about what they measure and separate from production normalization unless a primitive is genuinely shared.
+- Keep parsing helpers in normalization only when they materially support the production normalization pipeline. Do not reintroduce a separate forensic surface unless the package regains a real analysis use case that earns its own API.
 - Before adding a new abstraction, wrapper, helper type, or dependency, make sure it removes a real maintenance or modeling problem in this package instead of just making the code look more architectural.
 
 ## Swift Coding Guidance
@@ -49,7 +49,7 @@
 ## Source Layout Expectations
 
 - Keep source files role-focused and avoid letting catch-all files grow back.
-- Prefer extending the current responsibility-based layout under `API/`, `Models/`, `Normalization/`, `Runtime/`, and `Forensics/` instead of introducing ambiguous new buckets.
+- Prefer extending the current responsibility-based layout under `API/`, `Models/`, `Normalization/`, and `Runtime/` instead of introducing ambiguous new buckets.
 - If a file starts collecting unrelated responsibilities, split it by role before adding more behavior.
 
 ## CLI Preferences

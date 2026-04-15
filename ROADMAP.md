@@ -2,13 +2,13 @@
 
 ## Vision
 
-- [ ] Keep `TextForSpeech` as the shared source of truth for speech-safe normalization of code-heavy text, profile-driven pronunciation overrides, and lightweight forensic inspection of segmented input.
+- [ ] Keep `TextForSpeech` as the shared source of truth for speech-safe normalization of code-heavy text and profile-driven pronunciation overrides.
 
 ## Product principles
 
 - [ ] Keep normalization deterministic and reusable across callers instead of duplicating speech-cleanup rules in app code.
 - [x] Keep the built-in normalization layer explicit as `Profile.base` and consistently merged so callers get one reliable normalization pipeline.
-- [ ] Keep forensic APIs honest about what they measure and separate from the production normalization path unless shared primitives clearly belong in both places.
+- [x] Keep production normalization ownership explicit and avoid carrying a separate forensic API surface without a concrete package-level use case.
 - [ ] Keep the public Swift surface grouped by capability, with namespace-first entrypoints and runtime handles that stay easy to discover in SourceKit.
 
 ## Milestone Progress
@@ -18,7 +18,7 @@
 - [x] M3 Text and source lane API split
 - [x] M4 Runtime lookup and profile ergonomics
 - [ ] M5 Structured source normalization
-- [ ] M6 Forensic surface cleanup
+- [x] M6 Forensic surface cleanup
 - [ ] M7 Release and maintainability polish
 
 ## M1 Core normalization package
@@ -122,21 +122,21 @@
 
 ### Scope
 
-- [ ] Review the current forensic-facing section APIs and helpers.
-- [ ] Decide which pieces belong to normalization parsing versus forensic analysis.
-- [ ] Tighten file placement and naming so production ownership is clearer.
+- [x] Review the leftover forensic-facing APIs and helpers inherited from the earlier split work.
+- [x] Decide which pieces belong to normalization parsing versus a separate analysis surface.
+- [x] Tighten file placement and naming so production ownership is clearer.
 
 ### Tickets
 
-- [ ] Audit `TextForSpeech.forensicFeatures`, `sections`, and `sectionWindows` against the underlying parsing helpers they rely on.
-- [ ] Separate genuinely shared normalization primitives from forensic-only helpers.
-- [ ] Rename or relocate forensic-facing files if the current layout still blurs ownership.
+- [x] Remove the old public `TextForSpeech.Forensics` namespace once SpeakSwiftly no longer depends on it.
+- [x] Delete leftover helper code that only existed to support that surface when no internal production caller still uses it.
+- [x] Refresh roadmap and maintainer-facing docs so they no longer describe a separate forensic area or public forensic capability.
 
 ### Exit criteria
 
-- [ ] The forensic API surface has clear ownership boundaries.
-- [ ] Shared parsing utilities live where both normalization and forensics can use them without duplicate codepaths.
-- [ ] File and type naming make it obvious which code is production normalization logic and which code is forensic analysis support.
+- [x] The package no longer ships a separate forensic API surface.
+- [x] Shared parsing utilities live in normalization only when they materially support production normalization behavior.
+- [x] File and type naming make it obvious that the remaining code is production normalization logic or runtime support rather than forensic analysis support.
 
 ## M7 Release and maintainability polish
 

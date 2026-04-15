@@ -45,7 +45,7 @@ Keep durable built-in lexical policy in `Sources/TextForSpeech/Models`.
 
 Keep stored-profile ownership, active-profile identity, persistence, and runtime state repair in `Sources/TextForSpeech/Runtime`.
 
-Keep forensic helpers honest about what they measure and separate from production normalization unless a primitive is genuinely shared.
+Keep parsing helpers in normalization only when they materially support the production normalization pipeline. Do not reintroduce a separate forensic surface unless the package regains a real analysis use case that earns its own API.
 
 ## Documentation
 
