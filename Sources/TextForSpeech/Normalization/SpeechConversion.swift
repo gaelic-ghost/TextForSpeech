@@ -58,34 +58,35 @@ extension TextNormalizer {
 
         func flushBuffer() {
             guard !buffer.isEmpty else { return }
+
             segments.append(spokenSegment(buffer))
             buffer.removeAll(keepingCapacity: true)
         }
 
         for character in remainder {
             switch character {
-            case "~":
-                flushBuffer()
-                segments.append("home")
-            case "/":
-                flushBuffer()
-                if !segments.isEmpty {
-                    segments.append("slash")
-                }
-            case "\\":
-                flushBuffer()
-                segments.append("backslash")
-            case ".":
-                flushBuffer()
-                segments.append("dot")
-            case "_":
-                flushBuffer()
-                segments.append(" ")
-            case "-":
-                flushBuffer()
-                segments.append(" ")
-            default:
-                buffer.append(character)
+                case "~":
+                    flushBuffer()
+                    segments.append("home")
+                case "/":
+                    flushBuffer()
+                    if !segments.isEmpty {
+                        segments.append("slash")
+                    }
+                case "\\":
+                    flushBuffer()
+                    segments.append("backslash")
+                case ".":
+                    flushBuffer()
+                    segments.append("dot")
+                case "_":
+                    flushBuffer()
+                    segments.append(" ")
+                case "-":
+                    flushBuffer()
+                    segments.append(" ")
+                default:
+                    buffer.append(character)
             }
         }
 
@@ -110,7 +111,7 @@ extension TextNormalizer {
         }
 
         return collapseWhitespace(
-            "\(spokenSegment(String(scheme))) colon slash slash \(spokenPath(remainder))"
+            "\(spokenSegment(String(scheme))) colon slash slash \(spokenPath(remainder))",
         )
     }
 
@@ -120,23 +121,24 @@ extension TextNormalizer {
 
         func flushBuffer() {
             guard !buffer.isEmpty else { return }
+
             parts.append(spokenSegment(buffer))
             buffer.removeAll(keepingCapacity: true)
         }
 
         for character in text {
             switch character {
-            case ".":
-                flushBuffer()
-                parts.append("dot")
-            case "_":
-                flushBuffer()
-                parts.append(" ")
-            case "-":
-                flushBuffer()
-                parts.append(" ")
-            default:
-                buffer.append(character)
+                case ".":
+                    flushBuffer()
+                    parts.append("dot")
+                case "_":
+                    flushBuffer()
+                    parts.append(" ")
+                case "-":
+                    flushBuffer()
+                    parts.append(" ")
+                default:
+                    buffer.append(character)
             }
         }
 
@@ -146,7 +148,7 @@ extension TextNormalizer {
 
     static func spokenFunctionCall(
         _ text: String,
-        style: TextForSpeech.Replacement.Transform.FunctionCallStyle
+        style: TextForSpeech.Replacement.Transform.FunctionCallStyle,
     ) -> String {
         guard text.hasSuffix("()") else { return spokenIdentifier(text) }
 
@@ -154,35 +156,35 @@ extension TextNormalizer {
         let spokenBase = spokenIdentifier(base)
 
         switch style {
-        case .compact:
-            return spokenBase
-        case .balanced:
-            return "\(spokenBase) function"
-        case .explicit:
-            return "\(spokenBase) function call"
+            case .compact:
+                return spokenBase
+            case .balanced:
+                return "\(spokenBase) function"
+            case .explicit:
+                return "\(spokenBase) function call"
         }
     }
 
     static func spokenIssueReference(
         _ text: String,
-        style: TextForSpeech.Replacement.Transform.IssueReferenceStyle
+        style: TextForSpeech.Replacement.Transform.IssueReferenceStyle,
     ) -> String {
         let digits = text.drop { $0 == "#" }
         let number = String(digits)
 
         switch style {
-        case .compact:
-            return number
-        case .balanced:
-            return "issue \(number)"
-        case .explicit:
-            return "issue number \(number)"
+            case .compact:
+                return number
+            case .balanced:
+                return "issue \(number)"
+            case .explicit:
+                return "issue number \(number)"
         }
     }
 
     static func spokenFileReference(
         _ text: String,
-        style: TextForSpeech.Replacement.Transform.FileReferenceStyle
+        style: TextForSpeech.Replacement.Transform.FileReferenceStyle,
     ) -> String {
         let parts = text.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
         guard parts.count == 2 || parts.count == 3 else { return spokenPath(text) }
@@ -192,39 +194,39 @@ extension TextNormalizer {
         let column = parts.count == 3 ? parts[2] : nil
 
         switch style {
-        case .compact:
-            if let column {
-                return "\(file) \(line) \(column)"
-            }
-            return "\(file) \(line)"
-        case .balanced:
-            if let column {
-                return "\(file) line \(line) column \(column)"
-            }
-            return "\(file) at line \(line)"
-        case .explicit:
-            if let column {
-                return "file \(file) line \(line) column \(column)"
-            }
-            return "file \(file) at line \(line)"
+            case .compact:
+                if let column {
+                    return "\(file) \(line) \(column)"
+                }
+                return "\(file) \(line)"
+            case .balanced:
+                if let column {
+                    return "\(file) line \(line) column \(column)"
+                }
+                return "\(file) at line \(line)"
+            case .explicit:
+                if let column {
+                    return "file \(file) line \(line) column \(column)"
+                }
+                return "file \(file) at line \(line)"
         }
     }
 
     static func spokenCLIFlag(
         _ text: String,
-        style: TextForSpeech.Replacement.Transform.CLIFlagStyle
+        style: TextForSpeech.Replacement.Transform.CLIFlagStyle,
     ) -> String {
         let isLongFlag = text.hasPrefix("--")
         let body = String(text.drop { $0 == "-" })
         let spokenBody = spokenSegment(body.replacingOccurrences(of: "-", with: " "))
 
         switch style {
-        case .compact:
-            return spokenBody
-        case .balanced:
-            return isLongFlag ? "dash dash \(spokenBody)" : "dash \(spokenBody)"
-        case .explicit:
-            return isLongFlag ? "long flag \(spokenBody)" : "short flag \(spokenBody)"
+            case .compact:
+                return spokenBody
+            case .balanced:
+                return isLongFlag ? "dash dash \(spokenBody)" : "dash \(spokenBody)"
+            case .explicit:
+                return isLongFlag ? "long flag \(spokenBody)" : "short flag \(spokenBody)"
         }
     }
 }

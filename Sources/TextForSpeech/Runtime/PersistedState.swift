@@ -18,7 +18,7 @@ public extension TextForSpeech {
             version: Int = 1,
             builtInStyle: TextForSpeech.BuiltInProfileStyle = .balanced,
             activeCustomProfileID: String,
-            profiles: [String: Profile]
+            profiles: [String: Profile],
         ) {
             self.version = version
             self.builtInStyle = builtInStyle
@@ -31,7 +31,7 @@ public extension TextForSpeech {
             version = try container.decode(Int.self, forKey: .version)
             builtInStyle = try container.decodeIfPresent(
                 TextForSpeech.BuiltInProfileStyle.self,
-                forKey: .builtInStyle
+                forKey: .builtInStyle,
             ) ?? .balanced
             activeCustomProfileID = try container.decode(String.self, forKey: .activeCustomProfileID)
             profiles = try container.decode([String: Profile].self, forKey: .profiles)

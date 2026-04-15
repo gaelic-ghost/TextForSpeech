@@ -6,17 +6,17 @@ public extension TextForSpeech.Runtime {
     struct Persistence {
         fileprivate let runtime: TextForSpeech.Runtime
 
-        internal init(runtime: TextForSpeech.Runtime) {
-            self.runtime = runtime
-        }
-
         public var state: TextForSpeech.PersistedState {
             TextForSpeech.PersistedState(
                 version: TextForSpeech.Runtime.Versioning.currentPersistedStateVersion,
                 builtInStyle: runtime.builtInStyle,
                 activeCustomProfileID: runtime.activeCustomProfileID,
-                profiles: runtime.storedCustomProfilesByID
+                profiles: runtime.storedCustomProfilesByID,
             )
+        }
+
+        init(runtime: TextForSpeech.Runtime) {
+            self.runtime = runtime
         }
 
         public func restore(_ state: TextForSpeech.PersistedState) throws {
@@ -44,7 +44,7 @@ public extension TextForSpeech.Runtime {
             } catch {
                 throw TextForSpeech.PersistenceError.couldNotRead(
                     fileURL,
-                    error.localizedDescription
+                    error.localizedDescription,
                 )
             }
 
@@ -54,7 +54,7 @@ public extension TextForSpeech.Runtime {
             } catch {
                 throw TextForSpeech.PersistenceError.couldNotDecode(
                     fileURL,
-                    error.localizedDescription
+                    error.localizedDescription,
                 )
             }
 
@@ -72,12 +72,12 @@ public extension TextForSpeech.Runtime {
             do {
                 try runtime.fileManager.createDirectory(
                     at: directoryURL,
-                    withIntermediateDirectories: true
+                    withIntermediateDirectories: true,
                 )
             } catch {
                 throw TextForSpeech.PersistenceError.couldNotCreateDirectory(
                     directoryURL,
-                    error.localizedDescription
+                    error.localizedDescription,
                 )
             }
 
@@ -89,7 +89,7 @@ public extension TextForSpeech.Runtime {
             } catch {
                 throw TextForSpeech.PersistenceError.couldNotWrite(
                     fileURL,
-                    "TextForSpeech could not encode the current profile state before writing it. \(error.localizedDescription)"
+                    "TextForSpeech could not encode the current profile state before writing it. \(error.localizedDescription)",
                 )
             }
 
@@ -98,7 +98,7 @@ public extension TextForSpeech.Runtime {
             } catch {
                 throw TextForSpeech.PersistenceError.couldNotWrite(
                     fileURL,
-                    error.localizedDescription
+                    error.localizedDescription,
                 )
             }
         }

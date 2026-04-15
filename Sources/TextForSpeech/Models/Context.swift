@@ -17,7 +17,7 @@ public extension TextForSpeech {
             cwd: String? = nil,
             repoRoot: String? = nil,
             textFormat: TextFormat? = nil,
-            nestedSourceFormat: SourceFormat? = nil
+            nestedSourceFormat: SourceFormat? = nil,
         ) {
             self.cwd = Context.normalizedPath(cwd)
             self.repoRoot = Context.normalizedPath(repoRoot)

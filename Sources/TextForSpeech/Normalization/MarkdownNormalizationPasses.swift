@@ -7,7 +7,7 @@ extension TextNormalizer {
 
     static func normalizeFencedCodeBlocks(
         _ text: String,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         guard !lines.isEmpty else { return text }
@@ -44,7 +44,7 @@ extension TextNormalizer {
 
     static func normalizeInlineCodeSpans(
         _ text: String,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let bodies = inlineCodeBodies(in: text)
         guard !bodies.isEmpty else { return text }

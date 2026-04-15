@@ -32,7 +32,7 @@ public extension TextForSpeech.Profile {
     private static func spokenExtensionAlias(
         _ extensionText: String,
         as spokenAlias: String,
-        id: String
+        id: String,
     ) -> TextForSpeech.Replacement {
         // Keep these aliases ahead of file-reference narration so rewritten
         // suffixes are already in place when path and file-line passes run.
@@ -40,7 +40,7 @@ public extension TextForSpeech.Profile {
             extensionText,
             with: spokenAlias,
             id: id,
-            priority: 35
+            priority: 35,
         )
     }
 }

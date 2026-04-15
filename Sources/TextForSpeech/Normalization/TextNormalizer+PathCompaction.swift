@@ -16,7 +16,7 @@ extension TextNormalizer {
 
     static func compactRepeatedFilePathPrefixes(
         _ text: String,
-        context: TextForSpeech.Context?
+        context: TextForSpeech.Context?,
     ) -> String {
         var state = PathCompactionState()
 
@@ -38,9 +38,8 @@ extension TextNormalizer {
             }
 
             if let directoryKey = descriptor.directoryKey,
-                state.seenDirectories.contains(directoryKey),
-                let finalSegmentSpoken = descriptor.finalSegmentSpoken
-            {
+               state.seenDirectories.contains(directoryKey),
+               let finalSegmentSpoken = descriptor.finalSegmentSpoken {
                 return "same directory, \(finalSegmentSpoken)"
             }
 
@@ -50,15 +49,14 @@ extension TextNormalizer {
 
     private static func pathCompactionDescriptor(
         for path: String,
-        context: TextForSpeech.Context?
+        context: TextForSpeech.Context?,
     ) -> PathCompactionDescriptor? {
         let contextualPath = contextualizedPath(path, context: context)
         var comparableAnchor = normalizedComparableAnchor(for: contextualPath)
         var comparablePath = contextualPath.path
 
         if contextualPath.spokenContextPrefix == nil,
-            let alias = aliasedPathPrefix(in: contextualPath.path)
-        {
+           let alias = aliasedPathPrefix(in: contextualPath.path) {
             comparableAnchor = alias.spokenName
             comparablePath = String(contextualPath.path[alias.range.upperBound...])
         } else if contextualPath.spokenContextPrefix == nil, comparablePath == "~" {
@@ -89,12 +87,12 @@ extension TextNormalizer {
         return PathCompactionDescriptor(
             exactKey: exactKey,
             directoryKey: directoryKey?.isEmpty == true ? nil : directoryKey,
-            finalSegmentSpoken: segments.last.map { spokenPath($0) }
+            finalSegmentSpoken: segments.last.map { spokenPath($0) },
         )
     }
 
     private static func normalizedComparableAnchor(
-        for contextualPath: ContextualizedPath
+        for contextualPath: ContextualizedPath,
     ) -> String? {
         guard let spokenContextPrefix = contextualPath.spokenContextPrefix else {
             return nil

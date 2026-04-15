@@ -7,12 +7,12 @@ extension TextNormalizer {
 
     static func normalizeStructuredSourceLines(
         _ text: String,
-        format: TextForSpeech.SourceFormat
+        format: TextForSpeech.SourceFormat,
     ) -> String {
         applySingleBaseRule(
             id: "base-source-line",
             to: text,
-            format: .source(format)
+            format: .source(format),
         )
     }
 
@@ -22,7 +22,7 @@ extension TextNormalizer {
         applySingleBaseRule(
             id: "base-url",
             to: text,
-            format: .text(.plain)
+            format: .text(.plain),
         )
     }
 
@@ -35,10 +35,10 @@ extension TextNormalizer {
                 replacements: [
                     TextForSpeech.Profile.base.replacement(id: "base-galew"),
                     TextForSpeech.Profile.base.replacement(id: "base-galem"),
-                ].compactMap { $0 }
+                ].compactMap { $0 },
             ),
             format: .text(.plain),
-            phase: .beforeBuiltIns
+            phase: .beforeBuiltIns,
         )
     }
 
@@ -47,13 +47,13 @@ extension TextNormalizer {
         context: TextForSpeech.Context? = nil,
         profile _: TextForSpeech.Profile = .default,
         format _: NormalizationFormat = .text(.plain),
-        nestedFormat _: TextForSpeech.SourceFormat? = nil
+        nestedFormat _: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         applySingleBaseRule(
             id: "base-file-path",
             to: text,
             format: .text(.plain),
-            context: context
+            context: context,
         )
     }
 
@@ -61,7 +61,7 @@ extension TextNormalizer {
         applySingleBaseRule(
             id: "base-dotted-identifier",
             to: text,
-            format: .text(.plain)
+            format: .text(.plain),
         )
     }
 
@@ -69,7 +69,7 @@ extension TextNormalizer {
         applySingleBaseRule(
             id: "base-snake-identifier",
             to: text,
-            format: .text(.plain)
+            format: .text(.plain),
         )
     }
 
@@ -77,7 +77,7 @@ extension TextNormalizer {
         applySingleBaseRule(
             id: "base-dashed-identifier",
             to: text,
-            format: .text(.plain)
+            format: .text(.plain),
         )
     }
 
@@ -85,7 +85,7 @@ extension TextNormalizer {
         applySingleBaseRule(
             id: "base-camel-identifier",
             to: text,
-            format: .text(.plain)
+            format: .text(.plain),
         )
     }
 
@@ -94,20 +94,20 @@ extension TextNormalizer {
     static func normalizeCodeHeavyLines(
         _ text: String,
         format: NormalizationFormat,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
-        let ruleID: String = switch format {
-        case .text:
-            "base-text-code-line"
-        case .source:
-            "base-source-line"
+        let ruleID = switch format {
+            case .text:
+                "base-text-code-line"
+            case .source:
+                "base-source-line"
         }
 
         return applySingleBaseRule(
             id: ruleID,
             to: text,
             format: format,
-            nestedFormat: nestedFormat
+            nestedFormat: nestedFormat,
         )
     }
 
@@ -117,7 +117,7 @@ extension TextNormalizer {
         applySingleBaseRule(
             id: "base-repeated-letter-run",
             to: text,
-            format: .text(.plain)
+            format: .text(.plain),
         )
     }
 
@@ -128,7 +128,7 @@ extension TextNormalizer {
         to text: String,
         format: NormalizationFormat,
         context: TextForSpeech.Context? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         guard let rule = TextForSpeech.Profile.base.replacement(id: id) else { return text }
 
@@ -137,12 +137,12 @@ extension TextNormalizer {
             profile: TextForSpeech.Profile(
                 id: "base-\(id)",
                 name: "Base \(id)",
-                replacements: [rule]
+                replacements: [rule],
             ),
             format: format,
             phase: .beforeBuiltIns,
             context: context,
-            nestedFormat: nestedFormat
+            nestedFormat: nestedFormat,
         )
     }
 }

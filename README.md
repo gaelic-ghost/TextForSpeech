@@ -201,6 +201,13 @@ swift build
 swift test
 ```
 
+The repository also uses checked-in SwiftFormat and SwiftLint configuration:
+
+```bash
+swiftformat --lint --config .swiftformat .
+swiftlint lint --config .swiftlint.yml
+```
+
 For repository workflow expectations, architecture boundaries, and doc-sync rules, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Verification
@@ -210,6 +217,8 @@ The baseline verification path for this repository is:
 ```bash
 swift build
 swift test
+swiftformat --lint --config .swiftformat .
+swiftlint lint --config .swiftlint.yml
 ```
 
 For release work or architectural refactors, also review the current roadmap in [ROADMAP.md](ROADMAP.md) and the maintainer notes under [docs/maintainers](docs/maintainers).

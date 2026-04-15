@@ -9,14 +9,14 @@ public extension TextForSpeech.Profile {
             with: "gale wumbo",
             id: "base-galew",
             matching: .wholeToken,
-            priority: -10
+            priority: -10,
         ),
         TextForSpeech.Replacement(
             "galem",
             with: "gale mini",
             id: "base-galem",
             matching: .wholeToken,
-            priority: -10
+            priority: -10,
         ),
     ]
 }

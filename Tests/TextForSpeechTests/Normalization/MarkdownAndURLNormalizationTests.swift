@@ -3,7 +3,7 @@ import Testing
 
 // MARK: - Markdown and URL Handling
 
-@Test func fencedCodeBlocksBecomeSpokenCodeSamples() {
+@Test func `fenced code blocks become spoken code samples`() {
     let text = """
     Before
     ```swift
@@ -19,7 +19,7 @@ import Testing
     #expect(normalized.contains("End code sample."))
 }
 
-@Test func inlineCodeSpansBecomeSpeakable() {
+@Test func `inline code spans become speakable`() {
     let text = "Read `profile?.sampleRate ?? 24000` once."
 
     let normalized = TextNormalizer.normalizeInlineCodeSpans(text)
@@ -28,7 +28,7 @@ import Testing
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
-@Test func markdownLinksPreserveLabelAndDestination() {
+@Test func `markdown links preserve label and destination`() {
     let text = "Open [the docs](https://example.com/docs) now."
 
     let normalized = TextNormalizer.normalizeMarkdownLinks(text)
@@ -36,7 +36,7 @@ import Testing
     #expect(normalized.contains("the docs, link https://example.com/docs"))
 }
 
-@Test func urlsBecomeSpokenUrls() {
+@Test func `urls become spoken urls`() {
     let text = "Open https://example.com/docs now."
 
     let normalized = TextNormalizer.normalizeURLs(text)
@@ -45,7 +45,7 @@ import Testing
     #expect(!normalized.contains("https"))
 }
 
-@Test func urlsOmitLeadingWWW() {
+@Test func `urls omit leading WWW`() {
     let text = "Open https://www.example.com/docs now."
 
     let normalized = TextNormalizer.normalizeURLs(text)
@@ -54,7 +54,7 @@ import Testing
     #expect(!normalized.contains("www"))
 }
 
-@Test func nonHTTPURLsKeepTheirScheme() {
+@Test func `non HTTPUR ls keep their scheme`() {
     let text = "Open file://tmp/Thing now."
 
     let normalized = TextNormalizer.normalizeURLs(text)

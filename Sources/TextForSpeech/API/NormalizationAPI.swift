@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Normalization API
+// MARK: - TextForSpeech.Normalize
 
 public extension TextForSpeech {
     enum Normalize {}
@@ -13,14 +13,14 @@ public extension TextForSpeech.Normalize {
         customProfile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,
         format: TextForSpeech.TextFormat? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         TextNormalizer.normalizeText(
             text,
             context: context,
             profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: customProfile),
             format: format,
-            nestedFormat: nestedFormat
+            nestedFormat: nestedFormat,
         )
     }
 
@@ -29,14 +29,14 @@ public extension TextForSpeech.Normalize {
         as format: TextForSpeech.SourceFormat,
         context: TextForSpeech.Context? = nil,
         customProfile: TextForSpeech.Profile = .default,
-        style: TextForSpeech.BuiltInProfileStyle = .balanced
+        style: TextForSpeech.BuiltInProfileStyle = .balanced,
     ) -> String {
         SourceNormalizer.normalize(
             source,
             as: format,
             context: context,
             profile: customProfile,
-            style: style
+            style: style,
         )
     }
 

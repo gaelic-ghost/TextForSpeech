@@ -38,7 +38,7 @@ extension TextNormalizer {
             .replacingOccurrences(
                 of: #"\s+([,.;:?!])"#,
                 with: "$1",
-                options: .regularExpression
+                options: .regularExpression,
             )
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }

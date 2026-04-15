@@ -38,7 +38,7 @@ extension TextNormalizer {
 
     static func spokenCodeBlock(
         _ body: String,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat)
         return spoken.isEmpty ? "Code sample." : "Code sample. \(spoken). End code sample."
@@ -46,7 +46,7 @@ extension TextNormalizer {
 
     static func spokenInlineCode(
         _ body: String,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat)
         return spoken.isEmpty ? " code " : " \(spoken) "
@@ -54,7 +54,7 @@ extension TextNormalizer {
 
     static func spokenEmbeddedCode(
         _ body: String,
-        nestedFormat: TextForSpeech.SourceFormat? = nil
+        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         if let nestedFormat {
             return SourceNormalizer.normalizeEmbedded(body, as: nestedFormat)
@@ -65,8 +65,8 @@ extension TextNormalizer {
 
     static func spokenSource(_ text: String, format: TextForSpeech.SourceFormat) -> String {
         switch format {
-        case .generic, .swift, .python, .rust:
-            spokenCode(text)
+            case .generic, .swift, .python, .rust:
+                spokenCode(text)
         }
     }
 
@@ -85,7 +85,7 @@ extension TextNormalizer {
         let acronymNormalized = text.replacingOccurrences(
             of: #"([a-z])([A-Z]{2,})([A-Z][a-z])"#,
             with: "$1 $2 $3",
-            options: .regularExpression
+            options: .regularExpression,
         )
 
         var output = ""
@@ -102,8 +102,8 @@ extension TextNormalizer {
 
             let needsBreak =
                 (previous.isLowercase && character.isUppercase)
-                || (previous.isLetter && character.isNumber)
-                || (previous.isNumber && character.isLetter)
+                    || (previous.isLetter && character.isNumber)
+                    || (previous.isNumber && character.isLetter)
 
             if needsBreak, output.last != " " {
                 output.append(" ")
@@ -132,9 +132,8 @@ extension TextNormalizer {
             if index + 1 < words.count,
                let combinedTypeExpansion = spokenTypedNumericWord(
                    head: lowercasedCurrent,
-                   width: words[index + 1]
-               )
-            {
+                   width: words[index + 1],
+               ) {
                 expanded.append(combinedTypeExpansion)
                 index += 2
                 continue
@@ -151,14 +150,14 @@ extension TextNormalizer {
         guard let spokenWidth = spokenNumericWidths[width] else { return nil }
 
         switch head {
-        case "f", "float":
-            return "float \(spokenWidth)"
-        case "i", "int":
-            return "signed integer \(spokenWidth)"
-        case "u", "uint":
-            return "unsigned integer \(spokenWidth)"
-        default:
-            return nil
+            case "f", "float":
+                return "float \(spokenWidth)"
+            case "i", "int":
+                return "signed integer \(spokenWidth)"
+            case "u", "uint":
+                return "unsigned integer \(spokenWidth)"
+            default:
+                return nil
         }
     }
 }

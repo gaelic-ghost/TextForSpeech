@@ -10,13 +10,13 @@ enum SourceNormalizer {
         as format: TextForSpeech.SourceFormat,
         context: TextForSpeech.Context? = nil,
         profile: TextForSpeech.Profile = .default,
-        style: TextForSpeech.BuiltInProfileStyle = .balanced
+        style: TextForSpeech.BuiltInProfileStyle = .balanced,
     ) -> String {
         TextNormalizer.normalizeSource(
             source,
             context: context,
             profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: profile),
-            format: format
+            format: format,
         )
     }
 
@@ -24,12 +24,12 @@ enum SourceNormalizer {
 
     static func normalizeEmbedded(
         _ source: String,
-        as format: TextForSpeech.SourceFormat
+        as format: TextForSpeech.SourceFormat,
     ) -> String {
         TextNormalizer.normalizeSource(
             source,
             profile: .base,
-            format: format
+            format: format,
         )
     }
 }

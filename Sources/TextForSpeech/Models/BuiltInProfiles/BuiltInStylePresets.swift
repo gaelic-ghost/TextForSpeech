@@ -10,41 +10,41 @@ public extension TextForSpeech.Profile {
                 id: "balanced-function-call",
                 matching: .token(.functionCall),
                 using: .spokenFunctionCall(.balanced),
-                priority: 40
+                priority: 40,
             ),
             TextForSpeech.Replacement(
                 id: "balanced-issue-reference",
                 matching: .token(.issueReference),
                 using: .spokenIssueReference(.balanced),
-                priority: 30
+                priority: 30,
             ),
             TextForSpeech.Replacement(
                 id: "balanced-file-reference",
                 matching: .token(.fileLineReference),
                 using: .spokenFileReference(.balanced),
-                priority: 20
+                priority: 20,
             ),
             TextForSpeech.Replacement(
                 id: "balanced-cli-flag",
                 matching: .token(.cliFlag),
                 using: .spokenCLIFlag(.balanced),
-                priority: 10
+                priority: 10,
             ),
             TextForSpeech.Replacement(
                 id: "base-text-code-line",
                 matching: .line(.codeLike),
                 using: .spokenCode,
                 forTextFormats: Set(TextForSpeech.TextFormat.allCases),
-                priority: -80
+                priority: -80,
             ),
             TextForSpeech.Replacement(
                 id: "base-source-line",
                 matching: .line(.nonEmpty),
                 using: .spokenCode,
                 forSourceFormats: [.generic],
-                priority: -90
+                priority: -90,
             ),
-        ]
+        ],
     )
 
     /// A terser shipped listening mode for contexts where more visual detail
@@ -57,27 +57,27 @@ public extension TextForSpeech.Profile {
                 id: "compact-function-call",
                 matching: .token(.functionCall),
                 using: .spokenFunctionCall(.compact),
-                priority: 40
+                priority: 40,
             ),
             TextForSpeech.Replacement(
                 id: "compact-issue-reference",
                 matching: .token(.issueReference),
                 using: .spokenIssueReference(.compact),
-                priority: 30
+                priority: 30,
             ),
             TextForSpeech.Replacement(
                 id: "compact-file-reference",
                 matching: .token(.fileLineReference),
                 using: .spokenFileReference(.compact),
-                priority: 20
+                priority: 20,
             ),
             TextForSpeech.Replacement(
                 id: "compact-cli-flag",
                 matching: .token(.cliFlag),
                 using: .spokenCLIFlag(.compact),
-                priority: 10
+                priority: 10,
             ),
-        ]
+        ],
     )
 
     /// A more narrated shipped listening mode for audio-first experiences that
@@ -90,40 +90,40 @@ public extension TextForSpeech.Profile {
                 id: "explicit-function-call",
                 matching: .token(.functionCall),
                 using: .spokenFunctionCall(.explicit),
-                priority: 40
+                priority: 40,
             ),
             TextForSpeech.Replacement(
                 id: "explicit-issue-reference",
                 matching: .token(.issueReference),
                 using: .spokenIssueReference(.explicit),
-                priority: 30
+                priority: 30,
             ),
             TextForSpeech.Replacement(
                 id: "explicit-file-reference",
                 matching: .token(.fileLineReference),
                 using: .spokenFileReference(.explicit),
-                priority: 20
+                priority: 20,
             ),
             TextForSpeech.Replacement(
                 id: "explicit-cli-flag",
                 matching: .token(.cliFlag),
                 using: .spokenCLIFlag(.explicit),
-                priority: 10
+                priority: 10,
             ),
             TextForSpeech.Replacement(
                 id: "base-text-code-line",
                 matching: .line(.codeLike),
                 using: .spokenCode,
                 forTextFormats: Set(TextForSpeech.TextFormat.allCases),
-                priority: -80
+                priority: -80,
             ),
             TextForSpeech.Replacement(
                 id: "base-source-line",
                 matching: .line(.nonEmpty),
                 using: .spokenCode,
                 forSourceFormats: [.generic],
-                priority: -90
+                priority: -90,
             ),
-        ]
+        ],
     )
 }

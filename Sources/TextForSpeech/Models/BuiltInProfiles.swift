@@ -7,25 +7,25 @@ public extension TextForSpeech.Profile {
         id: "semantic-core",
         name: "Semantic Core",
         replacements:
-            semanticAliasReplacements
+        semanticAliasReplacements
             + scalarPronunciationReplacements
             + extensionAliasReplacements
-            + semanticTokenTransformReplacements
+            + semanticTokenTransformReplacements,
     )
 
     static func builtInStyle(_ style: TextForSpeech.BuiltInProfileStyle) -> TextForSpeech.Profile {
         switch style {
-        case .balanced:
-            balancedBuiltInStyle
-        case .compact:
-            compactBuiltInStyle
-        case .explicit:
-            explicitBuiltInStyle
+            case .balanced:
+                balancedBuiltInStyle
+            case .compact:
+                compactBuiltInStyle
+            case .explicit:
+                explicitBuiltInStyle
         }
     }
 
     static func builtInBase(
-        style: TextForSpeech.BuiltInProfileStyle
+        style: TextForSpeech.BuiltInProfileStyle,
     ) -> TextForSpeech.Profile {
         semanticCore.merged(with: builtInStyle(style))
     }

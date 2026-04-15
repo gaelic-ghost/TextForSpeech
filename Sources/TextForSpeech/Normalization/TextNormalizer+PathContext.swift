@@ -30,18 +30,18 @@ extension TextNormalizer {
 
     static func standaloneGaleAlias(for token: String) -> String? {
         switch token.lowercased() {
-        case "galew":
-            "gale wumbo"
-        case "galem":
-            "gale mini"
-        default:
-            nil
+            case "galew":
+                "gale wumbo"
+            case "galem":
+                "gale mini"
+            default:
+                nil
         }
     }
 
     static func contextualizedPath(
         _ path: String,
-        context: TextForSpeech.Context?
+        context: TextForSpeech.Context?,
     ) -> ContextualizedPath {
         guard path.hasPrefix("/") else {
             return ContextualizedPath(path: path, spokenContextPrefix: nil)
@@ -50,15 +50,13 @@ extension TextNormalizer {
         let standardizedPath = NSString(string: path).standardizingPath
 
         if let cwd = context?.cwd,
-            let relativePath = relativePath(from: cwd, to: standardizedPath)
-        {
+           let relativePath = relativePath(from: cwd, to: standardizedPath) {
             let spokenContextPrefix = relativePath.isEmpty ? "current directory" : "current directory slash"
             return ContextualizedPath(path: relativePath, spokenContextPrefix: spokenContextPrefix)
         }
 
         if let repoRoot = context?.repoRoot,
-            let relativePath = relativePath(from: repoRoot, to: standardizedPath)
-        {
+           let relativePath = relativePath(from: repoRoot, to: standardizedPath) {
             let spokenContextPrefix = relativePath.isEmpty ? "repo root" : "repo root slash"
             return ContextualizedPath(path: relativePath, spokenContextPrefix: spokenContextPrefix)
         }
@@ -72,7 +70,6 @@ extension TextNormalizer {
         guard standardizedPathBoundaryMatches(path, prefix: standardizedBasePath) else {
             return nil
         }
-
         guard path.count > standardizedBasePath.count else {
             return ""
         }
