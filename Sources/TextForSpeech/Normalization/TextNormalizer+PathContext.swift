@@ -51,13 +51,13 @@ extension TextNormalizer {
 
         if let cwd = context?.cwd,
            let relativePath = relativePath(from: cwd, to: standardizedPath) {
-            let spokenContextPrefix = relativePath.isEmpty ? "current directory" : "current directory slash"
+            let spokenContextPrefix = "current directory"
             return ContextualizedPath(path: relativePath, spokenContextPrefix: spokenContextPrefix)
         }
 
         if let repoRoot = context?.repoRoot,
            let relativePath = relativePath(from: repoRoot, to: standardizedPath) {
-            let spokenContextPrefix = relativePath.isEmpty ? "repo root" : "repo root slash"
+            let spokenContextPrefix = "repo root"
             return ContextualizedPath(path: relativePath, spokenContextPrefix: spokenContextPrefix)
         }
 

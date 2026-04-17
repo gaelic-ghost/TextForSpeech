@@ -53,11 +53,11 @@ enum TextNormalizer {
 
     static var normalizationPasses: [ContextualNormalizationPass] {
         [
-            { text, _, _, _, nestedFormat in
-                normalizeFencedCodeBlocks(text, nestedFormat: nestedFormat)
+            { text, context, _, _, nestedFormat in
+                normalizeFencedCodeBlocks(text, context: context, nestedFormat: nestedFormat)
             },
-            { text, _, _, _, nestedFormat in
-                normalizeInlineCodeSpans(text, nestedFormat: nestedFormat)
+            { text, context, _, _, nestedFormat in
+                normalizeInlineCodeSpans(text, context: context, nestedFormat: nestedFormat)
             },
             { text, _, _, _, _ in normalizeMarkdownLinks(text) },
             { text, context, _, _, _ in

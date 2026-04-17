@@ -14,7 +14,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = TextForSpeech.Normalize.text(original)
 
-    #expect(normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
+    #expect(normalized.contains("gale wumbo Workspace Speak Swiftly"))
     #expect(normalized.contains("NSApplication dot did Finish Launching Notification"))
     #expect(normalized.contains("camel Case Stuff"))
     #expect(normalized.contains("snake case stuff"))
@@ -48,7 +48,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("example dot com slash docs slash path now"))
-    #expect(normalized.contains("tmp slash Thing"))
+    #expect(normalized.contains("tmp Thing"))
 }
 
 @Test func `repeated underscores collapse to speech safe spacing`() {
@@ -57,7 +57,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("snake case"))
-    #expect(normalized.contains("tmp slash path now"))
+    #expect(normalized.contains("tmp path now"))
     #expect(!normalized.contains("underscore"))
     #expect(!normalized.contains("___"))
 }
@@ -68,7 +68,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("kebab case"))
-    #expect(normalized.contains("tmp slash path now"))
+    #expect(normalized.contains("tmp path now"))
     #expect(!normalized.contains("dash"))
     #expect(!normalized.contains("---"))
 }
@@ -84,7 +84,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
         ),
     )
 
-    #expect(normalized.contains("current directory slash Sources slash Speak Swiftly"))
+    #expect(normalized.contains("current directory Sources Speak Swiftly"))
     #expect(!normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
 }
 
@@ -101,7 +101,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
         ),
     )
 
-    let sharedPrefix = "current directory slash Sources slash Speak Swiftly"
+    let sharedPrefix = "current directory Sources Speak Swiftly"
     #expect(occurrenceCount(of: sharedPrefix, in: normalized) == 1)
     #expect(normalized.contains("Speech Text Normalizer dot swift"))
     #expect(normalized.contains("same directory, Worker Runtime dot swift"))
@@ -114,9 +114,9 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = TextForSpeech.Normalize.text(original)
 
-    #expect(normalized.contains("tmp slash Thing dot swift"))
+    #expect(normalized.contains("tmp Thing dot swift"))
     #expect(normalized.contains("same path"))
-    #expect(occurrenceCount(of: "tmp slash Thing dot swift", in: normalized) == 1)
+    #expect(occurrenceCount(of: "tmp Thing dot swift", in: normalized) == 1)
 }
 
 @Test func `normalize applies custom replacements around built ins`() {
@@ -226,6 +226,30 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     #expect(normalized.contains("optional chaining"))
     #expect(normalized.contains("nil coalescing"))
+}
+
+@Test func `inline code file paths use path speech instead of generic code speech`() {
+    let normalized = TextForSpeech.Normalize.text(
+        "Read `/Users/galew/Workspace/SpeakSwiftly/WorkerRuntime.swift` now.",
+        format: .markdown,
+    )
+
+    #expect(normalized.contains("gale wumbo Workspace Speak Swiftly Worker Runtime dot swift"))
+    #expect(!normalized.contains("gale wumbo slash Workspace"))
+}
+
+@Test func `inline code file paths keep context aware shortening`() {
+    let normalized = TextForSpeech.Normalize.text(
+        "Read `/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift` now.",
+        context: TextForSpeech.Context(
+            cwd: "/Users/galew/Workspace/SpeakSwiftly",
+            repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
+            textFormat: .markdown,
+        ),
+    )
+
+    #expect(normalized.contains("current directory Sources Speak Swiftly Worker Runtime dot swift"))
+    #expect(!normalized.contains("current directory slash"))
 }
 
 @Test func `normalize source provides explicit whole source lane`() {

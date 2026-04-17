@@ -7,6 +7,7 @@ extension TextNormalizer {
 
     static func normalizeFencedCodeBlocks(
         _ text: String,
+        context: TextForSpeech.Context? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -21,7 +22,9 @@ extension TextNormalizer {
             if trimmed.hasPrefix("```") {
                 if insideFence {
                     let body = bufferedCode.joined(separator: "\n")
-                    output.append(spokenCodeBlock(body, nestedFormat: nestedFormat))
+                    output.append(
+                        spokenCodeBlock(body, nestedFormat: nestedFormat, context: context)
+                    )
                     bufferedCode.removeAll(keepingCapacity: true)
                 }
                 insideFence.toggle()
@@ -36,7 +39,13 @@ extension TextNormalizer {
         }
 
         if insideFence, !bufferedCode.isEmpty {
-            output.append(spokenCodeBlock(bufferedCode.joined(separator: "\n"), nestedFormat: nestedFormat))
+            output.append(
+                spokenCodeBlock(
+                    bufferedCode.joined(separator: "\n"),
+                    nestedFormat: nestedFormat,
+                    context: context,
+                )
+            )
         }
 
         return output.joined(separator: "\n")
@@ -44,6 +53,7 @@ extension TextNormalizer {
 
     static func normalizeInlineCodeSpans(
         _ text: String,
+        context: TextForSpeech.Context? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let bodies = inlineCodeBodies(in: text)
@@ -70,7 +80,7 @@ extension TextNormalizer {
 
             let body = String(text[contentStart..<closing])
             if body == expectedBody {
-                result += spokenInlineCode(body, nestedFormat: nestedFormat)
+                result += spokenInlineCode(body, nestedFormat: nestedFormat, context: context)
                 index = text.index(after: closing)
                 nextBody = bodyIterator.next()
             } else {

@@ -8,7 +8,7 @@ import Testing
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
 
-    #expect(normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
+    #expect(normalized.contains("gale wumbo Workspace Speak Swiftly"))
     #expect(normalized.contains("Speech Text Normalizer dot swift"))
 }
 
@@ -17,7 +17,7 @@ import Testing
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
 
-    #expect(normalized.contains("gale mini slash Workspace slash Speak Swiftly"))
+    #expect(normalized.contains("gale mini Workspace Speak Swiftly"))
 }
 
 @Test func `dashed file paths become speech safe spacing`() {
@@ -25,7 +25,7 @@ import Testing
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
 
-    #expect(normalized.contains("tmp slash speak to user slash path now"))
+    #expect(normalized.contains("tmp speak to user path now"))
     #expect(!normalized.contains("dash"))
 }
 
@@ -40,9 +40,10 @@ import Testing
         ),
     )
 
-    #expect(normalized.contains("current directory slash Sources slash Speak Swiftly"))
+    #expect(normalized.contains("current directory Sources Speak Swiftly"))
     #expect(normalized.contains("Speech Text Normalizer dot swift"))
     #expect(!normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
+    #expect(!normalized.contains("gale wumbo Workspace Speak Swiftly slash"))
 }
 
 @Test func `file paths inside repo root but outside current directory keep repo root context`() {
@@ -56,7 +57,7 @@ import Testing
         ),
     )
 
-    #expect(normalized.contains("repo root slash README dot md"))
+    #expect(normalized.contains("repo root README dot md"))
     #expect(!normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
 }
 

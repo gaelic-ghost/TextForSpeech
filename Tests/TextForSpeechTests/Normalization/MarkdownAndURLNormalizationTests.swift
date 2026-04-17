@@ -28,6 +28,15 @@ import Testing
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
+@Test func `inline file path spans do not fall back to spoken slash code`() {
+    let text = "Read `/tmp/Thing.swift` once."
+
+    let normalized = TextNormalizer.normalizeInlineCodeSpans(text)
+
+    #expect(normalized.contains("tmp Thing dot swift"))
+    #expect(!normalized.contains("tmp slash Thing"))
+}
+
 @Test func `markdown links preserve label and destination`() {
     let text = "Open [the docs](https://example.com/docs) now."
 

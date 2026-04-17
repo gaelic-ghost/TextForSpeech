@@ -39,25 +39,40 @@ extension TextNormalizer {
     static func spokenCodeBlock(
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
+        context: TextForSpeech.Context? = nil,
     ) -> String {
-        let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat)
+        let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat, context: context)
         return spoken.isEmpty ? "Code sample." : "Code sample. \(spoken). End code sample."
     }
 
     static func spokenInlineCode(
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
+        context: TextForSpeech.Context? = nil,
     ) -> String {
-        let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat)
+        let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat, context: context)
         return spoken.isEmpty ? " code " : " \(spoken) "
     }
 
     static func spokenEmbeddedCode(
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
+        context: TextForSpeech.Context? = nil,
     ) -> String {
         if let nestedFormat {
             return SourceNormalizer.normalizeEmbedded(body, as: nestedFormat)
+        }
+
+        if isLikelyFileLineReference(body) {
+            return spokenFileReference(body, style: .balanced)
+        }
+
+        if isLikelyURL(body) {
+            return spokenURL(body)
+        }
+
+        if isLikelyFilePath(body) {
+            return spokenPath(body, context: context)
         }
 
         return spokenCode(body)
