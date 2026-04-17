@@ -70,12 +70,8 @@ extension TextNormalizer {
                     segments.append("home")
                 case "/":
                     flushBuffer()
-                    if !segments.isEmpty {
-                        segments.append("slash")
-                    }
                 case "\\":
                     flushBuffer()
-                    segments.append("backslash")
                 case ".":
                     flushBuffer()
                     segments.append("dot")
@@ -107,11 +103,11 @@ extension TextNormalizer {
                 remainder.removeFirst(4)
             }
 
-            return spokenPath(remainder)
+            return spokenSlashSeparatedPath(remainder)
         }
 
         return collapseWhitespace(
-            "\(spokenSegment(String(scheme))) colon slash slash \(spokenPath(remainder))",
+            "\(spokenSegment(String(scheme))) colon slash slash \(spokenSlashSeparatedPath(remainder))",
         )
     }
 
@@ -228,5 +224,37 @@ extension TextNormalizer {
             case .explicit:
                 return isLongFlag ? "long flag \(spokenBody)" : "short flag \(spokenBody)"
         }
+    }
+
+    private static func spokenSlashSeparatedPath(_ text: String) -> String {
+        var segments: [String] = []
+        var buffer = ""
+
+        func flushBuffer() {
+            guard !buffer.isEmpty else { return }
+
+            segments.append(spokenSegment(buffer))
+            buffer.removeAll(keepingCapacity: true)
+        }
+
+        for character in text {
+            switch character {
+                case "/":
+                    flushBuffer()
+                    if !segments.isEmpty {
+                        segments.append("slash")
+                    }
+                case ".":
+                    flushBuffer()
+                    segments.append("dot")
+                case "_", "-":
+                    flushBuffer()
+                default:
+                    buffer.append(character)
+            }
+        }
+
+        flushBuffer()
+        return collapseWhitespace(segments.joined(separator: " "))
     }
 }

@@ -160,6 +160,17 @@ The normalizer still owns:
 
 Those are document-structure or routing decisions rather than durable lexical policy. Treating them as replacement rules would make the system harder, not easier, to reason about.
 
+## File-path invariant
+
+For file paths, the required spoken behavior is:
+
+- collapse path separators to spacing rather than saying `slash` or `backslash`
+- keep extension narration such as `dot swift`
+- keep path-context shortening such as `current directory` and `repo root`
+- preserve the path-specific lane even when a path appears inside markdown inline code or fenced code
+
+This package exists to reduce downstream TTS damage for developer text, so maintainers should treat spoken separator words inside file paths as a regression unless a caller explicitly asks for separator narration.
+
 ## Runtime ownership
 
 `TextForSpeech.Runtime` owns:

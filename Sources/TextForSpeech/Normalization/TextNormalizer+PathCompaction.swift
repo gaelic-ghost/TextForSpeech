@@ -94,14 +94,6 @@ extension TextNormalizer {
     private static func normalizedComparableAnchor(
         for contextualPath: ContextualizedPath,
     ) -> String? {
-        guard let spokenContextPrefix = contextualPath.spokenContextPrefix else {
-            return nil
-        }
-
-        if spokenContextPrefix.hasSuffix(" slash") {
-            return String(spokenContextPrefix.dropLast(" slash".count))
-        }
-
-        return spokenContextPrefix
+        contextualPath.spokenContextPrefix
     }
 }
