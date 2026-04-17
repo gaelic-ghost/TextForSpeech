@@ -13,6 +13,34 @@ extension TextNormalizer {
             || (token.contains("/") && !token.contains(" "))
     }
 
+    static func isLikelyEmbeddedFilePath(_ token: String) -> Bool {
+        guard isLikelyFilePath(token) else { return false }
+        guard !token.contains(" ") else { return false }
+
+        if token.hasPrefix("/") || token.hasPrefix("~/") {
+            return true
+        }
+
+        return token.contains("./")
+            || token.contains("../")
+            || token.contains("/Users/")
+            || token.contains("/tmp/")
+            || token.contains("/var/")
+            || token.contains("/private/")
+            || token.contains("/opt/")
+            || token.contains("/usr/")
+            || token.contains("/Library/")
+            || token.contains("/Applications/")
+            || token.contains("/Sources/")
+            || token.contains("/Tests/")
+            || token.contains("/docs/")
+            || token.contains("/scripts/")
+            || token.contains("/Packages/")
+            || token.contains("/.build/")
+            || token.contains("\\")
+            || token.contains(".")
+    }
+
     static func isLikelyURL(_ token: String) -> Bool {
         guard let schemeSeparator = token.range(of: "://") else { return false }
 

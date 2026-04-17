@@ -252,6 +252,30 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("current directory slash"))
 }
 
+@Test func `inline code file references keep context aware shortening`() {
+    let normalized = TextForSpeech.Normalize.text(
+        "Read `/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift:12` now.",
+        context: TextForSpeech.Context(
+            cwd: "/Users/galew/Workspace/SpeakSwiftly",
+            repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
+            textFormat: .markdown,
+        ),
+    )
+
+    #expect(normalized.contains("current directory Sources Speak Swiftly Worker Runtime dot swift at line 12"))
+    #expect(!normalized.contains("gale wumbo Workspace Speak Swiftly"))
+}
+
+@Test func `inline slash operators stay in code speech lane`() {
+    let normalized = TextForSpeech.Normalize.text(
+        "Read `a/b` once.",
+        format: .markdown,
+    )
+
+    #expect(normalized.contains("a slash b"))
+    #expect(!normalized.contains("same path"))
+}
+
 @Test func `normalize source provides explicit whole source lane`() {
     let source = """
     struct WorkerRuntime {
