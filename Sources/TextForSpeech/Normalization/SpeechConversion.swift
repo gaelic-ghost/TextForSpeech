@@ -181,11 +181,12 @@ extension TextNormalizer {
     static func spokenFileReference(
         _ text: String,
         style: TextForSpeech.Replacement.Transform.FileReferenceStyle,
+        context: TextForSpeech.Context? = nil,
     ) -> String {
         let parts = text.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
-        guard parts.count == 2 || parts.count == 3 else { return spokenPath(text) }
+        guard parts.count == 2 || parts.count == 3 else { return spokenPath(text, context: context) }
 
-        let file = spokenPath(parts[0])
+        let file = spokenPath(parts[0], context: context)
         let line = parts[1]
         let column = parts.count == 3 ? parts[2] : nil
 

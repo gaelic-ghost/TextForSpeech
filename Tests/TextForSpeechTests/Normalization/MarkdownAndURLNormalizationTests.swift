@@ -37,6 +37,15 @@ import Testing
     #expect(!normalized.contains("tmp slash Thing"))
 }
 
+@Test func `slash operators inside inline code stay code shaped`() {
+    let text = "Read `a/b` once."
+
+    let normalized = TextNormalizer.normalizeInlineCodeSpans(text)
+
+    #expect(normalized.contains("a slash b"))
+    #expect(!normalized.contains("same path"))
+}
+
 @Test func `markdown links preserve label and destination`() {
     let text = "Open [the docs](https://example.com/docs) now."
 

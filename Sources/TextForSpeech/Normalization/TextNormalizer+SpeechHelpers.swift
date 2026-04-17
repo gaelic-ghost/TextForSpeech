@@ -64,14 +64,14 @@ extension TextNormalizer {
         }
 
         if isLikelyFileLineReference(body) {
-            return spokenFileReference(body, style: .balanced)
+            return spokenFileReference(body, style: .balanced, context: context)
         }
 
         if isLikelyURL(body) {
             return spokenURL(body)
         }
 
-        if isLikelyFilePath(body) {
+        if isLikelyEmbeddedFilePath(body) {
             return spokenPath(body, context: context)
         }
 
