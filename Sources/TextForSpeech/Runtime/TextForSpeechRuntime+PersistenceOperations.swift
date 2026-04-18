@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Persistence Operations
-
 public extension TextForSpeech.Runtime.Persistence {
     var state: TextForSpeech.PersistedState {
         TextForSpeech.PersistedState(

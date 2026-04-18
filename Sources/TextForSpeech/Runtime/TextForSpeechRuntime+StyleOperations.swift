@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Style Operations
-
 public extension TextForSpeech.Runtime.Style {
     func getActive() -> TextForSpeech.BuiltInProfileStyle {
         runtime.builtInStyle

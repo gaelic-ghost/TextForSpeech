@@ -1,5 +1,3 @@
-// MARK: - Detection
-
 extension TextNormalizer {
     static func detectTextFormat(in text: String) -> TextForSpeech.TextFormat {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)

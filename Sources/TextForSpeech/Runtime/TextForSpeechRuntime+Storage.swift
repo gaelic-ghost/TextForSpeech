@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Storage
-
 extension TextForSpeech.Runtime {
     static func defaultPersistenceURL(bundleIdentifier: String?) -> URL {
         let packageDirectoryName = defaultPersistenceDirectoryName

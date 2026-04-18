@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Style
-
 public extension TextForSpeech.Runtime {
     struct Style {
         public struct Option: Sendable, Equatable, Identifiable {

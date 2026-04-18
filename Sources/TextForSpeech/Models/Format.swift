@@ -1,5 +1,3 @@
-// MARK: - Format
-
 public extension TextForSpeech {
     enum TextFormat: String, Codable, CaseIterable, Sendable, Hashable {
         case plain = "plain_text"

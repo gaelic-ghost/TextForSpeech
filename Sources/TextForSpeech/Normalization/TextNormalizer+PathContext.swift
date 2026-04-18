@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Path Context
-
 extension TextNormalizer {
     struct ContextualizedPath {
         let path: String

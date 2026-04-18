@@ -1,8 +1,6 @@
 import Foundation
 import NaturalLanguage
 
-// MARK: - Parsing Utilities
-
 extension TextNormalizer {
     // MARK: Link Parsing
 

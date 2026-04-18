@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Profiles
-
 public extension TextForSpeech.Runtime {
     struct Profiles {
         public struct Summary: Sendable, Equatable, Identifiable {

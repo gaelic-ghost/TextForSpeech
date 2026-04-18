@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Profile Mutations
-
 public extension TextForSpeech.Runtime.Profiles {
     func setActive(id: String) throws {
         guard runtime.storedCustomProfilesByID[id] != nil else {

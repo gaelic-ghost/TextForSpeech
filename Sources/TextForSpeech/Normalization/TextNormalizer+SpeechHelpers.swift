@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Speech Helpers
-
 extension TextNormalizer {
     private static let spokenWordExpansions: [String: String] = [
         "cos": "cosine",

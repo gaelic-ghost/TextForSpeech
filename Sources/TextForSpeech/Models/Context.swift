@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Context
-
 public extension TextForSpeech {
     struct Context: Codable, Sendable, Equatable {
         // MARK: Public State

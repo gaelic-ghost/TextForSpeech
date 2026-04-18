@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Profile Queries
-
 public extension TextForSpeech.Runtime.Profiles {
     func getActive() -> Details {
         let profile = runtime.activeCustomProfile()
@@ -31,12 +29,15 @@ public extension TextForSpeech.Runtime.Profiles {
     }
 
     func list() -> [Summary] {
-        runtime.storedCustomProfilesByID.values.sorted { lhs, rhs in
-            if lhs.name == rhs.name {
-                return lhs.id < rhs.id
-            }
+        runtime.storedCustomProfilesByID
+            .values
+            .sorted { lhs, rhs in
+                if lhs.name == rhs.name {
+                    return lhs.id < rhs.id
+                }
 
-            return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
-        }.map(Summary.init(profile:))
+                return lhs.name.localizedCaseInsensitiveCompare(rhs.name) == .orderedAscending
+            }
+            .map(Summary.init(profile:))
     }
 }

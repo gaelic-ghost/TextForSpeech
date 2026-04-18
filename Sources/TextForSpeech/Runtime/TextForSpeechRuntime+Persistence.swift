@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Persistence
-
 public extension TextForSpeech.Runtime {
     struct Persistence {
         let runtime: TextForSpeech.Runtime

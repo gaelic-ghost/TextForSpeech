@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Token Normalization Passes
-
 extension TextNormalizer {
     // MARK: Source Line Normalization
 

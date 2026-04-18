@@ -1,5 +1,3 @@
-// MARK: - Built-In Scalar Pronunciations
-
 public extension TextForSpeech.Profile {
     /// Whole-token scalar pronunciations for terse typed-width forms that are
     /// consistently unpleasant for speech models to interpret raw.

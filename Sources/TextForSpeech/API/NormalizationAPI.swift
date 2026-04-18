@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - TextForSpeech.Normalize
-
 public extension TextForSpeech {
     enum Normalize {}
 }

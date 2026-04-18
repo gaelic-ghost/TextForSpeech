@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Replacement
-
 public extension TextForSpeech {
     struct Replacement: Codable, Sendable, Equatable, Identifiable {
         public enum Match: Codable, Sendable, Equatable {

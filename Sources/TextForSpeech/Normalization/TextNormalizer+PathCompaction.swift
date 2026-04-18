@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Path Compaction
-
 extension TextNormalizer {
     struct PathCompactionDescriptor {
         let exactKey: String

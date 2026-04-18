@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Runtime Normalization Operations
-
 public extension TextForSpeech.Runtime.Normalization {
     func text(
         _ text: String,
@@ -26,10 +24,10 @@ public extension TextForSpeech.Runtime.Normalization {
         format: TextForSpeech.TextFormat? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) throws -> String {
-        TextForSpeech.Normalize.text(
+        try TextForSpeech.Normalize.text(
             text,
             context: context,
-            customProfile: try runtime.storedCustomProfile(id: id),
+            customProfile: runtime.storedCustomProfile(id: id),
             style: runtime.builtInStyle,
             format: format,
             nestedFormat: nestedFormat,
@@ -56,11 +54,11 @@ public extension TextForSpeech.Runtime.Normalization {
         usingProfileID id: String,
         context: TextForSpeech.Context? = nil,
     ) throws -> String {
-        TextForSpeech.Normalize.source(
+        try TextForSpeech.Normalize.source(
             source,
             as: format,
             context: context,
-            customProfile: try runtime.storedCustomProfile(id: id),
+            customProfile: runtime.storedCustomProfile(id: id),
             style: runtime.builtInStyle,
         )
     }

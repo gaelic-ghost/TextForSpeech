@@ -1,5 +1,3 @@
-// MARK: - Formatting
-
 extension TextNormalizer {
     static func canonicalize(_ text: String) -> String {
         text

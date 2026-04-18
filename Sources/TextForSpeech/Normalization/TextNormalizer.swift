@@ -2,8 +2,6 @@ import Foundation
 import NaturalLanguage
 import RegexBuilder
 
-// MARK: - Normalizer
-
 enum TextNormalizer {
     // MARK: Pass Types
 

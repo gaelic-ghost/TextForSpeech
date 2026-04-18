@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Heuristics
-
 extension TextNormalizer {
     static func isLikelyFilePath(_ token: String) -> Bool {
         guard !token.isEmpty else { return false }
