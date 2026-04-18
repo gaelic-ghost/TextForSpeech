@@ -138,19 +138,15 @@ let runtime = try TextForSpeech.Runtime(
     persistence: .default
 )
 
-try runtime.profiles.setBuiltInStyle(.compact)
-try runtime.profiles.create(id: "logs", name: "Logs")
-try runtime.profiles.add(
+try runtime.style.setActive(to: .compact)
+let logs = try runtime.profiles.create(name: "Logs")
+try runtime.profiles.addReplacement(
     TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
-    toProfileID: "logs"
+    toProfile: logs.id
 )
-try runtime.profiles.activate(id: "logs")
+try runtime.profiles.setActive(id: logs.id)
 
-let normalized = TextForSpeech.Normalize.text(
-    "stderr and stdout",
-    customProfile: runtime.profiles.active(),
-    style: runtime.profiles.builtInStyle
-)
+let normalized = runtime.normalize.text("stderr and stdout")
 ```
 
 The runtime model is intentionally explicit:
@@ -160,11 +156,13 @@ The runtime model is intentionally explicit:
 - `TextForSpeech.Profile.builtInBase(style:)` composes `semanticCore + style preset`.
 - `TextForSpeech.Profile.base` is the default `.balanced` built-in base for convenience.
 - `TextForSpeech.Profile.default` is the empty default custom profile value.
-- `runtime.profiles.builtInStyle` is the currently selected shipped style preset.
-- `runtime.profiles.activeID` is the stored custom profile id currently selected by the runtime.
-- `runtime.profiles.active()` is the raw active custom profile.
-- `runtime.profiles.effective()` is always `builtInBase(style: builtInStyle) + active custom`.
-- `runtime.profiles.stored(id:)` reads a named stored custom profile without activating it.
+- `runtime.style.getActive()` returns the currently selected shipped style preset.
+- `runtime.style.list()` returns the available built-in style presets with short summaries.
+- `runtime.profiles.getActive()` returns the active custom profile's id, a summary, and its replacements.
+- `runtime.profiles.getEffective()` returns the active custom profile as merged with the currently selected built-in style.
+- `runtime.profiles.get(id:)` reads one stored custom profile summary and its replacements by id.
+- `runtime.profiles.create(name:)` creates one stored custom profile and returns its generated id to the caller.
+- `runtime.normalize.text(...)` and `runtime.normalize.source(...)` apply `builtInBase(style: style.getActive()) + active custom` without exposing the merged profile value.
 
 Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default store uses `TextForSpeech-Debug` instead so local debug runs do not touch the production namespace. Callers that need an explicit location can pass `.file(url)`. The selected built-in style is persisted alongside the active custom profile id and stored custom profiles.
 

@@ -11,96 +11,108 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(runtime.profiles.builtInStyle == .balanced)
-    #expect(runtime.profiles.activeID == "default")
-    #expect(runtime.profiles.active().id == "default")
-    #expect(runtime.profiles.stored(id: "default") == .default)
+    #expect(runtime.style.getActive() == .balanced)
+    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().summary.id == "default")
+    #expect(runtime.profiles.getActive().summary.replacementCount == 0)
+    #expect(try runtime.profiles.get(id: "default").summary.id == "default")
     #expect(FileManager.default.fileExists(atPath: fileURL.path))
 }
 
-@Test func `runtime merges base and active custom profiles for effective snapshots`() throws {
+@Test func `runtime style lists available built in styles`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try runtime.profiles.store(
-        TextForSpeech.Profile(
-            id: "custom",
-            name: "Custom",
-            replacements: [
-                TextForSpeech.Replacement("bar", with: "baz", id: "custom-rule"),
-            ],
-        ),
-    )
-    try runtime.profiles.activate(id: "custom")
+    let options = runtime.style.list()
 
-    let snapshot = runtime.profiles.effective()
+    #expect(options.map(\.style) == [.balanced, .compact, .explicit])
+    #expect(options.allSatisfy { !$0.summary.isEmpty })
+}
+
+@Test func `runtime normalize uses built in base and active custom profile`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    let custom = try runtime.profiles.create(name: "Custom")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("bar", with: "baz", id: "custom-rule"),
+        toProfile: custom.id,
+    )
+    try runtime.profiles.setActive(id: custom.id)
+
+    let normalized = runtime.normalize.text("https://example.com and bar")
 
     #expect(runtime.baseProfile == .base)
-    #expect(snapshot.id == "custom")
-    #expect(snapshot.name == "Custom")
-    #expect(snapshot.replacements.contains(where: { $0.id == "custom-rule" }))
-    #expect(snapshot.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(normalized.contains("example dot com"))
+    #expect(normalized.contains("baz"))
 }
 
-@Test func `runtime returns stable snapshots for later jobs`() throws {
+@Test func `runtime getEffective merges active style with active custom profile`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try runtime.storeActiveProfile(
-        TextForSpeech.Profile(
-            id: "default",
-            name: "Default",
-            replacements: [
-                TextForSpeech.Replacement("foo", with: "bar", id: "foo-rule"),
-            ],
-        ),
+    let logs = try runtime.profiles.create(name: "Logs")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stderr", with: "standard error", id: "logs-rule"),
+        toProfile: logs.id,
     )
+    try runtime.profiles.setActive(id: logs.id)
 
-    let firstSnapshot = runtime.profiles.effective()
+    let effective = runtime.profiles.getEffective()
 
-    try runtime.storeActiveProfile(
-        TextForSpeech.Profile(
-            id: "default",
-            name: "Updated",
-            replacements: [
-                TextForSpeech.Replacement("foo", with: "baz", id: "foo-rule"),
-            ],
-        ),
-    )
-
-    let secondSnapshot = runtime.profiles.effective()
-
-    #expect(firstSnapshot.name == "Default")
-    #expect(firstSnapshot.replacement(id: "foo-rule")?.replacement == "bar")
-    #expect(secondSnapshot.name == "Updated")
-    #expect(secondSnapshot.replacement(id: "foo-rule")?.replacement == "baz")
+    #expect(effective.profileID == logs.id)
+    #expect(effective.summary.id == logs.id)
+    #expect(effective.replacements.contains(where: { $0.id == "logs-rule" }))
+    #expect(effective.replacements.contains(where: { $0.id == "base-url" }))
 }
 
-@Test func `runtime can preview stored named profiles without activating them`() throws {
+@Test func `runtime normalize can preview stored named profiles without activating them`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try runtime.profiles.store(
-        TextForSpeech.Profile(
-            id: "logs",
-            name: "Logs",
-            replacements: [
-                TextForSpeech.Replacement("stderr", with: "standard error", id: "logs-rule"),
-            ],
-        ),
+    let logs = try runtime.profiles.create(name: "Logs")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stderr", with: "standard error", id: "logs-rule"),
+        toProfile: logs.id,
     )
 
-    let snapshot = runtime.profiles.effective(id: "logs")
+    let normalized = try runtime.normalize.text("stderr", usingProfileID: logs.id)
 
-    #expect(snapshot?.id == "logs")
-    #expect(snapshot?.replacements.contains(where: { $0.id == "logs-rule" }) == true)
-    #expect(runtime.profiles.activeID == "default")
+    #expect(normalized == "standard error")
+    #expect(runtime.profiles.getActive().profileID == "default")
+}
+
+@Test func `runtime normalize tracks later profile changes`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    try runtime.renameActiveProfile(to: "Default")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("foo", with: "bar", id: "foo-rule"),
+    )
+
+    let firstNormalized = runtime.normalize.text("foo")
+
+    try runtime.renameActiveProfile(to: "Updated")
+    _ = try runtime.profiles.patchReplacement(
+        TextForSpeech.Replacement("foo", with: "baz", id: "foo-rule"),
+    )
+
+    let secondNormalized = runtime.normalize.text("foo")
+
+    #expect(firstNormalized == "bar")
+    #expect(secondNormalized == "baz")
+    #expect(runtime.profiles.getActive().summary.name == "Updated")
 }
 
 @Test func `runtime can switch built in style and persist it`() throws {
@@ -109,30 +121,63 @@ import Testing
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let writer = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try writer.profiles.setBuiltInStyle(.compact)
+    try writer.style.setActive(to: .compact)
 
-    #expect(writer.profiles.builtInStyle == .compact)
+    #expect(writer.style.getActive() == .compact)
     #expect(writer.baseProfile == .builtInBase(style: .compact))
 
     let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(reader.profiles.builtInStyle == .compact)
+    #expect(reader.style.getActive() == .compact)
     #expect(reader.baseProfile == .builtInBase(style: .compact))
 }
 
-@Test func `runtime creates profiles and lists them in stable order`() throws {
+@Test func `runtime creates profiles with generated ids and lists them in stable order`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    let zebra = try runtime.profiles.create(id: "zebra", name: "Zebra")
-    let alpha = try runtime.profiles.create(id: "alpha", name: "Alpha")
+    let zebra = try runtime.profiles.create(name: "Zebra")
+    let alpha = try runtime.profiles.create(name: "Alpha")
 
     #expect(zebra.id == "zebra")
-    #expect(alpha.name == "Alpha")
+    #expect(alpha.summary.name == "Alpha")
     #expect(runtime.profiles.list().map(\.id) == ["alpha", "default", "zebra"])
+}
+
+@Test func `runtime create deduplicates generated ids from duplicate names`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+
+    let first = try runtime.profiles.create(name: "Logs")
+    let second = try runtime.profiles.create(name: "Logs")
+
+    #expect(first.id == "logs")
+    #expect(second.id == "logs-2")
+}
+
+@Test func `runtime get returns summary and replacements together`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    let logs = try runtime.profiles.create(name: "Logs")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
+        toProfile: logs.id,
+    )
+
+    let details = try runtime.profiles.get(id: logs.id)
+
+    #expect(details.summary.id == logs.id)
+    #expect(details.summary.replacementCount == 1)
+    #expect(details.replacements.map(\.id) == ["stderr-rule"])
 }
 
 @Test func `runtime edits active and stored profile replacements`() throws {
@@ -141,39 +186,55 @@ import Testing
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try runtime.storeActiveProfile(
-        TextForSpeech.Profile(
-            id: "default",
-            name: "Default",
-            replacements: [
-                TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
-            ],
-        ),
+    try runtime.renameActiveProfile(to: "Default")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
     )
-    _ = try runtime.profiles.create(id: "logs", name: "Logs")
+    let logs = try runtime.profiles.create(name: "Logs")
 
-    let activeProfile = try runtime.profiles.add(
+    let activeProfile = try runtime.profiles.addReplacement(
         TextForSpeech.Replacement("stdout", with: "standard output", id: "stdout-rule"),
     )
-    #expect(activeProfile.replacements.map(\.id).contains("stdout-rule"))
+    #expect(activeProfile.summary.replacementCount == 2)
 
-    let storedProfile = try runtime.profiles.add(
+    let storedProfile = try runtime.profiles.addReplacement(
         TextForSpeech.Replacement("panic", with: "runtime panic", id: "panic-rule"),
-        toProfileID: "logs",
+        toProfile: logs.id,
     )
-    #expect(storedProfile.replacements.map(\.id) == ["panic-rule"])
+    #expect(storedProfile.summary.replacementCount == 1)
 
-    let replacedProfile = try runtime.profiles.replace(
+    let replacedProfile = try runtime.profiles.patchReplacement(
         TextForSpeech.Replacement("panic", with: "fatal runtime panic", id: "panic-rule"),
-        inProfileID: "logs",
+        inProfile: logs.id,
     )
-    #expect(replacedProfile.replacement(id: "panic-rule")?.replacement == "fatal runtime panic")
+    #expect(replacedProfile.summary.replacementCount == 1)
+    #expect(try runtime.profiles.get(id: logs.id).replacements.first?.replacement == "fatal runtime panic")
 
     let trimmedProfile = try runtime.profiles.removeReplacement(
         id: "panic-rule",
-        fromProfileID: "logs",
+        fromProfile: logs.id,
     )
-    #expect(trimmedProfile.replacements.isEmpty)
+    #expect(trimmedProfile.summary.replacementCount == 0)
+}
+
+@Test func `runtime can rename and reset one stored profile`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    let logs = try runtime.profiles.create(name: "Logs")
+    let renamed = try runtime.profiles.rename(profile: logs.id, to: "Operations")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stdout", with: "standard output", id: "stdout-rule"),
+        toProfile: logs.id,
+    )
+
+    try runtime.profiles.reset(id: logs.id)
+
+    #expect(renamed.summary.name == "Operations")
+    #expect(try runtime.profiles.get(id: logs.id).summary.name == "Operations")
+    #expect(try runtime.profiles.get(id: logs.id).replacements.isEmpty)
 }
 
 @Test func `runtime persists active profile ID and stored profiles`() throws {
@@ -182,31 +243,24 @@ import Testing
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let writer = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try writer.profiles.store(
-        TextForSpeech.Profile(
-            id: "logs",
-            name: "Logs",
-            replacements: [
-                TextForSpeech.Replacement("stderr", with: "standard error", id: "logs-rule"),
-            ],
-        ),
+    let logs = try writer.profiles.create(name: "Logs")
+    _ = try writer.profiles.addReplacement(
+        TextForSpeech.Replacement("stderr", with: "standard error", id: "logs-rule"),
+        toProfile: logs.id,
     )
-    try writer.profiles.store(
-        TextForSpeech.Profile(
-            id: "ops",
-            name: "Ops",
-            replacements: [
-                TextForSpeech.Replacement("stdout", with: "standard output", id: "ops-rule"),
-            ],
-        ),
+    let ops = try writer.profiles.create(name: "Ops")
+    _ = try writer.profiles.addReplacement(
+        TextForSpeech.Replacement("stdout", with: "standard output", id: "ops-rule"),
+        toProfile: ops.id,
     )
-    try writer.profiles.activate(id: "ops")
+    try writer.profiles.setActive(id: ops.id)
 
     let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(reader.profiles.activeID == "ops")
-    #expect(reader.profiles.active().replacement(id: "ops-rule")?.replacement == "standard output")
-    #expect(reader.profiles.stored(id: "logs")?.replacement(id: "logs-rule")?.replacement == "standard error")
+    #expect(reader.profiles.getActive().profileID == ops.id)
+    #expect(reader.profiles.getActive().summary.id == ops.id)
+    #expect(reader.profiles.getActive().replacements.first?.replacement == "standard output")
+    #expect(try reader.profiles.get(id: logs.id).replacements.first?.replacement == "standard error")
 }
 
 @Test func `runtime falls back to default when persisted active profile is missing`() throws {
@@ -227,8 +281,8 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(runtime.profiles.activeID == "default")
-    #expect(runtime.profiles.active() == .default)
+    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().summary.id == "default")
 }
 
 @Test func `deleting active named profile reactivates default`() throws {
@@ -237,26 +291,31 @@ import Testing
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try runtime.profiles.store(TextForSpeech.Profile(id: "logs", name: "Logs"))
-    try runtime.profiles.activate(id: "logs")
+    let logs = try runtime.profiles.create(name: "Logs")
+    try runtime.profiles.setActive(id: logs.id)
 
-    try runtime.profiles.delete(id: "logs")
+    try runtime.profiles.delete(id: logs.id)
 
-    #expect(runtime.profiles.activeID == "default")
-    #expect(runtime.profiles.stored(id: "default") == .default)
+    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(try runtime.profiles.get(id: "default").summary.id == "default")
 }
 
-@Test func `deleting default profile recreates empty default`() throws {
+@Test func `factoryReset clears stored custom profiles back to default only`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    let logs = try runtime.profiles.create(name: "Logs")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stdout", with: "standard output", id: "stdout-rule"),
+        toProfile: logs.id,
+    )
 
-    try runtime.profiles.delete(id: "default")
+    try runtime.profiles.factoryReset()
 
-    #expect(runtime.profiles.activeID == "default")
-    #expect(runtime.profiles.stored(id: "default") == .default)
+    #expect(runtime.profiles.list().map(\.id) == ["default"])
+    #expect(runtime.profiles.getActive().profileID == "default")
 }
 
 @Test func `runtime restore rejects unsupported persisted state version`() throws {
@@ -307,8 +366,7 @@ private func write(state: TextForSpeech.PersistedState, to url: URL) throws {
 }
 
 private extension TextForSpeech.Runtime {
-    func storeActiveProfile(_ profile: TextForSpeech.Profile) throws {
-        try profiles.store(profile)
-        try profiles.activate(id: profile.id)
+    func renameActiveProfile(to name: String) throws {
+        _ = try profiles.rename(profile: profiles.getActive().profileID, to: name)
     }
 }

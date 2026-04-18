@@ -1,9 +1,9 @@
 import Foundation
 
-// MARK: - Runtime Persistence
+// MARK: - Runtime Normalization
 
 public extension TextForSpeech.Runtime {
-    struct Persistence {
+    struct Normalization {
         let runtime: TextForSpeech.Runtime
 
         init(runtime: TextForSpeech.Runtime) {

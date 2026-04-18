@@ -59,6 +59,14 @@ public extension TextForSpeech.Runtime {
         Profiles(runtime: self)
     }
 
+    var style: Style {
+        Style(runtime: self)
+    }
+
+    var normalize: Normalization {
+        Normalization(runtime: self)
+    }
+
     var persistence: Persistence {
         Persistence(runtime: self)
     }
