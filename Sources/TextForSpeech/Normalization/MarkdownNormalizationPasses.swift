@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Markdown Normalization Passes
-
 extension TextNormalizer {
     // MARK: Markdown Code Normalization
 
@@ -23,7 +21,7 @@ extension TextNormalizer {
                 if insideFence {
                     let body = bufferedCode.joined(separator: "\n")
                     output.append(
-                        spokenCodeBlock(body, nestedFormat: nestedFormat, context: context)
+                        spokenCodeBlock(body, nestedFormat: nestedFormat, context: context),
                     )
                     bufferedCode.removeAll(keepingCapacity: true)
                 }
@@ -44,7 +42,7 @@ extension TextNormalizer {
                     bufferedCode.joined(separator: "\n"),
                     nestedFormat: nestedFormat,
                     context: context,
-                )
+                ),
             )
         }
 

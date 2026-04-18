@@ -1,5 +1,3 @@
-// MARK: - Built-In Profiles
-
 public extension TextForSpeech.Profile {
     /// The always-on shipped semantic layer composed from the semantic-role
     /// fragments in `Models/BuiltInProfiles/`.

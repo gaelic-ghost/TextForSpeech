@@ -184,29 +184,41 @@ This package exists to reduce downstream TTS damage for developer text, so maint
 Its public grouped surfaces are:
 
 - `profiles`
+- `style`
+- `normalize`
 - `persistence`
 
 The runtime profile API now centers on:
 
-- `profiles.builtInStyle`
-- `profiles.activeID`
-- `profiles.active()`
-- `profiles.effective()`
-- `profiles.effective(id:)`
-- `profiles.stored(id:)`
+- `profiles.getActive()`
+- `profiles.getEffective()`
+- `profiles.get(id:)`
 - `profiles.list()`
-- `profiles.setBuiltInStyle(_:)`
-- `profiles.activate(id:)`
-- `profiles.store(_:)`
-- `profiles.create(id:name:replacements:)`
+- `profiles.setActive(id:)`
+- `profiles.create(name:)`
+- `profiles.rename(profile:to:)`
 - `profiles.delete(id:)`
-- `profiles.add(_:)`
-- `profiles.add(_:toProfileID:)`
-- `profiles.replace(_:)`
-- `profiles.replace(_:inProfileID:)`
+- `profiles.addReplacement(_:)`
+- `profiles.addReplacement(_:toProfile:)`
+- `profiles.patchReplacement(_:)`
+- `profiles.patchReplacement(_:inProfile:)`
 - `profiles.removeReplacement(id:)`
-- `profiles.removeReplacement(id:fromProfileID:)`
-- `profiles.reset()`
+- `profiles.removeReplacement(id:fromProfile:)`
+- `profiles.factoryReset()`
+- `profiles.reset(id:)`
+
+The runtime style API now centers on:
+
+- `style.getActive()`
+- `style.list()`
+- `style.setActive(to:)`
+
+The runtime normalization API now centers on:
+
+- `normalize.text(_:)`
+- `normalize.text(_:usingProfileID:)`
+- `normalize.source(_:as:)`
+- `normalize.source(_:as:usingProfileID:)`
 
 The grouped persistence API centers on:
 

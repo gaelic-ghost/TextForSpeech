@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Replacement Rule Engine
-
 extension TextNormalizer {
     static func paragraphCount(in text: String) -> Int {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Replacement Rule Matching
-
 extension TextNormalizer {
     static func tokenMatches(_ expected: String, token: String, caseSensitive: Bool) -> Bool {
         caseSensitive

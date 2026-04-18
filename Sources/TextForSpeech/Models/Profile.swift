@@ -1,5 +1,3 @@
-// MARK: - Profile
-
 public extension TextForSpeech {
     struct Profile: Codable, Sendable, Equatable, Identifiable {
         public let id: String

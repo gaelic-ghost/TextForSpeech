@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Speech Conversion
-
 extension TextNormalizer {
     static func spokenCode(_ text: String) -> String {
         let replacements: [(String, String)] = [

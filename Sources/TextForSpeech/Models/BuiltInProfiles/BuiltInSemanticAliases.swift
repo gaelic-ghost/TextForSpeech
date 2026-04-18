@@ -1,5 +1,3 @@
-// MARK: - Built-In Semantic Aliases
-
 public extension TextForSpeech.Profile {
     /// Always-on semantic aliases for stable names that should be rewritten
     /// before any broader token transforms run.

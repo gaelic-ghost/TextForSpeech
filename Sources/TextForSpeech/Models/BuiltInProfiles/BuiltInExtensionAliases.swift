@@ -1,5 +1,3 @@
-// MARK: - Built-In Extension Aliases
-
 public extension TextForSpeech.Profile {
     /// Literal extension aliases for file suffixes whose raw token shapes are
     /// too acronym-dense or cluster-heavy to sound natural when spoken.

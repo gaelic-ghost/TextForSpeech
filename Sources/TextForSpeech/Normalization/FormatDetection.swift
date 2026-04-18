@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Format Detection
-
 extension TextNormalizer {
     static func looksLikeHTML(_ text: String) -> Bool {
         text.contains(/<([A-Za-z][A-Za-z0-9:-]*)(\s[^>]*)?>/) && text.contains("</")

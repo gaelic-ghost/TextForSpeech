@@ -1,5 +1,3 @@
-// MARK: - Persistence
-
 public extension TextForSpeech {
     struct PersistedState: Codable, Sendable, Equatable {
         private enum CodingKeys: String, CodingKey {

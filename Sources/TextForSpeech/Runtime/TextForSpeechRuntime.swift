@@ -1,8 +1,6 @@
 import Foundation
 import Observation
 
-// MARK: - TextForSpeech.Runtime
-
 public extension TextForSpeech {
     @Observable
     final class Runtime {
@@ -57,6 +55,14 @@ public extension TextForSpeech {
 public extension TextForSpeech.Runtime {
     var profiles: Profiles {
         Profiles(runtime: self)
+    }
+
+    var style: Style {
+        Style(runtime: self)
+    }
+
+    var normalize: Normalization {
+        Normalization(runtime: self)
     }
 
     var persistence: Persistence {

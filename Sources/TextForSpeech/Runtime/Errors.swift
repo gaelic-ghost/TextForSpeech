@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Errors
-
 public extension TextForSpeech {
     enum PersistenceError: Swift.Error, Sendable, Equatable, LocalizedError {
         case missingPersistenceURL

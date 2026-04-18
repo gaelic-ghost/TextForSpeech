@@ -1,7 +1,5 @@
 import Foundation
 
-// MARK: - Source Normalizer
-
 enum SourceNormalizer {
     // MARK: Public Routing
 
