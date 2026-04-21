@@ -72,6 +72,15 @@ import Testing
     #expect(!normalized.contains("www"))
 }
 
+@Test func `urls omit mixed case leading WWW`() {
+    let text = "Open https://WWW.Example.com/docs now."
+
+    let normalized = TextNormalizer.normalizeURLs(text)
+
+    #expect(normalized.contains("Example dot com slash docs"))
+    #expect(!normalized.contains("WWW"))
+}
+
 @Test func `non HTTPUR ls keep their scheme`() {
     let text = "Open file://tmp/Thing now."
 
