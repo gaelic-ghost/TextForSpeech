@@ -58,6 +58,7 @@ enum TextNormalizer {
                 normalizeInlineCodeSpans(text, context: context, nestedFormat: nestedFormat)
             },
             { text, _, _, _, _ in normalizeMarkdownLinks(text) },
+            { text, _, _, _, _ in normalizePriorityListItems(text) },
             { text, context, _, _, _ in
                 compactRepeatedFilePathPrefixes(text, context: context)
             },

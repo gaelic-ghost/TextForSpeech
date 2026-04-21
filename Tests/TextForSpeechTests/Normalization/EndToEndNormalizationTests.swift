@@ -228,6 +228,38 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("Header"))
 }
 
+@Test func `normalize text speaks markdown priority list labels`() {
+    let original = """
+    - [P1] Fix the crash
+    - [P2] Add tests
+    """
+
+    let normalized = TextForSpeech.Normalize.text(
+        original,
+        format: .markdown,
+    )
+
+    #expect(normalized.contains("Priority Level One. Fix the crash"))
+    #expect(normalized.contains("Priority Level Two. Add tests"))
+    #expect(!normalized.contains("[P1]"))
+}
+
+@Test func `normalize text speaks plain priority list labels`() {
+    let original = """
+    [P4] Triage the next report
+    [P5] Prepare the follow up
+    """
+
+    let normalized = TextForSpeech.Normalize.text(
+        original,
+        format: .plain,
+    )
+
+    #expect(normalized.contains("Priority Level Four. Triage the next report"))
+    #expect(normalized.contains("Priority Level Five. Prepare the follow up"))
+    #expect(!normalized.contains("[P4]"))
+}
+
 @Test func `normalize text uses nested format for embedded swift code`() {
     let original = """
     ```swift
