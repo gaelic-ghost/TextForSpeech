@@ -154,6 +154,7 @@ The normalizer still owns:
 - fenced-code extraction
 - inline-code extraction
 - markdown-link parsing
+- list-prefix parsing for structural markers such as priority tags like `[P1]`
 - format detection
 - path-context shortening such as `current directory` and `repo root`
 - final whitespace cleanup
