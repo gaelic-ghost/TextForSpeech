@@ -97,7 +97,7 @@ extension TextNormalizer {
         var remainder = String(text[schemeSeparator.upperBound...])
 
         if ["http", "https"].contains(scheme) {
-            if remainder.hasPrefix("www.") {
+            if remainder.lowercased().hasPrefix("www.") {
                 remainder.removeFirst(4)
             }
 
