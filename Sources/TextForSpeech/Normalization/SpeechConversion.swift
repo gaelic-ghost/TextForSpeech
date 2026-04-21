@@ -52,6 +52,10 @@ extension TextNormalizer {
         } else if let alias = aliasedPathPrefix(in: contextualPath.path) {
             segments.append(alias.spokenName)
             remainder = contextualPath.path[alias.range.upperBound...]
+        } else {
+            let relativePrefix = spokenRelativePathPrefix(in: contextualPath.path)
+            segments += relativePrefix.prefixSegments
+            remainder = relativePrefix.remainder[...]
         }
 
         func flushBuffer() {
@@ -86,6 +90,36 @@ extension TextNormalizer {
 
         flushBuffer()
         return collapseWhitespace(segments.joined(separator: " "))
+    }
+
+    private static func spokenRelativePathPrefix(
+        in path: String,
+    ) -> (prefixSegments: [String], remainder: String) {
+        if path == "." || path == "./" {
+            return (["current directory"], "")
+        }
+
+        if path.hasPrefix("./") {
+            return (["current directory"], String(path.dropFirst(2)))
+        }
+
+        if path == ".." || path == "../" {
+            return (["parent directory"], "")
+        }
+
+        var remainder = path[...]
+        var prefixSegments: [String] = []
+
+        while remainder.hasPrefix("../") {
+            prefixSegments.append("parent directory")
+            remainder = remainder.dropFirst(3)
+        }
+
+        if !prefixSegments.isEmpty {
+            return (prefixSegments, String(remainder))
+        }
+
+        return ([], path)
     }
 
     static func spokenURL(_ text: String) -> String {

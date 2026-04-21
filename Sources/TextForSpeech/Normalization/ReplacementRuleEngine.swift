@@ -108,6 +108,7 @@ extension TextNormalizer {
         var end = rawToken.endIndex
 
         while start < end,
+              !preservesLeadingRelativePathPrefix(in: rawToken, at: start),
               rawToken[start].unicodeScalars.allSatisfy({ punctuation.contains($0) }) {
             start = rawToken.index(after: start)
         }
@@ -144,6 +145,7 @@ extension TextNormalizer {
         var end = token.endIndex
 
         while start < end,
+              !preservesLeadingRelativePathPrefix(in: token, at: start),
               token[start].unicodeScalars.allSatisfy({ punctuation.contains($0) }) {
             start = token.index(after: start)
         }
@@ -164,6 +166,25 @@ extension TextNormalizer {
         }
 
         return String(token[start..<end])
+    }
+
+    private static func preservesLeadingRelativePathPrefix(
+        in token: String,
+        at index: String.Index,
+    ) -> Bool {
+        guard token[index] == "." else { return false }
+
+        let nextIndex = token.index(after: index)
+        guard nextIndex < token.endIndex else { return false }
+
+        if token[nextIndex] == "/" {
+            return true
+        }
+
+        let secondIndex = token.index(after: nextIndex)
+        return token[nextIndex] == "."
+            && secondIndex < token.endIndex
+            && token[secondIndex] == "/"
     }
 
     // MARK: Rule Application

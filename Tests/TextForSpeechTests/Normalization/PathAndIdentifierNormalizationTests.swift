@@ -61,6 +61,17 @@ import Testing
     #expect(!normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
 }
 
+@Test func `relative file paths become directory aware speech`() {
+    let text = "Path: ./Sources/WorkerRuntime.swift and ../README.md."
+
+    let normalized = TextNormalizer.normalizeFilePaths(text)
+
+    #expect(normalized.contains("current directory Sources Worker Runtime dot swift"))
+    #expect(normalized.contains("parent directory README dot md"))
+    #expect(!normalized.contains("dot slash Sources"))
+    #expect(!normalized.contains("dot dot slash README"))
+}
+
 @Test func `standalone gale aliases become spoken names`() {
     let text = "Please ask galew, galem, and Galew again."
 

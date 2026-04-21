@@ -119,6 +119,18 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(occurrenceCount(of: "tmp Thing dot swift", in: normalized) == 1)
 }
 
+@Test func `normalize compacts repeated relative paths in the same directory`() {
+    let original = """
+    Compare ./Sources/WorkerRuntime.swift and ./Sources/ProfileStore.swift.
+    """
+
+    let normalized = TextForSpeech.Normalize.text(original, format: .plain)
+
+    #expect(normalized.contains("current directory Sources Worker Runtime dot swift"))
+    #expect(normalized.contains("same directory, Profile Store dot swift"))
+    #expect(!normalized.contains("dot slash Sources"))
+}
+
 @Test func `normalize applies custom replacements around built ins`() {
     let profile = TextForSpeech.Profile(
         id: "custom",
@@ -148,6 +160,31 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("settings token"))
     #expect(!normalized.contains("c h r o m"))
     #expect(!normalized.contains("snake case stuff"))
+}
+
+@Test func `whole token custom replacements preserve punctuation boundaries`() {
+    let profile = TextForSpeech.Profile(
+        id: "custom-whole-token",
+        name: "Custom Whole Token",
+        replacements: [
+            TextForSpeech.Replacement(
+                "TODO",
+                with: "to do marker",
+                matching: .wholeToken,
+            ),
+        ],
+    )
+
+    let normalized = TextForSpeech.Normalize.text(
+        "Keep (TODO), TODO, and TODO.",
+        customProfile: profile,
+        format: .plain,
+    )
+
+    #expect(normalized.contains("(to do marker),"))
+    #expect(normalized.contains("to do marker,"))
+    #expect(normalized.contains("to do marker."))
+    #expect(!normalized.contains("TODO"))
 }
 
 @Test func `detect text format finds markdown`() {
@@ -264,6 +301,16 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     #expect(normalized.contains("current directory Sources Speak Swiftly Worker Runtime dot swift at line 12"))
     #expect(!normalized.contains("gale wumbo Workspace Speak Swiftly"))
+}
+
+@Test func `inline code relative file references use directory aware path speech`() {
+    let normalized = TextForSpeech.Normalize.text(
+        "Read `../Sources/WorkerRuntime.swift:12` now.",
+        format: .markdown,
+    )
+
+    #expect(normalized.contains("parent directory Sources Worker Runtime dot swift at line 12"))
+    #expect(!normalized.contains("dot dot slash Sources"))
 }
 
 @Test func `inline slash operators stay in code speech lane`() {
