@@ -5,6 +5,7 @@ extension TextNormalizer {
         guard !token.isEmpty else { return false }
         guard !token.contains("://") else { return false }
         guard !token.contains("@") else { return false }
+        guard !isLikelyMeasuredValue(token) else { return false }
 
         return token.hasPrefix("/")
             || token.hasPrefix("~/")
@@ -46,6 +47,14 @@ extension TextNormalizer {
         guard !scheme.isEmpty else { return false }
 
         return scheme.allSatisfy { $0.isLetter }
+    }
+
+    static func isLikelyCurrencyAmount(_ token: String) -> Bool {
+        parsedCurrencyAmount(in: token) != nil
+    }
+
+    static func isLikelyMeasuredValue(_ token: String) -> Bool {
+        parsedMeasuredValue(in: token) != nil
     }
 
     static func isLikelyDottedIdentifier(_ token: String) -> Bool {

@@ -62,6 +62,7 @@ enum TextNormalizer {
             { text, context, _, _, _ in
                 compactRepeatedFilePathPrefixes(text, context: context)
             },
+            { text, _, _, _, _ in normalizeSpacedMeasuredValues(text) },
             { text, context, profile, format, nestedFormat in
                 applyReplacementRules(
                     text,
@@ -78,6 +79,7 @@ enum TextNormalizer {
 
     static var sourceNormalizationPasses: [ContextualNormalizationPass] {
         [
+            { text, _, _, _, _ in normalizeSpacedMeasuredValues(text) },
             { text, context, profile, format, nestedFormat in
                 applyReplacementRules(
                     text,

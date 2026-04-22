@@ -17,6 +17,8 @@ public extension TextForSpeech {
         public enum TokenKind: String, Codable, Sendable, CaseIterable {
             case filePath = "file_path"
             case url
+            case currencyAmount = "currency_amount"
+            case measuredValue = "measured_value"
             case dottedIdentifier = "dotted_identifier"
             case snakeCaseIdentifier = "snake_case_identifier"
             case dashedIdentifier = "dashed_identifier"
@@ -61,6 +63,8 @@ public extension TextForSpeech {
             case literal(String)
             case spokenPath
             case spokenURL
+            case spokenCurrencyAmount
+            case spokenMeasuredValue
             case spokenIdentifier
             case spokenCode
             case spokenFunctionCall(FunctionCallStyle)

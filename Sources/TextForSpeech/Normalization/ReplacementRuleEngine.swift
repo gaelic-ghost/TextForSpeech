@@ -272,6 +272,12 @@ extension TextNormalizer {
             case .spokenURL:
                 spokenURL(text)
 
+            case .spokenCurrencyAmount:
+                spokenCurrencyAmount(text)
+
+            case .spokenMeasuredValue:
+                spokenMeasuredValue(text)
+
             case .spokenIdentifier:
                 spokenIdentifier(text)
 

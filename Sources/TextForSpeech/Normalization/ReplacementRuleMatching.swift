@@ -16,6 +16,10 @@ extension TextNormalizer {
                 isLikelyFilePath(token)
             case .url:
                 isLikelyURL(token)
+            case .currencyAmount:
+                isLikelyCurrencyAmount(token)
+            case .measuredValue:
+                isLikelyMeasuredValue(token)
             case .dottedIdentifier:
                 isLikelyDottedIdentifier(token)
             case .snakeCaseIdentifier:
