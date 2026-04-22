@@ -292,8 +292,7 @@ extension TextNormalizer {
         lineKind: TextForSpeech.Replacement.LineKind,
         line: String,
     ) -> String {
-        guard isSpokenCodeLineRule(rule), lineKind == .codeLike else { return line }
-        return omittingMatchedSpeechDelimiters(in: line)
+        line
     }
 
     private static func resolvedReplacement(
@@ -326,7 +325,14 @@ extension TextNormalizer {
             case .spokenCode:
                 switch format {
                     case let .source(sourceFormat):
-                        spokenSource(text, format: sourceFormat)
+                        if isPreprocessedSourceLineForSpokenCode(rule) {
+                            spokenCode(
+                                text,
+                                suppressingMatchedDelimiters: false,
+                            )
+                        } else {
+                            spokenSource(text, format: sourceFormat)
+                        }
                     case .text:
                         if let nestedFormat {
                             spokenSource(text, format: nestedFormat)
@@ -350,5 +356,13 @@ extension TextNormalizer {
             case .spellOut:
                 spelledOut(trimmedCandidateToken(text))
         }
+    }
+
+    private static func isPreprocessedSourceLineForSpokenCode(
+        _ rule: TextForSpeech.Replacement,
+    ) -> Bool {
+        guard case .line(.nonEmpty) = rule.match else { return false }
+        guard case .spokenCode = rule.transform else { return false }
+        return true
     }
 }

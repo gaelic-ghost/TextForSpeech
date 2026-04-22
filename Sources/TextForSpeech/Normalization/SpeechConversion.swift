@@ -2,7 +2,21 @@ import Foundation
 
 extension TextNormalizer {
     static func spokenCode(_ text: String) -> String {
-        let pairSuppressed = omittingMatchedSpeechDelimiters(in: text)
+        spokenCode(
+            text,
+            suppressingMatchedDelimiters: true,
+        )
+    }
+
+    static func spokenCode(
+        _ text: String,
+        suppressingMatchedDelimiters: Bool,
+    ) -> String {
+        let pairSuppressed = if suppressingMatchedDelimiters {
+            omittingMatchedSpeechDelimiters(in: text)
+        } else {
+            text
+        }
         let replacements: [(String, String)] = [
             ("\n", ". "),
             ("->", " returns "),
@@ -86,7 +100,7 @@ extension TextNormalizer {
             guard let matchingOpen = delimiter.matchingOpen,
                   let last = delimiterStack.last,
                   last.delimiter == matchingOpen else {
-                continue
+                return text
             }
 
             omittedIndices.insert(last.index)
@@ -94,6 +108,7 @@ extension TextNormalizer {
             delimiterStack.removeLast()
         }
 
+        guard delimiterStack.isEmpty else { return text }
         guard !omittedIndices.isEmpty else { return text }
 
         return String(

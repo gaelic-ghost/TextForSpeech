@@ -423,6 +423,18 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("sample Rate"))
 }
 
+@Test func `malformed source delimiters stay audible`() {
+    let normalized = TextForSpeech.Normalize.source(
+        "let x = ([)]",
+        as: .swift,
+    )
+
+    #expect(normalized.contains("open parenthesis"))
+    #expect(normalized.contains("open bracket"))
+    #expect(normalized.contains("close parenthesis"))
+    #expect(normalized.contains("close bracket"))
+}
+
 @Test func `styles differentiate function calls issue references flags and file refs`() {
     let original = "Run foo() with --help and see #123 in WorkerRuntime.swift:42:7."
 
