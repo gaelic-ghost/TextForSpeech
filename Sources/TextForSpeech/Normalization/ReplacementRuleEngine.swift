@@ -241,10 +241,20 @@ extension TextNormalizer {
                 }
 
             case let .line(lineKind):
-                return transformLines(in: text) { line in
+                let lineInput = lineInputForLineRule(
+                    rule,
+                    lineKind: lineKind,
+                    text: text,
+                )
+
+                return transformLines(in: lineInput) { line in
                     lineMatches(lineKind, line: line)
                         ? resolvedReplacement(
-                            for: line,
+                            for: preparedLineForLineRule(
+                                rule,
+                                lineKind: lineKind,
+                                line: line,
+                            ),
                             rule: rule,
                             context: context,
                             format: format,
@@ -253,6 +263,30 @@ extension TextNormalizer {
                         : nil
                 }
         }
+    }
+
+    private static func isSpokenCodeLineRule(_ rule: TextForSpeech.Replacement) -> Bool {
+        guard case .line = rule.match else { return false }
+        guard case .spokenCode = rule.transform else { return false }
+        return true
+    }
+
+    private static func lineInputForLineRule(
+        _ rule: TextForSpeech.Replacement,
+        lineKind: TextForSpeech.Replacement.LineKind,
+        text: String,
+    ) -> String {
+        guard isSpokenCodeLineRule(rule), lineKind == .nonEmpty else { return text }
+        return omittingMatchedSpeechDelimiters(in: text)
+    }
+
+    private static func preparedLineForLineRule(
+        _ rule: TextForSpeech.Replacement,
+        lineKind: TextForSpeech.Replacement.LineKind,
+        line: String,
+    ) -> String {
+        guard isSpokenCodeLineRule(rule), lineKind == .codeLike else { return line }
+        return omittingMatchedSpeechDelimiters(in: line)
     }
 
     private static func resolvedReplacement(
