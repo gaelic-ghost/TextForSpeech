@@ -51,7 +51,7 @@ Then import `TextForSpeech` in the targets that need normalization or runtime-ma
 
 ## Usage
 
-Normalize mixed text directly when you want the default built-in `.balanced` style and an optional path context:
+Normalize mixed text directly when you want the default built-in `.balanced` style, optional path-and-format context, and optional request metadata:
 
 ```swift
 import TextForSpeech
@@ -61,6 +61,11 @@ let normalized = TextForSpeech.Normalize.text(
     context: TextForSpeech.Context(
         cwd: "/Users/galew/Workspace/SpeakSwiftly",
         repoRoot: "/Users/galew/Workspace/SpeakSwiftly"
+    ),
+    requestContext: TextForSpeech.RequestContext(
+        source: "codex",
+        app: "SpeakSwiftly",
+        project: "TextForSpeech"
     )
 )
 ```

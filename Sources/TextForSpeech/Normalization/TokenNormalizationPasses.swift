@@ -126,6 +126,7 @@ extension TextNormalizer {
         to text: String,
         format: NormalizationFormat,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         guard let rule = TextForSpeech.Profile.base.replacement(id: id) else { return text }
@@ -140,6 +141,7 @@ extension TextNormalizer {
             format: format,
             phase: .beforeBuiltIns,
             context: context,
+            requestContext: requestContext,
             nestedFormat: nestedFormat,
         )
     }

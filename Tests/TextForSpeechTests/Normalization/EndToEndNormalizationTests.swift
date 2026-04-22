@@ -23,6 +23,23 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
+@Test func `normalize accepts request context without changing output`() {
+    let original = "Read /tmp/Thing.swift and `profile?.sampleRate ?? 24000`."
+
+    let normalized = TextForSpeech.Normalize.text(
+        original,
+        requestContext: TextForSpeech.RequestContext(
+            source: "codex",
+            app: "SpeakSwiftly",
+            project: "TextForSpeech",
+            attributes: ["surface": "tests"],
+        ),
+    )
+
+    #expect(normalized.contains("tmp Thing dot swift"))
+    #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
+}
+
 @Test func `normalize preserves markdown links code blocks and spiral words`() {
     let original = """
     Read [the docs](https://example.com/docs) first.
@@ -368,6 +385,27 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("sample Rate"))
 }
 
+@Test func `normalize source accepts request context without changing output`() {
+    let source = """
+    struct WorkerRuntime {
+        let sampleRate: Int
+    }
+    """
+
+    let normalized = TextForSpeech.Normalize.source(
+        source,
+        as: .swift,
+        requestContext: TextForSpeech.RequestContext(
+            source: "codex",
+            app: "SpeakSwiftly",
+            topic: "normalization",
+        ),
+    )
+
+    #expect(!normalized.contains("open brace"))
+    #expect(normalized.contains("sample Rate"))
+}
+
 @Test func `compact style keeps whole source more visual and less spoken`() {
     let source = """
     struct WorkerRuntime {
@@ -383,6 +421,18 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     #expect(!normalized.contains("open brace"))
     #expect(normalized.contains("sample Rate"))
+}
+
+@Test func `malformed source delimiters stay audible`() {
+    let normalized = TextForSpeech.Normalize.source(
+        "let x = ([)]",
+        as: .swift,
+    )
+
+    #expect(normalized.contains("open parenthesis"))
+    #expect(normalized.contains("open bracket"))
+    #expect(normalized.contains("close parenthesis"))
+    #expect(normalized.contains("close bracket"))
 }
 
 @Test func `styles differentiate function calls issue references flags and file refs`() {

@@ -18,6 +18,7 @@ extension TextNormalizer {
         format: NormalizationFormat,
         phase: TextForSpeech.Replacement.Phase,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let replacements: [TextForSpeech.Replacement] = switch format {
@@ -32,6 +33,7 @@ extension TextNormalizer {
                 rule,
                 to: partial,
                 context: context,
+                requestContext: requestContext,
                 format: format,
                 nestedFormat: nestedFormat,
             )
@@ -193,6 +195,7 @@ extension TextNormalizer {
         _ rule: TextForSpeech.Replacement,
         to text: String,
         context: TextForSpeech.Context?,
+        requestContext: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
@@ -206,6 +209,7 @@ extension TextNormalizer {
                         for: rule.text,
                         rule: rule,
                         context: context,
+                        requestContext: requestContext,
                         format: format,
                         nestedFormat: nestedFormat,
                     ),
@@ -221,6 +225,7 @@ extension TextNormalizer {
                             for: token,
                             rule: rule,
                             context: context,
+                            requestContext: requestContext,
                             format: format,
                             nestedFormat: nestedFormat,
                         )
@@ -234,6 +239,7 @@ extension TextNormalizer {
                             for: token,
                             rule: rule,
                             context: context,
+                            requestContext: requestContext,
                             format: format,
                             nestedFormat: nestedFormat,
                         )
@@ -257,6 +263,7 @@ extension TextNormalizer {
                             ),
                             rule: rule,
                             context: context,
+                            requestContext: requestContext,
                             format: format,
                             nestedFormat: nestedFormat,
                         )
@@ -285,14 +292,14 @@ extension TextNormalizer {
         lineKind: TextForSpeech.Replacement.LineKind,
         line: String,
     ) -> String {
-        guard isSpokenCodeLineRule(rule), lineKind == .codeLike else { return line }
-        return omittingMatchedSpeechDelimiters(in: line)
+        line
     }
 
     private static func resolvedReplacement(
         for text: String,
         rule: TextForSpeech.Replacement,
         context: TextForSpeech.Context?,
+        requestContext _: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
@@ -318,7 +325,14 @@ extension TextNormalizer {
             case .spokenCode:
                 switch format {
                     case let .source(sourceFormat):
-                        spokenSource(text, format: sourceFormat)
+                        if isPreprocessedSourceLineForSpokenCode(rule) {
+                            spokenCode(
+                                text,
+                                suppressingMatchedDelimiters: false,
+                            )
+                        } else {
+                            spokenSource(text, format: sourceFormat)
+                        }
                     case .text:
                         if let nestedFormat {
                             spokenSource(text, format: nestedFormat)
@@ -342,5 +356,13 @@ extension TextNormalizer {
             case .spellOut:
                 spelledOut(trimmedCandidateToken(text))
         }
+    }
+
+    private static func isPreprocessedSourceLineForSpokenCode(
+        _ rule: TextForSpeech.Replacement,
+    ) -> Bool {
+        guard case .line(.nonEmpty) = rule.match else { return false }
+        guard case .spokenCode = rule.transform else { return false }
+        return true
     }
 }

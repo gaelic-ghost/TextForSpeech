@@ -25,6 +25,7 @@ extension TextNormalizer {
     static func normalizeFencedCodeBlocks(
         _ text: String,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
@@ -40,7 +41,12 @@ extension TextNormalizer {
                 if insideFence {
                     let body = bufferedCode.joined(separator: "\n")
                     output.append(
-                        spokenCodeBlock(body, nestedFormat: nestedFormat, context: context),
+                        spokenCodeBlock(
+                            body,
+                            nestedFormat: nestedFormat,
+                            context: context,
+                            requestContext: requestContext,
+                        ),
                     )
                     bufferedCode.removeAll(keepingCapacity: true)
                 }
@@ -61,6 +67,7 @@ extension TextNormalizer {
                     bufferedCode.joined(separator: "\n"),
                     nestedFormat: nestedFormat,
                     context: context,
+                    requestContext: requestContext,
                 ),
             )
         }
@@ -71,6 +78,7 @@ extension TextNormalizer {
     static func normalizeInlineCodeSpans(
         _ text: String,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let bodies = inlineCodeBodies(in: text)
@@ -97,7 +105,12 @@ extension TextNormalizer {
 
             let body = String(text[contentStart..<closing])
             if body == expectedBody {
-                result += spokenInlineCode(body, nestedFormat: nestedFormat, context: context)
+                result += spokenInlineCode(
+                    body,
+                    nestedFormat: nestedFormat,
+                    context: context,
+                    requestContext: requestContext,
+                )
                 index = text.index(after: closing)
                 nextBody = bodyIterator.next()
             } else {

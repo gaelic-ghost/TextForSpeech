@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import TextForSpeech
 
@@ -141,6 +142,23 @@ import Testing
     #expect(TextForSpeech.Profile.builtInStyle(.balanced).id == "base")
     #expect(TextForSpeech.Profile.builtInStyle(.compact).id == "compact-built-in-style")
     #expect(TextForSpeech.Profile.builtInStyle(.explicit).id == "explicit-built-in-style")
+}
+
+@Test func `request context decodes missing attributes as empty dictionary`() throws {
+    let data = """
+    {
+      "source": "codex",
+      "app": "SpeakSwiftly",
+      "project": "TextForSpeech"
+    }
+    """.data(using: .utf8)!
+
+    let decoded = try JSONDecoder().decode(TextForSpeech.RequestContext.self, from: data)
+
+    #expect(decoded.source == "codex")
+    #expect(decoded.app == "SpeakSwiftly")
+    #expect(decoded.project == "TextForSpeech")
+    #expect(decoded.attributes.isEmpty)
 }
 
 @Test func `compact style drops balanced code line rules but keeps semantic core`() {

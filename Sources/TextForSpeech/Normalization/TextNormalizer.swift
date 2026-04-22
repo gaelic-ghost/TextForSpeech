@@ -10,6 +10,7 @@ enum TextNormalizer {
         (
             String,
             TextForSpeech.Context?,
+            TextForSpeech.RequestContext?,
             TextForSpeech.Profile,
             NormalizationFormat,
             TextForSpeech.SourceFormat?,
@@ -51,46 +52,58 @@ enum TextNormalizer {
 
     static var normalizationPasses: [ContextualNormalizationPass] {
         [
-            { text, context, _, _, nestedFormat in
-                normalizeFencedCodeBlocks(text, context: context, nestedFormat: nestedFormat)
+            { text, context, requestContext, _, _, nestedFormat in
+                normalizeFencedCodeBlocks(
+                    text,
+                    context: context,
+                    requestContext: requestContext,
+                    nestedFormat: nestedFormat,
+                )
             },
-            { text, context, _, _, nestedFormat in
-                normalizeInlineCodeSpans(text, context: context, nestedFormat: nestedFormat)
+            { text, context, requestContext, _, _, nestedFormat in
+                normalizeInlineCodeSpans(
+                    text,
+                    context: context,
+                    requestContext: requestContext,
+                    nestedFormat: nestedFormat,
+                )
             },
-            { text, _, _, _, _ in normalizeMarkdownLinks(text) },
-            { text, _, _, _, _ in normalizePriorityListItems(text) },
-            { text, context, _, _, _ in
+            { text, _, _, _, _, _ in normalizeMarkdownLinks(text) },
+            { text, _, _, _, _, _ in normalizePriorityListItems(text) },
+            { text, context, _, _, _, _ in
                 compactRepeatedFilePathPrefixes(text, context: context)
             },
-            { text, _, _, _, _ in normalizeSpacedMeasuredValues(text) },
-            { text, context, profile, format, nestedFormat in
+            { text, _, _, _, _, _ in normalizeSpacedMeasuredValues(text) },
+            { text, context, requestContext, profile, format, nestedFormat in
                 applyReplacementRules(
                     text,
                     profile: profile,
                     format: format,
                     phase: .beforeBuiltIns,
                     context: context,
+                    requestContext: requestContext,
                     nestedFormat: nestedFormat,
                 )
             },
-            { text, _, _, _, _ in collapseWhitespace(text) },
+            { text, _, _, _, _, _ in collapseWhitespace(text) },
         ]
     }
 
     static var sourceNormalizationPasses: [ContextualNormalizationPass] {
         [
-            { text, _, _, _, _ in normalizeSpacedMeasuredValues(text) },
-            { text, context, profile, format, nestedFormat in
+            { text, _, _, _, _, _ in normalizeSpacedMeasuredValues(text) },
+            { text, context, requestContext, profile, format, nestedFormat in
                 applyReplacementRules(
                     text,
                     profile: profile,
                     format: format,
                     phase: .beforeBuiltIns,
                     context: context,
+                    requestContext: requestContext,
                     nestedFormat: nestedFormat,
                 )
             },
-            { text, _, _, _, _ in collapseWhitespace(text) },
+            { text, _, _, _, _, _ in collapseWhitespace(text) },
         ]
     }
 
@@ -99,6 +112,7 @@ enum TextNormalizer {
     static func normalizeText(
         _ text: String,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .default,
         format: TextForSpeech.TextFormat? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
@@ -107,6 +121,7 @@ enum TextNormalizer {
         return normalize(
             canonicalize(text),
             context: context,
+            requestContext: requestContext,
             profile: profile,
             format: .text(resolvedFormat),
             nestedFormat: nestedFormat ?? context?.nestedSourceFormat,
@@ -117,12 +132,14 @@ enum TextNormalizer {
     static func normalizeSource(
         _ source: String,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .default,
         format: TextForSpeech.SourceFormat,
     ) -> String {
         normalize(
             canonicalize(source),
             context: context,
+            requestContext: requestContext,
             profile: profile,
             format: .source(format),
             passes: sourceNormalizationPasses,
@@ -134,13 +151,14 @@ enum TextNormalizer {
     private static func normalize(
         _ text: String,
         context: TextForSpeech.Context?,
+        requestContext: TextForSpeech.RequestContext?,
         profile: TextForSpeech.Profile,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         passes: [ContextualNormalizationPass],
     ) -> String {
         let normalized = passes.reduce(text) { partial, pass in
-            pass(partial, context, profile, format, nestedFormat)
+            pass(partial, context, requestContext, profile, format, nestedFormat)
         }
         let finalized = collapseWhitespace(
             applyReplacementRules(
@@ -149,6 +167,7 @@ enum TextNormalizer {
                 format: format,
                 phase: .afterBuiltIns,
                 context: context,
+                requestContext: requestContext,
                 nestedFormat: nestedFormat,
             ),
         )
