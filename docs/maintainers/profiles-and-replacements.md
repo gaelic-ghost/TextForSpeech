@@ -125,7 +125,7 @@ The balanced style layer currently includes:
 - function-call speaking such as `foo()` -> `foo function`
 - issue-reference speaking such as `#123` -> `issue 123`
 - file-line-reference speaking such as `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift line 42 column 7`
-- CLI-flag speaking such as `--help` -> `dash dash help`
+- CLI-flag speaking such as `--help` -> `double tack help`
 
 The compact style currently:
 

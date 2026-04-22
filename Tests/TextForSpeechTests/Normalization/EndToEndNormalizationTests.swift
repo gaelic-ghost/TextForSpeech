@@ -407,12 +407,12 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(compact.contains("foo"))
     #expect(!compact.contains("function call"))
     #expect(compact.contains("help"))
-    #expect(!compact.contains("dash dash help"))
+    #expect(!compact.contains("double tack help"))
     #expect(compact.contains("123"))
     #expect(!compact.contains("issue 123"))
 
     #expect(balanced.contains("foo function"))
-    #expect(balanced.contains("dash dash help"))
+    #expect(balanced.contains("double tack help"))
     #expect(balanced.contains("issue 123"))
     #expect(balanced.contains("Worker Runtime dot swift line 42 column 7"))
 
@@ -438,4 +438,18 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     #expect(balanced.contains("Marvis TTS Model dot swift at line 208"))
     #expect(explicit.contains("file Marvis TTS Model dot swift at line 208"))
+}
+
+@Test func `balanced style speaks short and long cli flag prefixes as tack words`() {
+    let original = "Run codex --version and git branch -d."
+
+    let normalized = TextForSpeech.Normalize.text(
+        original,
+        style: .balanced,
+        format: .plain,
+    )
+
+    #expect(normalized.contains("codex double tack version"))
+    #expect(normalized.contains("git branch tack d"))
+    #expect(!normalized.contains("dash"))
 }

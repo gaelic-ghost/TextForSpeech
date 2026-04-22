@@ -253,7 +253,7 @@ extension TextNormalizer {
             case .compact:
                 return spokenBody
             case .balanced:
-                return isLongFlag ? "dash dash \(spokenBody)" : "dash \(spokenBody)"
+                return isLongFlag ? "double tack \(spokenBody)" : "tack \(spokenBody)"
             case .explicit:
                 return isLongFlag ? "long flag \(spokenBody)" : "short flag \(spokenBody)"
         }
