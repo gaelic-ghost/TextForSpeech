@@ -288,8 +288,21 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
         format: .source(.swift),
     )
 
-    #expect(normalized.contains("open brace"))
+    #expect(!normalized.contains("open brace"))
     #expect(normalized.contains("nil coalescing"))
+    #expect(normalized.contains("has Prefix"))
+}
+
+@Test func `unmatched code delimiters still speak`() {
+    let text = #"let fallback = weirdWords.first(where: { $0.hasPrefix("q") ]"#
+
+    let normalized = TextNormalizer.normalizeCodeHeavyLines(
+        text,
+        format: .source(.swift),
+    )
+
+    #expect(normalized.contains("open brace"))
+    #expect(normalized.contains("close bracket"))
 }
 
 @Test func `spiral prone words are spelled out`() {

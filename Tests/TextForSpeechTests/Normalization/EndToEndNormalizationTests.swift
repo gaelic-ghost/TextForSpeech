@@ -364,7 +364,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = TextForSpeech.Normalize.source(source, as: .swift)
 
-    #expect(normalized.contains("open brace"))
+    #expect(!normalized.contains("open brace"))
     #expect(normalized.contains("sample Rate"))
 }
 

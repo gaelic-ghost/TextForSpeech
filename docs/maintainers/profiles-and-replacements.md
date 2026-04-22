@@ -128,6 +128,7 @@ The balanced style layer currently includes:
 - issue-reference speaking such as `#123` -> `issue 123`
 - file-line-reference speaking such as `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift line 42 column 7`
 - CLI-flag speaking such as `--help` -> `double tack help`
+- matched brace, bracket, and parenthesis pairs are omitted inside the spoken-code lane so structural wrappers do not drown out the actual code content, while unmatched delimiters are still narrated
 
 The compact style currently:
 

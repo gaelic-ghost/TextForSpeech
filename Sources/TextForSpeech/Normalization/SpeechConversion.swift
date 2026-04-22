@@ -2,6 +2,7 @@ import Foundation
 
 extension TextNormalizer {
     static func spokenCode(_ text: String) -> String {
+        let pairSuppressed = omittingMatchedSpeechDelimiters(in: text)
         let replacements: [(String, String)] = [
             ("\n", ". "),
             ("->", " returns "),
@@ -34,11 +35,72 @@ extension TextNormalizer {
             ("=", " equals "),
         ]
 
-        let spoken = replacements.reduce(text) { partial, replacement in
+        let spoken = replacements.reduce(pairSuppressed) { partial, replacement in
             partial.replacingOccurrences(of: replacement.0, with: replacement.1)
         }
 
         return collapseWhitespace(insertWordBreaks(in: spoken))
+    }
+
+    static func omittingMatchedSpeechDelimiters(in text: String) -> String {
+        enum Delimiter: Character {
+            case openParenthesis = "("
+            case closeParenthesis = ")"
+            case openBracket = "["
+            case closeBracket = "]"
+            case openBrace = "{"
+            case closeBrace = "}"
+
+            var matchingOpen: Delimiter? {
+                switch self {
+                    case .closeParenthesis:
+                        .openParenthesis
+                    case .closeBracket:
+                        .openBracket
+                    case .closeBrace:
+                        .openBrace
+                    default:
+                        nil
+                }
+            }
+
+            var isOpening: Bool {
+                matchingOpen == nil
+            }
+        }
+
+        guard !text.isEmpty else { return text }
+
+        let characters = Array(text)
+        var omittedIndices = Set<Int>()
+        var delimiterStack: [(delimiter: Delimiter, index: Int)] = []
+
+        for (index, character) in characters.enumerated() {
+            guard let delimiter = Delimiter(rawValue: character) else { continue }
+
+            if delimiter.isOpening {
+                delimiterStack.append((delimiter, index))
+                continue
+            }
+
+            guard let matchingOpen = delimiter.matchingOpen,
+                  let last = delimiterStack.last,
+                  last.delimiter == matchingOpen else {
+                continue
+            }
+
+            omittedIndices.insert(last.index)
+            omittedIndices.insert(index)
+            delimiterStack.removeLast()
+        }
+
+        guard !omittedIndices.isEmpty else { return text }
+
+        return String(
+            characters.enumerated().map { index, character in
+                omittedIndices.contains(index) ? " " : character
+            }
+        )
     }
 
     static func spokenPath(_ text: String, context: TextForSpeech.Context? = nil) -> String {
