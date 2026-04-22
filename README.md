@@ -82,7 +82,7 @@ let normalized = TextForSpeech.Normalize.source(
 The shipped styles now differ in concrete coding-agent ways:
 
 - `.compact` assumes more visual context and says less. It drops the broad line-based spoken-code expansion and keeps common shapes terse, such as `foo()` -> `foo`, `#123` -> `123`, and `--help` -> `help`.
-- `.balanced` is the default general-purpose mode. It keeps spoken-code expansion for code-like lines and speaks common references more explicitly, such as `foo()` -> `foo function`, `#123` -> `issue 123`, `WorkerRuntime.swift:42` -> `Worker Runtime dot swift at line 42`, and `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift line 42 column 7`.
+- `.balanced` is the default general-purpose mode. It keeps spoken-code expansion for code-like lines and speaks common references more explicitly, such as `foo()` -> `foo function`, `#123` -> `issue 123`, `--help` -> `double tack help`, `WorkerRuntime.swift:42` -> `Worker Runtime dot swift at line 42`, and `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift line 42 column 7`.
 - `.explicit` is the audio-first mode. It keeps the same line-based spoken-code expansion as `.balanced`, but uses more narrated phrasing for common coding-agent shapes, such as `foo()` -> `foo function call`, `#123` -> `issue number 123`, and `--help` -> `long flag help`.
 
 The built-in speech layer also expands common numeric scalar shorthands and math-heavy identifiers, so tokens such as `f32` become `float thirty two` and combinations such as `cosF32` become `cosine float thirty two`.
