@@ -133,6 +133,8 @@ import Testing
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-f32" }))
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-xcodeproj-extension" }))
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(semanticCore.replacements.contains(where: { $0.id == "base-currency-amount" }))
+    #expect(semanticCore.replacements.contains(where: { $0.id == "base-measured-value" }))
 }
 
 @Test func `built in style lookup returns named preset profiles`() {

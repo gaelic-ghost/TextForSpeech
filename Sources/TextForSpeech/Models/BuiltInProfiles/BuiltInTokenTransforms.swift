@@ -15,6 +15,18 @@ public extension TextForSpeech.Profile {
             priority: -30,
         ),
         TextForSpeech.Replacement(
+            id: "base-currency-amount",
+            matching: .token(.currencyAmount),
+            using: .spokenCurrencyAmount,
+            priority: -35,
+        ),
+        TextForSpeech.Replacement(
+            id: "base-measured-value",
+            matching: .token(.measuredValue),
+            using: .spokenMeasuredValue,
+            priority: -37,
+        ),
+        TextForSpeech.Replacement(
             id: "base-dotted-identifier",
             matching: .token(.dottedIdentifier),
             using: .spokenIdentifier,

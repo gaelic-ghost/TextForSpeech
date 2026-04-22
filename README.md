@@ -25,7 +25,7 @@ The package currently has three main responsibilities:
 
 ### Motivation
 
-Speech models do poorly with raw developer text such as file paths, identifiers, markdown links, inline code, repeated separators, repeated-letter runs, and terse scalar or math-heavy tokens like `f32`, `cosF32`, or `WorkerRuntime.swift:42`. `TextForSpeech` centralizes those cleanup rules so the same behavior can be reused across callers instead of being reimplemented in app code or worker code.
+Speech models do poorly with raw developer text such as file paths, identifiers, markdown links, inline code, repeated separators, repeated-letter runs, currency and measurement forms like `$9.39` or `42 km`, and terse scalar or math-heavy tokens like `f32`, `cosF32`, or `WorkerRuntime.swift:42`. `TextForSpeech` centralizes those cleanup rules so the same behavior can be reused across callers instead of being reimplemented in app code or worker code.
 
 ## Setup
 
@@ -85,7 +85,7 @@ The shipped styles now differ in concrete coding-agent ways:
 - `.balanced` is the default general-purpose mode. It keeps spoken-code expansion for code-like lines and speaks common references more explicitly, such as `foo()` -> `foo function`, `#123` -> `issue 123`, `--help` -> `double tack help`, `WorkerRuntime.swift:42` -> `Worker Runtime dot swift at line 42`, and `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift line 42 column 7`.
 - `.explicit` is the audio-first mode. It keeps the same line-based spoken-code expansion as `.balanced`, but uses more narrated phrasing for common coding-agent shapes, such as `foo()` -> `foo function call`, `#123` -> `issue number 123`, and `--help` -> `long flag help`.
 
-The built-in speech layer also expands common numeric scalar shorthands and math-heavy identifiers, so tokens such as `f32` become `float thirty two` and combinations such as `cosF32` become `cosine float thirty two`.
+The built-in speech layer also expands common numeric scalar shorthands, currency amounts, and measurement suffixes, so tokens such as `f32` become `float thirty two`, `$9.39` becomes `nine dollars and thirty-nine cents`, `42 km` becomes `forty-two kilometers`, `64Gbps` becomes `sixty four gigabits per second`, and combinations such as `cosF32` become `cosine float thirty two`.
 
 The semantic core also ships extension aliases for especially speech-hostile file types. That includes Xcode-heavy forms such as `.xcodeproj`, `.pbxproj`, `.xcworkspace`, `.xcconfig`, `.xcscheme`, `.xctestplan`, `.xcresult`, `.xcassets`, `.xcstrings`, `.xcprivacy`, and `.dSYM`, plus mixed-stack formats such as `.mdx`, `.tsx`, `.jsx`, `.jsonc`, `.ipynb`, `.wasm`, `.sqlite`, and `.db`.
 

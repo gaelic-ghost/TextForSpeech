@@ -99,6 +99,8 @@ The built-in layers now carry the durable lexical policy that used to be spread 
 The semantic core currently includes:
 
 - Gale alias replacements such as `galew` and `galem`
+- currency amount speaking such as `$9.39` -> `nine dollars and thirty-nine cents`
+- measured-value speaking such as `42 km` -> `forty-two kilometers` and `64Gbps` -> `sixty four gigabits per second`
 - extension aliases for hard-to-speak file types such as `.xcodeproj`, `.pbxproj`, `.xcworkspace`, `.xcconfig`, `.xcscheme`, `.xctestplan`, `.xcresult`, `.xcassets`, `.xcstrings`, `.xcprivacy`, `.dSYM`, `.mdx`, `.tsx`, `.jsx`, `.jsonc`, `.ipynb`, `.wasm`, `.sqlite`, and `.db`
 - spoken URL conversion
 - spoken file-path conversion

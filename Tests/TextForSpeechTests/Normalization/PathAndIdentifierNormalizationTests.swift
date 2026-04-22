@@ -1,6 +1,10 @@
 import Testing
 @testable import TextForSpeech
 
+private func occurrenceCount(of needle: String, in haystack: String) -> Int {
+    haystack.components(separatedBy: needle).count - 1
+}
+
 // MARK: - File Paths and Names
 
 @Test func `file paths become spoken paths`() {
@@ -180,6 +184,92 @@ import Testing
     #expect(normalized.contains("float thirty two"))
     #expect(normalized.contains("signed integer sixty four"))
     #expect(normalized.contains("unsigned integer size"))
+}
+
+@Test func `currency amounts become spoken currency phrases`() {
+    let text = "Use $73, £4, £3.72, $9.39, and €2.05 once."
+
+    let normalized = TextForSpeech.Normalize.text(text, format: .plain)
+
+    #expect(normalized.contains("seventy three dollars"))
+    #expect(normalized.contains("four pounds"))
+    #expect(normalized.contains("three pounds, seventy two"))
+    #expect(normalized.contains("nine dollars and thirty nine cents"))
+    #expect(normalized.contains("two euros and five cents"))
+}
+
+@Test func `measured values become spoken unit phrases with or without one space`() {
+    let text = "Read 42km, 42 km, 32in, 256GB, 512Gb, 4500RPM, and 165lbs once."
+
+    let normalized = TextForSpeech.Normalize.text(text, format: .plain)
+
+    #expect(normalized.contains("forty two kilometers"))
+    #expect(occurrenceCount(of: "forty two kilometers", in: normalized) == 2)
+    #expect(normalized.contains("thirty two inches"))
+    #expect(normalized.contains("two hundred fifty six gigabytes"))
+    #expect(normalized.contains("five hundred twelve gigabits"))
+    #expect(normalized.contains("four thousand five hundred rotations per minute"))
+    #expect(normalized.contains("one hundred sixty five pounds"))
+}
+
+@Test func `measured values cover storage bandwidth and additional distance weight units`() {
+    let text = "Read 8 MB, 9Mb, 10 mb, 2TB, 2Tb, 11KBps, 12KB/s, 13Kbps, 14kbps, 15Kb/s, 16MBps, 17MB/s, 18Mbps, 19mbps, 20Mb/s, 21GBps, 22GB/s, 23Gbps, 24gbps, 25Gb/s, 26TBps, 27TB/s, 28Tbps, 29tbps, 30Tb/s, 83 mi, and 90 kg once."
+
+    let normalized = TextForSpeech.Normalize.text(text, format: .plain)
+
+    #expect(normalized.contains("eight megabytes"))
+    #expect(normalized.contains("nine megabits"))
+    #expect(normalized.contains("ten megabits"))
+    #expect(normalized.contains("two terabytes"))
+    #expect(normalized.contains("two terabits"))
+    #expect(normalized.contains("eleven kilobytes per second"))
+    #expect(normalized.contains("twelve kilobytes per second"))
+    #expect(normalized.contains("thirteen kilobits per second"))
+    #expect(normalized.contains("fourteen kilobits per second"))
+    #expect(normalized.contains("fifteen kilobits per second"))
+    #expect(normalized.contains("sixteen megabytes per second"))
+    #expect(normalized.contains("seventeen megabytes per second"))
+    #expect(normalized.contains("eighteen megabits per second"))
+    #expect(normalized.contains("nineteen megabits per second"))
+    #expect(normalized.contains("twenty megabits per second"))
+    #expect(normalized.contains("twenty one gigabytes per second"))
+    #expect(normalized.contains("twenty two gigabytes per second"))
+    #expect(normalized.contains("twenty three gigabits per second"))
+    #expect(normalized.contains("twenty four gigabits per second"))
+    #expect(normalized.contains("twenty five gigabits per second"))
+    #expect(normalized.contains("twenty six terabytes per second"))
+    #expect(normalized.contains("twenty seven terabytes per second"))
+    #expect(normalized.contains("twenty eight terabits per second"))
+    #expect(normalized.contains("twenty nine terabits per second"))
+    #expect(normalized.contains("thirty terabits per second"))
+    #expect(normalized.contains("eighty three miles"))
+    #expect(normalized.contains("ninety kilograms"))
+}
+
+@Test func `measured values use singular unit names for one`() {
+    let text = "Read 1 in, 1GB, 1Gb, 1MB, 1Mb, 1TB, 1Tb, 1KBps, 1Kbps, 1MBps, 1Mbps, 1GBps, 1Gbps, 1TBps, 1Tbps, 1lb, 1mi, 1kg, and 1RPM once."
+
+    let normalized = TextForSpeech.Normalize.text(text, format: .plain)
+
+    #expect(normalized.contains("one inch"))
+    #expect(normalized.contains("one gigabyte"))
+    #expect(normalized.contains("one gigabit"))
+    #expect(normalized.contains("one megabyte"))
+    #expect(normalized.contains("one megabit"))
+    #expect(normalized.contains("one terabyte"))
+    #expect(normalized.contains("one terabit"))
+    #expect(normalized.contains("one kilobyte per second"))
+    #expect(normalized.contains("one kilobit per second"))
+    #expect(normalized.contains("one megabyte per second"))
+    #expect(normalized.contains("one megabit per second"))
+    #expect(normalized.contains("one gigabyte per second"))
+    #expect(normalized.contains("one gigabit per second"))
+    #expect(normalized.contains("one terabyte per second"))
+    #expect(normalized.contains("one terabit per second"))
+    #expect(normalized.contains("one pound"))
+    #expect(normalized.contains("one mile"))
+    #expect(normalized.contains("one kilogram"))
+    #expect(normalized.contains("one rotation per minute"))
 }
 
 @Test func `line only file references use at line narration`() {

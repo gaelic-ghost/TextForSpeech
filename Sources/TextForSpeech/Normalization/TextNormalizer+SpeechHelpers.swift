@@ -1,6 +1,109 @@
 import Foundation
 
 extension TextNormalizer {
+    struct CurrencyDefinition {
+        let singular: String
+        let plural: String
+        let minorSingular: String?
+        let minorPlural: String?
+        let decimalJoiner: String
+    }
+
+    struct MeasurementDefinition {
+        let singular: String
+        let plural: String
+    }
+
+    struct ParsedCurrencyAmount {
+        let definition: CurrencyDefinition
+        let wholePart: String
+        let fractionalPart: String?
+    }
+
+    struct ParsedMeasuredValue {
+        let numericPart: String
+        let definition: MeasurementDefinition
+    }
+
+    private static let currencyDefinitions: [Character: CurrencyDefinition] = [
+        "$": CurrencyDefinition(
+            singular: "dollar",
+            plural: "dollars",
+            minorSingular: "cent",
+            minorPlural: "cents",
+            decimalJoiner: " and "
+        ),
+        "£": CurrencyDefinition(
+            singular: "pound",
+            plural: "pounds",
+            minorSingular: nil,
+            minorPlural: nil,
+            decimalJoiner: ", "
+        ),
+        "€": CurrencyDefinition(
+            singular: "euro",
+            plural: "euros",
+            minorSingular: "cent",
+            minorPlural: "cents",
+            decimalJoiner: " and "
+        ),
+    ]
+
+    private static let measurementDefinitions: [String: MeasurementDefinition] = [
+        "km": MeasurementDefinition(singular: "kilometer", plural: "kilometers"),
+        "mi": MeasurementDefinition(singular: "mile", plural: "miles"),
+        "kg": MeasurementDefinition(singular: "kilogram", plural: "kilograms"),
+        "in": MeasurementDefinition(singular: "inch", plural: "inches"),
+        "KBps": MeasurementDefinition(singular: "kilobyte per second", plural: "kilobytes per second"),
+        "KB/s": MeasurementDefinition(singular: "kilobyte per second", plural: "kilobytes per second"),
+        "Kbps": MeasurementDefinition(singular: "kilobit per second", plural: "kilobits per second"),
+        "kbps": MeasurementDefinition(singular: "kilobit per second", plural: "kilobits per second"),
+        "Kb/s": MeasurementDefinition(singular: "kilobit per second", plural: "kilobits per second"),
+        "MBps": MeasurementDefinition(singular: "megabyte per second", plural: "megabytes per second"),
+        "MB/s": MeasurementDefinition(singular: "megabyte per second", plural: "megabytes per second"),
+        "Mbps": MeasurementDefinition(singular: "megabit per second", plural: "megabits per second"),
+        "mbps": MeasurementDefinition(singular: "megabit per second", plural: "megabits per second"),
+        "Mb/s": MeasurementDefinition(singular: "megabit per second", plural: "megabits per second"),
+        "GBps": MeasurementDefinition(singular: "gigabyte per second", plural: "gigabytes per second"),
+        "GB/s": MeasurementDefinition(singular: "gigabyte per second", plural: "gigabytes per second"),
+        "Gbps": MeasurementDefinition(singular: "gigabit per second", plural: "gigabits per second"),
+        "gbps": MeasurementDefinition(singular: "gigabit per second", plural: "gigabits per second"),
+        "Gb/s": MeasurementDefinition(singular: "gigabit per second", plural: "gigabits per second"),
+        "TBps": MeasurementDefinition(singular: "terabyte per second", plural: "terabytes per second"),
+        "TB/s": MeasurementDefinition(singular: "terabyte per second", plural: "terabytes per second"),
+        "Tbps": MeasurementDefinition(singular: "terabit per second", plural: "terabits per second"),
+        "tbps": MeasurementDefinition(singular: "terabit per second", plural: "terabits per second"),
+        "Tb/s": MeasurementDefinition(singular: "terabit per second", plural: "terabits per second"),
+        "MB": MeasurementDefinition(singular: "megabyte", plural: "megabytes"),
+        "Mb": MeasurementDefinition(singular: "megabit", plural: "megabits"),
+        "mb": MeasurementDefinition(singular: "megabit", plural: "megabits"),
+        "lb": MeasurementDefinition(singular: "pound", plural: "pounds"),
+        "lbs": MeasurementDefinition(singular: "pound", plural: "pounds"),
+        "GB": MeasurementDefinition(singular: "gigabyte", plural: "gigabytes"),
+        "Gb": MeasurementDefinition(singular: "gigabit", plural: "gigabits"),
+        "gb": MeasurementDefinition(singular: "gigabit", plural: "gigabits"),
+        "TB": MeasurementDefinition(singular: "terabyte", plural: "terabytes"),
+        "Tb": MeasurementDefinition(singular: "terabit", plural: "terabits"),
+        "tb": MeasurementDefinition(singular: "terabit", plural: "terabits"),
+        "RPM": MeasurementDefinition(singular: "rotation per minute", plural: "rotations per minute"),
+        "rpm": MeasurementDefinition(singular: "rotation per minute", plural: "rotations per minute"),
+    ]
+
+    private static let measurementAlternationPattern = measurementDefinitions.keys
+        .sorted { lhs, rhs in
+            if lhs.count == rhs.count {
+                return lhs < rhs
+            }
+
+            return lhs.count > rhs.count
+        }
+        .map(NSRegularExpression.escapedPattern(for:))
+        .joined(separator: "|")
+
+    private static let spacedMeasuredValueRegex = try? NSRegularExpression(
+        pattern: "(?<![#$£€[:alnum:]])([0-9][0-9,]*(?:\\.[0-9]+)?) (" + measurementAlternationPattern + ")(?![[:alnum:]])",
+    )
+
     private static let spokenWordExpansions: [String: String] = [
         "cos": "cosine",
         "sin": "sine",
@@ -32,6 +135,19 @@ extension TextNormalizer {
 
     static func spelledOut(_ text: String) -> String {
         text.map { String($0) }.joined(separator: " ")
+    }
+
+    static func spokenNumber(_ text: String) -> String {
+        let normalized = text.replacingOccurrences(of: ",", with: "")
+        let decimal = NSDecimalNumber(string: normalized, locale: Locale(identifier: "en_US_POSIX"))
+
+        guard decimal != .notANumber else { return text }
+
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .spellOut
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+
+        return formatter.string(from: decimal) ?? text
     }
 
     static func spokenCodeBlock(
@@ -81,6 +197,61 @@ extension TextNormalizer {
             case .generic, .swift, .python, .rust:
                 spokenCode(text)
         }
+    }
+
+    static func spokenCurrencyAmount(_ text: String) -> String {
+        guard let parsed = parsedCurrencyAmount(in: text) else { return text }
+
+        let wholePart = spokenNumber(parsed.wholePart)
+        let majorUnit = isSingularNumber(parsed.wholePart) ? parsed.definition.singular : parsed.definition.plural
+
+        guard let fractionalPart = parsed.fractionalPart, fractionalPart != "00" else {
+            return "\(wholePart) \(majorUnit)"
+        }
+
+        let spokenFraction = spokenNumber(String(Int(fractionalPart) ?? 0))
+
+        if let minorSingular = parsed.definition.minorSingular,
+           let minorPlural = parsed.definition.minorPlural {
+            let minorUnit = fractionalPart == "01" ? minorSingular : minorPlural
+            return "\(wholePart) \(majorUnit)\(parsed.definition.decimalJoiner)\(spokenFraction) \(minorUnit)"
+        }
+
+        return "\(wholePart) \(majorUnit)\(parsed.definition.decimalJoiner)\(spokenFraction)"
+    }
+
+    static func spokenMeasuredValue(_ text: String) -> String {
+        guard let parsed = parsedMeasuredValue(in: text) else { return text }
+
+        let spokenValue = spokenNumber(parsed.numericPart)
+        let unit = isSingularNumber(parsed.numericPart) ? parsed.definition.singular : parsed.definition.plural
+        return "\(spokenValue) \(unit)"
+    }
+
+    static func normalizeSpacedMeasuredValues(_ text: String) -> String {
+        guard let spacedMeasuredValueRegex else { return text }
+
+        let matches = spacedMeasuredValueRegex.matches(
+            in: text,
+            range: NSRange(text.startIndex..., in: text),
+        )
+
+        guard !matches.isEmpty else { return text }
+
+        var normalized = text
+
+        for match in matches.reversed() {
+            guard let range = Range(match.range, in: normalized) else { continue }
+
+            let candidate = String(normalized[range])
+            let spoken = spokenMeasuredValue(candidate)
+
+            guard spoken != candidate else { continue }
+
+            normalized.replaceSubrange(range, with: spoken)
+        }
+
+        return normalized
     }
 
     static func spokenSegment(_ text: String) -> String {
@@ -172,5 +343,107 @@ extension TextNormalizer {
             default:
                 return nil
         }
+    }
+
+    private static func measurementDefinition(for suffix: String) -> MeasurementDefinition? {
+        if let exact = measurementDefinitions[suffix] {
+            return exact
+        }
+
+        return measurementDefinitions[suffix.lowercased()]
+    }
+
+    private static func normalizedNumberString(
+        _ text: String,
+        maxFractionDigits: Int? = nil,
+    ) -> String? {
+        let normalized = text.replacingOccurrences(of: ",", with: "")
+        guard !normalized.isEmpty else { return nil }
+
+        let parts = normalized.split(separator: ".", omittingEmptySubsequences: false)
+        guard parts.count <= 2 else { return nil }
+        guard let wholePart = parts.first, !wholePart.isEmpty, wholePart.allSatisfy(\.isNumber) else {
+            return nil
+        }
+
+        if parts.count == 2 {
+            let fractionalPart = parts[1]
+            guard !fractionalPart.isEmpty, fractionalPart.allSatisfy(\.isNumber) else {
+                return nil
+            }
+
+            if let maxFractionDigits, fractionalPart.count > maxFractionDigits {
+                return nil
+            }
+        }
+
+        return normalized
+    }
+
+    private static func isSingularNumber(_ text: String) -> Bool {
+        let decimal = NSDecimalNumber(
+            string: text.replacingOccurrences(of: ",", with: ""),
+            locale: Locale(identifier: "en_US_POSIX"),
+        )
+
+        return decimal != .notANumber && decimal == NSDecimalNumber.one
+    }
+
+    static func parsedCurrencyAmount(in text: String) -> ParsedCurrencyAmount? {
+        guard let symbol = text.first, let definition = currencyDefinitions[symbol] else { return nil }
+
+        let numericPortion = String(text.dropFirst())
+        guard let normalized = normalizedNumberString(numericPortion, maxFractionDigits: 2) else {
+            return nil
+        }
+
+        let parts = normalized.split(separator: ".", omittingEmptySubsequences: false).map(String.init)
+        let wholePart = parts[0]
+        let fractionalPart = parts.count == 2
+            ? parts[1].padding(toLength: 2, withPad: "0", startingAt: 0)
+            : nil
+
+        return ParsedCurrencyAmount(
+            definition: definition,
+            wholePart: wholePart,
+            fractionalPart: fractionalPart,
+        )
+    }
+
+    static func parsedMeasuredValue(in text: String) -> ParsedMeasuredValue? {
+        let trimmed = text.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return nil }
+
+        let parts = trimmed.split(separator: " ", omittingEmptySubsequences: false).map(String.init)
+
+        if parts.count == 2 {
+            guard let numericPart = normalizedNumberString(parts[0]),
+                  let definition = measurementDefinition(for: parts[1]) else {
+                return nil
+            }
+
+            return ParsedMeasuredValue(
+                numericPart: numericPart,
+                definition: definition,
+            )
+        }
+
+        guard parts.count == 1 else { return nil }
+
+        let token = parts[0]
+        guard let splitIndex = token.firstIndex(where: \.isLetter) else { return nil }
+
+        let numericPart = String(token[..<splitIndex])
+        let suffix = String(token[splitIndex...])
+
+        guard let normalizedNumber = normalizedNumberString(numericPart),
+              let definition = measurementDefinition(for: suffix) else {
+            return nil
+        }
+
+        return ParsedMeasuredValue(
+            numericPart: normalizedNumber,
+            definition: definition,
+        )
     }
 }
