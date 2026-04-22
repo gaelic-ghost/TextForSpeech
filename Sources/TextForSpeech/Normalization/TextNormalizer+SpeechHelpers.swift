@@ -154,8 +154,14 @@ extension TextNormalizer {
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
     ) -> String {
-        let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat, context: context)
+        let spoken = spokenEmbeddedCode(
+            body,
+            nestedFormat: nestedFormat,
+            context: context,
+            requestContext: requestContext,
+        )
         return spoken.isEmpty ? "Code sample." : "Code sample. \(spoken). End code sample."
     }
 
@@ -163,8 +169,14 @@ extension TextNormalizer {
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
     ) -> String {
-        let spoken = spokenEmbeddedCode(body, nestedFormat: nestedFormat, context: context)
+        let spoken = spokenEmbeddedCode(
+            body,
+            nestedFormat: nestedFormat,
+            context: context,
+            requestContext: requestContext,
+        )
         return spoken.isEmpty ? " code " : " \(spoken) "
     }
 
@@ -172,9 +184,14 @@ extension TextNormalizer {
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
     ) -> String {
         if let nestedFormat {
-            return SourceNormalizer.normalizeEmbedded(body, as: nestedFormat)
+            return SourceNormalizer.normalizeEmbedded(
+                body,
+                as: nestedFormat,
+                requestContext: requestContext,
+            )
         }
 
         if isLikelyFileLineReference(body) {

@@ -46,6 +46,7 @@ It does not carry request-local path context, detected formats, or runtime-owned
 That keeps responsibilities clean:
 
 - `TextForSpeech.Context` carries request-local environment such as `cwd`, `repoRoot`, and optional format hints.
+- `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, and freeform string attributes.
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.

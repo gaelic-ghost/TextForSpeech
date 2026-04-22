@@ -18,6 +18,7 @@ extension TextNormalizer {
         format: NormalizationFormat,
         phase: TextForSpeech.Replacement.Phase,
         context: TextForSpeech.Context? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let replacements: [TextForSpeech.Replacement] = switch format {
@@ -32,6 +33,7 @@ extension TextNormalizer {
                 rule,
                 to: partial,
                 context: context,
+                requestContext: requestContext,
                 format: format,
                 nestedFormat: nestedFormat,
             )
@@ -193,6 +195,7 @@ extension TextNormalizer {
         _ rule: TextForSpeech.Replacement,
         to text: String,
         context: TextForSpeech.Context?,
+        requestContext: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
@@ -206,6 +209,7 @@ extension TextNormalizer {
                         for: rule.text,
                         rule: rule,
                         context: context,
+                        requestContext: requestContext,
                         format: format,
                         nestedFormat: nestedFormat,
                     ),
@@ -221,6 +225,7 @@ extension TextNormalizer {
                             for: token,
                             rule: rule,
                             context: context,
+                            requestContext: requestContext,
                             format: format,
                             nestedFormat: nestedFormat,
                         )
@@ -234,6 +239,7 @@ extension TextNormalizer {
                             for: token,
                             rule: rule,
                             context: context,
+                            requestContext: requestContext,
                             format: format,
                             nestedFormat: nestedFormat,
                         )
@@ -257,6 +263,7 @@ extension TextNormalizer {
                             ),
                             rule: rule,
                             context: context,
+                            requestContext: requestContext,
                             format: format,
                             nestedFormat: nestedFormat,
                         )
@@ -293,6 +300,7 @@ extension TextNormalizer {
         for text: String,
         rule: TextForSpeech.Replacement,
         context: TextForSpeech.Context?,
+        requestContext _: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
