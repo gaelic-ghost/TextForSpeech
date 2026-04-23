@@ -240,6 +240,48 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     )
 }
 
+@Test func `normalize text preserves nine paragraph prose structure`() {
+    let normalized = TextForSpeech.Normalize.text(
+        """
+        First paragraph, with a comma after the opening phrase. It mentions camelCaseStuff and closes cleanly.
+
+        Second paragraph keeps speaking in ordinary prose. It mentions WorkerRuntime.swift, then ends with a period.
+
+        Third paragraph asks for calm structure, not flattening. It keeps every sentence where it started.
+
+        Fourth paragraph says TODO should stay where it belongs, if replaced. It also keeps commas, periods, and spacing intact.
+
+        Fifth paragraph brings in snake_case_stuff and kebab-case-stuff. Both should normalize without collapsing the paragraph break after them.
+
+        Sixth paragraph mentions /tmp/Thing.swift in the middle of a sentence. The path should become speech-safe while the prose shape stays put.
+
+        Seventh paragraph includes NSApplication.didFinishLaunchingNotification. The dotted identifier should change, but not the paragraph boundary.
+
+        Eighth paragraph adds one more ordinary sentence, with another comma, to make the structure test harder. Nothing should be fused into its neighbors.
+
+        Ninth paragraph closes the sample. If the formatter is still flattening prose, this test should catch it.
+        """,
+        format: .plain,
+    )
+
+    let paragraphs = normalized
+        .components(separatedBy: "\n\n")
+        .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        .filter { !$0.isEmpty }
+
+    #expect(paragraphs.count == 9)
+    #expect(occurrenceCount(of: "\n\n", in: normalized) == 8)
+    #expect(normalized.contains("First paragraph, with a comma"))
+    #expect(normalized.contains("camel Case Stuff"))
+    #expect(normalized.contains("Worker Runtime dot swift, then ends with a period."))
+    #expect(normalized.contains("snake case stuff"))
+    #expect(normalized.contains("kebab case stuff"))
+    #expect(normalized.contains("tmp Thing dot swift"))
+    #expect(normalized.contains("NSApplication dot did Finish Launching Notification"))
+    #expect(!normalized.contains("First paragraph, with a comma after the opening phrase. It mentions camel Case Stuff and closes cleanly. Second paragraph"))
+    #expect(!normalized.contains("neighbors. Ninth paragraph"))
+}
+
 @Test func `detect text format finds markdown`() {
     let markdown = """
     # Header
