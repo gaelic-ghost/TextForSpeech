@@ -85,7 +85,7 @@ enum TextNormalizer {
                     nestedFormat: nestedFormat,
                 )
             },
-            { text, _, _, _, _, _ in collapseWhitespace(text) },
+            { text, _, _, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
         ]
     }
 
@@ -103,7 +103,7 @@ enum TextNormalizer {
                     nestedFormat: nestedFormat,
                 )
             },
-            { text, _, _, _, _, _ in collapseWhitespace(text) },
+            { text, _, _, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
         ]
     }
 
@@ -160,7 +160,7 @@ enum TextNormalizer {
         let normalized = passes.reduce(text) { partial, pass in
             pass(partial, context, requestContext, profile, format, nestedFormat)
         }
-        let finalized = collapseWhitespace(
+        let finalized = normalizeWhitespacePreservingLineBreaks(
             applyReplacementRules(
                 normalized,
                 profile: profile,
