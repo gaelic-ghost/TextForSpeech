@@ -161,7 +161,7 @@ The normalizer still owns:
 - list-prefix parsing for structural markers such as priority tags like `[P1]`
 - format detection
 - path-context shortening such as `current directory` and `repo root`
-- final whitespace cleanup
+- final whitespace cleanup that preserves explicit line and paragraph breaks
 
 Those are document-structure or routing decisions rather than durable lexical policy. Treating them as replacement rules would make the system harder, not easier, to reason about.
 

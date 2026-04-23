@@ -40,4 +40,22 @@ extension TextNormalizer {
             )
             .trimmingCharacters(in: .whitespacesAndNewlines)
     }
+
+    static func normalizeWhitespacePreservingLineBreaks(_ text: String) -> String {
+        text
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .map(normalizeWhitespaceWithinLine)
+            .joined(separator: "\n")
+    }
+
+    private static func normalizeWhitespaceWithinLine<S: StringProtocol>(_ line: S) -> String {
+        line
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+            .replacingOccurrences(
+                of: #"\s+([,.;:?!])"#,
+                with: "$1",
+                options: .regularExpression,
+            )
+    }
 }

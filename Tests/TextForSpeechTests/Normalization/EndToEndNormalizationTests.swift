@@ -204,6 +204,42 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("TODO"))
 }
 
+@Test func `normalize text preserves line breaks paragraphs and suffix punctuation`() {
+    let profile = TextForSpeech.Profile(
+        id: "custom-structure",
+        name: "Custom Structure",
+        replacements: [
+            TextForSpeech.Replacement(
+                "TODO",
+                with: "to do marker",
+                matching: .wholeToken,
+            ),
+        ],
+    )
+
+    let normalized = TextForSpeech.Normalize.text(
+        """
+        Keep TODO,
+        and camelCaseStuff.
+
+        Close with WorkerRuntime.swift.
+        """,
+        customProfile: profile,
+        format: .plain,
+    )
+
+    #expect(
+        normalized
+            ==
+            """
+            Keep to do marker,
+            and camel Case Stuff.
+
+            Close with Worker Runtime dot swift.
+            """
+    )
+}
+
 @Test func `detect text format finds markdown`() {
     let markdown = """
     # Header
@@ -383,6 +419,23 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     #expect(!normalized.contains("open brace"))
     #expect(normalized.contains("sample Rate"))
+}
+
+@Test func `normalize source preserves line and paragraph breaks`() {
+    let source = """
+    struct WorkerRuntime {
+        let sampleRate: Int
+
+        let fallbackValue: Int
+    }
+    """
+
+    let normalized = TextForSpeech.Normalize.source(source, as: .swift)
+
+    #expect(normalized.split(separator: "\n", omittingEmptySubsequences: false).count == 5)
+    #expect(normalized.contains("\n\n"))
+    #expect(normalized.contains("sample Rate"))
+    #expect(normalized.contains("fallback Value"))
 }
 
 @Test func `normalize source accepts request context without changing output`() {
