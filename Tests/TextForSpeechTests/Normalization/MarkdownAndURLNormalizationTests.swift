@@ -28,6 +28,25 @@ import Testing
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
+@Test func `inline code honors double colon style policy`() {
+    let text = "Read `Thing::value` once."
+
+    let balanced = TextForSpeech.Normalize.text(
+        text,
+        style: .balanced,
+        format: .markdown,
+    )
+    let explicit = TextForSpeech.Normalize.text(
+        text,
+        style: .explicit,
+        format: .markdown,
+    )
+
+    #expect(balanced.contains("Thing value"))
+    #expect(!balanced.contains("double colon"))
+    #expect(explicit.contains("Thing double colon value"))
+}
+
 @Test func `inline file path spans do not fall back to spoken slash code`() {
     let text = "Read `/tmp/Thing.swift` once."
 

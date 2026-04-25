@@ -32,6 +32,7 @@ extension TextNormalizer {
             applyReplacementRule(
                 rule,
                 to: partial,
+                profile: profile,
                 context: context,
                 requestContext: requestContext,
                 format: format,
@@ -194,6 +195,7 @@ extension TextNormalizer {
     private static func applyReplacementRule(
         _ rule: TextForSpeech.Replacement,
         to text: String,
+        profile: TextForSpeech.Profile,
         context: TextForSpeech.Context?,
         requestContext: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
@@ -208,6 +210,7 @@ extension TextNormalizer {
                     with: resolvedReplacement(
                         for: rule.text,
                         rule: rule,
+                        profile: profile,
                         context: context,
                         requestContext: requestContext,
                         format: format,
@@ -224,6 +227,7 @@ extension TextNormalizer {
                         ? resolvedReplacement(
                             for: token,
                             rule: rule,
+                            profile: profile,
                             context: context,
                             requestContext: requestContext,
                             format: format,
@@ -238,6 +242,7 @@ extension TextNormalizer {
                         ? resolvedReplacement(
                             for: token,
                             rule: rule,
+                            profile: profile,
                             context: context,
                             requestContext: requestContext,
                             format: format,
@@ -262,6 +267,7 @@ extension TextNormalizer {
                                 line: line,
                             ),
                             rule: rule,
+                            profile: profile,
                             context: context,
                             requestContext: requestContext,
                             format: format,
@@ -298,6 +304,7 @@ extension TextNormalizer {
     private static func resolvedReplacement(
         for text: String,
         rule: TextForSpeech.Replacement,
+        profile: TextForSpeech.Profile,
         context: TextForSpeech.Context?,
         requestContext _: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
@@ -329,15 +336,19 @@ extension TextNormalizer {
                             spokenCode(
                                 text,
                                 suppressingMatchedDelimiters: false,
+                                doubleColonPolicy: doubleColonSpeechPolicy(for: profile),
                             )
                         } else {
-                            spokenSource(text, format: sourceFormat)
+                            spokenSource(text, format: sourceFormat, profile: profile)
                         }
                     case .text:
                         if let nestedFormat {
-                            spokenSource(text, format: nestedFormat)
+                            spokenSource(text, format: nestedFormat, profile: profile)
                         } else {
-                            spokenCode(text)
+                            spokenCode(
+                                text,
+                                doubleColonPolicy: doubleColonSpeechPolicy(for: profile),
+                            )
                         }
                 }
 

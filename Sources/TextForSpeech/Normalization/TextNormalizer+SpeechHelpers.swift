@@ -155,12 +155,14 @@ extension TextNormalizer {
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         context: TextForSpeech.Context? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
+        profile: TextForSpeech.Profile = .base,
     ) -> String {
         let spoken = spokenEmbeddedCode(
             body,
             nestedFormat: nestedFormat,
             context: context,
             requestContext: requestContext,
+            profile: profile,
         )
         return spoken.isEmpty ? "Code sample." : "Code sample. \(spoken). End code sample."
     }
@@ -170,12 +172,14 @@ extension TextNormalizer {
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         context: TextForSpeech.Context? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
+        profile: TextForSpeech.Profile = .base,
     ) -> String {
         let spoken = spokenEmbeddedCode(
             body,
             nestedFormat: nestedFormat,
             context: context,
             requestContext: requestContext,
+            profile: profile,
         )
         return spoken.isEmpty ? " code " : " \(spoken) "
     }
@@ -185,12 +189,14 @@ extension TextNormalizer {
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         context: TextForSpeech.Context? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
+        profile: TextForSpeech.Profile = .base,
     ) -> String {
         if let nestedFormat {
             return SourceNormalizer.normalizeEmbedded(
                 body,
                 as: nestedFormat,
                 requestContext: requestContext,
+                profile: profile,
             )
         }
 
@@ -206,14 +212,30 @@ extension TextNormalizer {
             return spokenPath(body, context: context)
         }
 
-        return spokenCode(body)
+        return spokenCode(
+            body,
+            doubleColonPolicy: doubleColonSpeechPolicy(for: profile),
+        )
     }
 
-    static func spokenSource(_ text: String, format: TextForSpeech.SourceFormat) -> String {
+    static func spokenSource(
+        _ text: String,
+        format: TextForSpeech.SourceFormat,
+        profile: TextForSpeech.Profile = .base,
+    ) -> String {
         switch format {
             case .generic, .swift, .python, .rust:
-                spokenCode(text)
+                spokenCode(
+                    text,
+                    doubleColonPolicy: doubleColonSpeechPolicy(for: profile),
+                )
         }
+    }
+
+    static func doubleColonSpeechPolicy(
+        for profile: TextForSpeech.Profile,
+    ) -> DoubleColonSpeechPolicy {
+        profile.replacement(id: "explicit-function-call") == nil ? .silent : .verbose
     }
 
     static func spokenCurrencyAmount(_ text: String) -> String {

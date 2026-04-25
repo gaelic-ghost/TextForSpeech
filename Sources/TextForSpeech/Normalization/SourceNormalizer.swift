@@ -26,11 +26,12 @@ enum SourceNormalizer {
         _ source: String,
         as format: TextForSpeech.SourceFormat,
         requestContext: TextForSpeech.RequestContext? = nil,
+        profile: TextForSpeech.Profile = .base,
     ) -> String {
         TextNormalizer.normalizeSource(
             source,
             requestContext: requestContext,
-            profile: .base,
+            profile: profile,
             format: format,
         )
     }

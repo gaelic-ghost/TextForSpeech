@@ -27,6 +27,7 @@ extension TextNormalizer {
         context: TextForSpeech.Context? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
+        profile: TextForSpeech.Profile = .base,
     ) -> String {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
         guard !lines.isEmpty else { return text }
@@ -46,6 +47,7 @@ extension TextNormalizer {
                             nestedFormat: nestedFormat,
                             context: context,
                             requestContext: requestContext,
+                            profile: profile,
                         ),
                     )
                     bufferedCode.removeAll(keepingCapacity: true)
@@ -68,6 +70,7 @@ extension TextNormalizer {
                     nestedFormat: nestedFormat,
                     context: context,
                     requestContext: requestContext,
+                    profile: profile,
                 ),
             )
         }
@@ -80,6 +83,7 @@ extension TextNormalizer {
         context: TextForSpeech.Context? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
+        profile: TextForSpeech.Profile = .base,
     ) -> String {
         let bodies = inlineCodeBodies(in: text)
         guard !bodies.isEmpty else { return text }
@@ -110,6 +114,7 @@ extension TextNormalizer {
                     nestedFormat: nestedFormat,
                     context: context,
                     requestContext: requestContext,
+                    profile: profile,
                 )
                 index = text.index(after: closing)
                 nextBody = bodyIterator.next()

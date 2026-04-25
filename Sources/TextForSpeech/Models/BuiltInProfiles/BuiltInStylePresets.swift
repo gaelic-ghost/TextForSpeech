@@ -5,6 +5,12 @@ public extension TextForSpeech.Profile {
         name: "Balanced Built-In Style",
         replacements: [
             TextForSpeech.Replacement(
+                "::",
+                with: " ",
+                id: "balanced-double-colon",
+                priority: 50,
+            ),
+            TextForSpeech.Replacement(
                 id: "balanced-function-call",
                 matching: .token(.functionCall),
                 using: .spokenFunctionCall(.balanced),
@@ -51,6 +57,12 @@ public extension TextForSpeech.Profile {
         id: "compact-built-in-style",
         name: "Compact Built-In Style",
         replacements: [
+            TextForSpeech.Replacement(
+                "::",
+                with: " ",
+                id: "compact-double-colon",
+                priority: 50,
+            ),
             TextForSpeech.Replacement(
                 id: "compact-function-call",
                 matching: .token(.functionCall),

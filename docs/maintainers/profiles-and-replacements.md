@@ -123,6 +123,7 @@ The semantic core is now split by semantic role under `Sources/TextForSpeech/Mod
 
 The balanced style layer currently includes:
 
+- silent `::` separator handling so namespaced code tokens keep a word break without saying `double colon`
 - line-based spoken code conversion for code-like text lines
 - line-based spoken code conversion for whole-source input
 - function-call speaking such as `foo()` -> `foo function`
@@ -133,6 +134,7 @@ The balanced style layer currently includes:
 
 The compact style currently:
 
+- keeps `::` silent so namespaced code tokens do not leak raw punctuation into downstream speech
 - drops those line-based spoken-code rules so source-like text stays more visual and less expanded
 - compresses function calls such as `foo()` -> `foo`
 - compresses issue references such as `#123` -> `123`
@@ -142,6 +144,7 @@ The compact style currently:
 The explicit style currently:
 
 - keeps the same line-based spoken-code rules as the balanced style
+- says `::` as `double colon` for audio-first code clarity
 - expands function calls such as `foo()` -> `foo function call`
 - expands issue references such as `#123` -> `issue number 123`
 - expands file references such as `WorkerRuntime.swift:42:7` -> `file Worker Runtime dot swift line 42 column 7`
@@ -267,7 +270,7 @@ When deciding where a new built-in rule belongs:
 - use `BuiltInScalarPronunciations.swift` when the rule is a durable whole-token pronunciation for terse typed-width or numeric forms
 - use `BuiltInExtensionAliases.swift` when the main problem is a raw file suffix that sounds bad before path or file-reference narration
 - use `BuiltInTokenTransforms.swift` when the rule is broad token-shape behavior rather than one literal vocabulary entry
-- use `BuiltInStylePresets.swift` only when the behavior is presentation policy and callers should be able to switch between `.balanced`, `.compact`, and `.explicit` without changing the underlying semantics
+- use `BuiltInStylePresets.swift` only when the behavior is presentation policy and callers should be able to switch between `.balanced`, `.compact`, and `.explicit` without changing the underlying semantics; `::` belongs here because only `.explicit` should narrate it as `double colon`
 - keep structural markdown, parsing, routing, or context-sensitive behavior out of these fragments and in `Normalization/`
 
 When touching docs or tests:
