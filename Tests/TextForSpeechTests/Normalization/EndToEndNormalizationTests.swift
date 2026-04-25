@@ -567,6 +567,36 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(explicit.contains("file Worker Runtime dot swift line 42 column 7"))
 }
 
+@Test func `double colon stays silent except in explicit style`() {
+    let original = "let value = Thing::value"
+
+    let compact = TextForSpeech.Normalize.source(
+        original,
+        as: .swift,
+        style: .compact,
+    )
+    let balanced = TextForSpeech.Normalize.source(
+        original,
+        as: .swift,
+        style: .balanced,
+    )
+    let explicit = TextForSpeech.Normalize.source(
+        original,
+        as: .swift,
+        style: .explicit,
+    )
+
+    #expect(compact.contains("Thing value"))
+    #expect(!compact.contains("::"))
+    #expect(!compact.contains("double colon"))
+
+    #expect(balanced.contains("Thing value"))
+    #expect(!balanced.contains("::"))
+    #expect(!balanced.contains("double colon"))
+
+    #expect(explicit.contains("Thing double colon value"))
+}
+
 @Test func `styles use at line for line only file references`() {
     let original = "See MarvisTTSModel.swift:208."
 

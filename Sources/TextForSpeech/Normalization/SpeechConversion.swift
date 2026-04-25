@@ -1,6 +1,11 @@
 import Foundation
 
 extension TextNormalizer {
+    enum DoubleColonSpeechPolicy {
+        case silent
+        case verbose
+    }
+
     static func spokenCode(_ text: String) -> String {
         spokenCode(
             text,
@@ -10,13 +15,32 @@ extension TextNormalizer {
 
     static func spokenCode(
         _ text: String,
+        doubleColonPolicy: DoubleColonSpeechPolicy,
+    ) -> String {
+        spokenCode(
+            text,
+            suppressingMatchedDelimiters: true,
+            doubleColonPolicy: doubleColonPolicy,
+        )
+    }
+
+    static func spokenCode(
+        _ text: String,
         suppressingMatchedDelimiters: Bool,
+        doubleColonPolicy: DoubleColonSpeechPolicy = .silent,
     ) -> String {
         let pairSuppressed = if suppressingMatchedDelimiters {
             omittingMatchedSpeechDelimiters(in: text)
         } else {
             text
         }
+        let doubleColonReplacement = switch doubleColonPolicy {
+            case .silent:
+                " "
+            case .verbose:
+                " double colon "
+        }
+
         let replacements: [(String, String)] = [
             ("\n", ". "),
             ("->", " returns "),
@@ -27,7 +51,7 @@ extension TextNormalizer {
             ("!=", " not equals "),
             ("&&", " and "),
             ("||", " or "),
-            ("::", " double colon "),
+            ("::", doubleColonReplacement),
             ("?.", " optional chaining "),
             ("??", " nil coalescing "),
             ("...", " ellipsis "),

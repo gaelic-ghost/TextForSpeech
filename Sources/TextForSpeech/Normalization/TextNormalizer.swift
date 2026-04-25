@@ -52,20 +52,22 @@ enum TextNormalizer {
 
     static var normalizationPasses: [ContextualNormalizationPass] {
         [
-            { text, context, requestContext, _, _, nestedFormat in
+            { text, context, requestContext, profile, _, nestedFormat in
                 normalizeFencedCodeBlocks(
                     text,
                     context: context,
                     requestContext: requestContext,
                     nestedFormat: nestedFormat,
+                    profile: profile,
                 )
             },
-            { text, context, requestContext, _, _, nestedFormat in
+            { text, context, requestContext, profile, _, nestedFormat in
                 normalizeInlineCodeSpans(
                     text,
                     context: context,
                     requestContext: requestContext,
                     nestedFormat: nestedFormat,
+                    profile: profile,
                 )
             },
             { text, _, _, _, _, _ in normalizeMarkdownLinks(text) },
