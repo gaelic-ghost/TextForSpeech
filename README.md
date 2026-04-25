@@ -5,17 +5,22 @@ A Swift package for turning code-heavy, path-heavy, and markdown-heavy developer
 ## Table of Contents
 
 - [Overview](#overview)
-- [Setup](#setup)
+- [Quick Start](#quick-start)
 - [Usage](#usage)
-- [Runtime profiles](#runtime-profiles)
-- [Source layout](#source-layout)
 - [Development](#development)
-- [Verification](#verification)
+- [Repo Structure](#repo-structure)
+- [Release Notes](#release-notes)
 - [License](#license)
 
 ## Overview
 
-`TextForSpeech` owns the text-conditioning layer that `SpeakSwiftly` consumes as an external package. It ships one semantic built-in core plus a selectable built-in `style`, then layers persisted custom profiles on top so callers can tune pronunciation without reimplementing the core normalization pipeline.
+### Status
+
+`TextForSpeech` is actively available as the shared normalization package used by `SpeakSwiftly`.
+
+### What This Project Is
+
+`TextForSpeech` owns the text-conditioning step that prepares developer-heavy text before speech generation. It ships one semantic built-in core plus selectable built-in styles, then layers persisted custom profiles on top so callers can tune pronunciation without reimplementing the core normalization behavior.
 
 The package currently has three main responsibilities:
 
@@ -27,15 +32,21 @@ The package currently has three main responsibilities:
 
 Speech models do poorly with raw developer text such as file paths, identifiers, markdown links, inline code, repeated separators, repeated-letter runs, currency and measurement forms like `$9.39` or `42 km`, and terse scalar or math-heavy tokens like `f32`, `cosF32`, or `WorkerRuntime.swift:42`. `TextForSpeech` centralizes those cleanup rules so the same behavior can be reused across callers instead of being reimplemented in app code or worker code.
 
-## Setup
+## Quick Start
 
-`TextForSpeech` is a Swift Package Manager library product targeting iOS 17, macOS 14, and Swift 6 language mode.
+Add `TextForSpeech` as a Swift Package Manager dependency, import `TextForSpeech`, then call the namespace-first normalization API:
 
-During local development, add it to another package with a local path dependency:
+```swift
+import TextForSpeech
+
+let normalized = TextForSpeech.Normalize.text("stderr: WorkerRuntime.swift:42")
+```
+
+Add the package from its GitHub repository:
 
 ```swift
 dependencies: [
-    .package(path: "../TextForSpeech"),
+    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.18.7"),
 ],
 targets: [
     .executableTarget(
@@ -47,8 +58,6 @@ targets: [
 ]
 ```
 
-Then import `TextForSpeech` in the targets that need normalization or runtime-managed profile state.
-
 ## Usage
 
 Normalize mixed text directly when you want the default built-in `.balanced` style, optional path-and-format context, and optional request metadata:
@@ -57,10 +66,10 @@ Normalize mixed text directly when you want the default built-in `.balanced` sty
 import TextForSpeech
 
 let normalized = TextForSpeech.Normalize.text(
-    "stderr: /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
+    "stderr: /workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
     context: TextForSpeech.Context(
-        cwd: "/Users/galew/Workspace/SpeakSwiftly",
-        repoRoot: "/Users/galew/Workspace/SpeakSwiftly"
+        cwd: "/workspace/SpeakSwiftly",
+        repoRoot: "/workspace/SpeakSwiftly"
     ),
     requestContext: TextForSpeech.RequestContext(
         source: "codex",
@@ -70,7 +79,7 @@ let normalized = TextForSpeech.Normalize.text(
 )
 ```
 
-If you omit `format`, `TextForSpeech` detects a likely outer text format before running the text normalization pipeline.
+If you omit `format`, `TextForSpeech` detects a likely outer text format before running the text normalization path.
 
 If you want a different shipped listening mode, pass `style:`:
 
@@ -84,7 +93,7 @@ let normalized = TextForSpeech.Normalize.source(
 )
 ```
 
-The shipped styles now differ in concrete coding-agent ways:
+The shipped styles differ in concrete coding-agent ways:
 
 - `.compact` assumes more visual context and says less. It drops the broad line-based spoken-code expansion, keeps common shapes terse, and keeps `::` silent, such as `foo()` -> `foo`, `#123` -> `123`, and `--help` -> `help`.
 - `.balanced` is the default general-purpose mode. It keeps spoken-code expansion for code-like lines, keeps `::` silent, and speaks common references more explicitly, such as `foo()` -> `foo function`, `#123` -> `issue 123`, `--help` -> `double tack help`, `WorkerRuntime.swift:42` -> `Worker Runtime dot swift at line 42`, and `WorkerRuntime.swift:42:7` -> `Worker Runtime dot swift line 42 column 7`.
@@ -94,9 +103,9 @@ The built-in speech layer also expands common numeric scalar shorthands, currenc
 
 The semantic core also ships extension aliases for especially speech-hostile file types. That includes Xcode-heavy forms such as `.xcodeproj`, `.pbxproj`, `.xcworkspace`, `.xcconfig`, `.xcscheme`, `.xctestplan`, `.xcresult`, `.xcassets`, `.xcstrings`, `.xcprivacy`, and `.dSYM`, plus mixed-stack formats such as `.mdx`, `.tsx`, `.jsx`, `.jsonc`, `.ipynb`, `.wasm`, `.sqlite`, and `.db`.
 
-For repeated file paths in the same utterance, the text lane now also compacts repeated anchors before the built-in path-speaking pass. File-path separators collapse to spacing rather than spoken words, and later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
+For repeated file paths in the same utterance, the text path compacts repeated anchors before the built-in path-speaking pass. File-path separators collapse to spacing rather than spoken words, and later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
 
-When the outer document is mixed text but the embedded code language is known, pass `nestedFormat` so fenced or inline code can route through the source lane:
+When the outer document is mixed text but the embedded code language is known, pass `nestedFormat` so fenced or inline code can route through the source path:
 
 ```swift
 import TextForSpeech
@@ -114,7 +123,7 @@ let normalized = TextForSpeech.Normalize.text(
 )
 ```
 
-Use the source lane when the whole input is a source file or editor buffer and the caller already knows the language:
+Use the source path when the whole input is a source file or editor buffer and the caller already knows the language:
 
 ```swift
 import TextForSpeech
@@ -129,9 +138,9 @@ let normalized = TextForSpeech.Normalize.source(
 )
 ```
 
-The source lane is explicit today but still generic. It normalizes whole-source input more consistently than the mixed-text lane, but SwiftSyntax-backed Swift-specific structure is still future roadmap work rather than current behavior.
+The source path is explicit today but still generic. It normalizes whole-source input more consistently than the mixed-text path, but SwiftSyntax-backed Swift-specific structure is still future roadmap work rather than current behavior.
 
-## Runtime Profiles
+### Runtime Profiles
 
 Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, one selected built-in style, and JSON-backed persistence configured through a small enum:
 
@@ -171,60 +180,95 @@ The runtime model is intentionally explicit:
 
 Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default store uses `TextForSpeech-Debug` instead so local debug runs do not touch the production namespace. Callers that need an explicit location can pass `.file(url)`. The selected built-in style is persisted alongside the active custom profile id and stored custom profiles.
 
-## Source Layout
-
-The package source lives under `Sources/TextForSpeech` and is organized by responsibility:
-
-- `API/`
-  Public namespace-first entrypoints such as `Normalize`.
-- `Models/`
-  Core value types such as `Profile`, `Replacement`, and `Context`, plus the built-in profile composition surface and the semantic-role fragments under `Models/BuiltInProfiles/`.
-- `Normalization/`
-  The text lane, source lane, structural markdown parsing, replacement-rule engine, speech helpers, and format detection.
-- `Runtime/`
-  Runtime ownership, grouped profile and persistence handles, persisted state, and runtime-facing errors.
-The current source split keeps structural normalization logic separate from durable lexical policy:
-
-- structural work such as markdown parsing, code-span extraction, and format detection stays in code
-- durable lexical policy such as built-in aliases, extension aliases, identifier speaking, path speaking, URL speaking, repeated-letter-run handling, and style-specific speaking policy lives in the built-in profile layers
-
-Tests live under `Tests/TextForSpeechTests` and are grouped by role:
-
-- `Models/`
-- `Normalization/`
-- `Runtime/`
-- focused normalization files for path and identifier behavior, markdown and URL behavior, and broader end-to-end flows
-
 ## Development
 
-Use the standard Swift package workflow from the repository root:
+### Setup
+
+`TextForSpeech` is a Swift Package Manager library product targeting iOS 17, macOS 14, and Swift 6 language mode.
+
+No generated project setup is required for ordinary local development. Work from the repository root with SwiftPM.
+
+### Workflow
+
+Use the standard Swift package workflow for code and tests:
 
 ```bash
 swift build
 swift test
 ```
 
-The repository also uses checked-in SwiftFormat and SwiftLint configuration:
+The repository also uses repo-owned maintainer scripts for validation, shared sync work, and releases:
 
 ```bash
-swiftformat --lint --config .swiftformat .
-swiftlint lint --config .swiftlint.yml
+sh scripts/repo-maintenance/validate-all.sh
+sh scripts/repo-maintenance/sync-shared.sh
+sh scripts/repo-maintenance/release.sh --mode standard --version vX.Y.Z
 ```
 
-For repository workflow expectations, architecture boundaries, and doc-sync rules, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For repository workflow expectations, architecture boundaries, and doc-sync rules, see [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), and the maintainer notes under [docs/maintainers](docs/maintainers).
 
-## Verification
+### Validation
 
 The baseline verification path for this repository is:
 
 ```bash
 swift build
 swift test
+sh scripts/repo-maintenance/validate-all.sh
+```
+
+The repository also includes checked-in SwiftFormat and SwiftLint configuration:
+
+```bash
 swiftformat --lint --config .swiftformat .
 swiftlint lint --config .swiftlint.yml
 ```
 
-For release work or architectural refactors, also review the current roadmap in [ROADMAP.md](ROADMAP.md) and the maintainer notes under [docs/maintainers](docs/maintainers).
+Run those formatter and lint commands when style-tooling changes are in scope or when a change touches enough Swift code that a formatting pass is useful.
+
+## Repo Structure
+
+```text
+.
+├── Package.swift
+├── Sources/TextForSpeech/
+│   ├── API/
+│   ├── Models/
+│   ├── Normalization/
+│   └── Runtime/
+├── Tests/TextForSpeechTests/
+│   ├── Models/
+│   ├── Normalization/
+│   └── Runtime/
+├── docs/
+│   ├── maintainers/
+│   └── releases/
+└── scripts/repo-maintenance/
+```
+
+`Sources/TextForSpeech` is organized by responsibility:
+
+- `API/` contains public namespace-first entrypoints such as `Normalize`.
+- `Models/` contains core value types such as `Profile`, `Replacement`, and `Context`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
+- `Normalization/` contains the text path, source path, structural markdown parsing, replacement-rule engine, speech helpers, and format detection.
+- `Runtime/` contains runtime ownership, grouped profile and persistence handles, persisted state, and runtime-facing errors.
+
+The current source split keeps structural normalization logic separate from durable lexical policy:
+
+- structural work such as markdown parsing, code-span extraction, and format detection stays in code
+- durable lexical policy such as built-in aliases, extension aliases, identifier speaking, path speaking, URL speaking, repeated-letter-run handling, and style-specific speaking policy lives in the built-in profile layers
+
+Tests live under `Tests/TextForSpeechTests` and are grouped by role, with focused normalization files for path and identifier behavior, markdown and URL behavior, and broader end-to-end flows.
+
+## Release Notes
+
+Release notes live under [docs/releases](docs/releases). Each release note should stay factual, scoped to the tagged change, and explicit about behavior or API shifts.
+
+Use the repo-owned release command for standard release work:
+
+```bash
+sh scripts/repo-maintenance/release.sh --mode standard --version vX.Y.Z
+```
 
 ## License
 
