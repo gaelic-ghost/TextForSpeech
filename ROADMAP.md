@@ -21,6 +21,7 @@
 - [x] M6 Forensic surface cleanup
 - [ ] M7 Release and maintainability polish
 - [ ] M8 Summary-aware normalization requests
+- [ ] M9 Public API model cleanup
 
 ## M1 Core normalization package
 
@@ -166,13 +167,13 @@
 
 - [x] Add an opt-in async normalization path that can summarize text before speech-safe normalization.
 - [x] Keep deterministic normalization provider-free when callers leave `summarize` at its default `false` value.
-- [x] Persist the selected summary provider as runtime state instead of baking one provider into request handling.
+- [x] Persist the selected summary configuration as runtime state instead of baking one provider into request handling.
 - [ ] Harden provider-specific behavior with live integration checks and caller-facing guidance.
 
 ### Tickets
 
-- [x] Add `TextForSpeech.SummaryProvider` with distinct `.codexExec`, `.openAIResponses`, and `.foundationModels` cases.
-- [x] Add `runtime.summaryProvider.get()`, `list()`, and `set(_:)`.
+- [x] Add `TextForSpeech.SummaryConfiguration` with a concrete `SummaryProvider` backend selector.
+- [x] Add `runtime.summary.get()`, `list()`, and `set(_:)`.
 - [x] Add async `summarize:` normalization arguments for text and source requests.
 - [ ] Add provider-specific integration tests or examples that can be run when credentials and platform support are available.
 - [ ] Decide whether summary model selection needs a first-class package setting beyond provider selection.
@@ -182,3 +183,23 @@
 - [x] Callers can choose deterministic normalization or async summary-aware normalization explicitly at the call site.
 - [x] Provider failures return descriptive errors that name the selected provider and the missing credential, platform support, or response failure.
 - [x] README, maintainer docs, tests, and release notes describe the provider setting and request flag consistently.
+
+## M9 Public API model cleanup
+
+### Scope
+
+- [ ] Decide whether persisted JSON state is a public import/export contract or an internal runtime archive.
+- [ ] Add a simpler public authoring path for common custom replacement rules.
+- [ ] Keep the advanced replacement rule model available for built-ins and power users without making ordinary callers learn every internal rule field.
+
+### Tickets
+
+- [ ] Rework `TextForSpeech.PersistedState` into either a documented advanced archive contract or a hidden storage DTO behind narrower persistence APIs.
+- [ ] Add convenience replacement authoring APIs for common phrase and whole-token pronunciation overrides.
+- [ ] Update README, maintainer docs, tests, and release notes so persistence-state and replacement-authoring responsibilities are explicit.
+
+### Exit criteria
+
+- [ ] Ordinary callers can save, load, back up, or restore runtime state without depending on accidental storage details.
+- [ ] Ordinary callers can add common custom pronunciation rules without constructing the full low-level `Replacement` rule shape by hand.
+- [ ] Advanced callers still have access to the full rule model when they need format scoping, phases, token transforms, or priorities.

@@ -74,7 +74,7 @@ The runtime currently exposes grouped handles that describe the intended caller
 workflow:
 
 - `runtime.style`
-- `runtime.summaryProvider`
+- `runtime.summary`
 - `runtime.profiles`
 - `runtime.normalize`
 - `runtime.persistence`
@@ -82,7 +82,7 @@ workflow:
 That shape is good. The selected runtime values remain readable:
 
 - `runtime.builtInStyle`
-- `runtime.activeSummaryProvider`
+- `runtime.activeSummaryConfiguration`
 
 Their setters are module-internal, so an external caller cannot change runtime
 behavior without going through the operations that persist the change. This
@@ -108,6 +108,23 @@ this?" in one way. `summary.id` remains available for the same profile id inside
 the nested summary, and `details.id` is the direct identity of the details
 record.
 
+### 5. Summary configuration describes the setting, not only the backend
+
+`TextForSpeech.SummaryConfiguration` is now the caller-facing summary setting.
+It carries a concrete `SummaryProvider` backend selector today, but the public
+normalization and runtime APIs no longer treat the provider enum as the whole
+concept:
+
+- `TextForSpeech.Normalize.text(..., summary:summarize:)`
+- `TextForSpeech.Normalize.source(..., summary:summarize:)`
+- `runtime.summary.get()`
+- `runtime.summary.list()`
+- `runtime.summary.set(_:)`
+
+Practical reason: callers still choose the concrete backend they need, but the
+API now has a stable place to add model selection, fallback policy, local-only
+constraints, or privacy controls without reshaping every call site again.
+
 ## Deferred design questions
 
 ### 3. Should `PersistedState` be public?
@@ -121,23 +138,6 @@ The practical design question is whether the package wants to support
 state-file tooling as a real public use case. If yes, `PersistedState` should be
 documented as an advanced archive contract. If no, the runtime should hide it
 behind narrower persistence operations.
-
-### 5. Should summary providers describe behavior or implementation?
-
-`TextForSpeech.SummaryProvider` currently exposes implementation routes:
-
-- `.foundationModels`
-- `.openAIResponses`
-- `.codexExec`
-
-That is concrete and honest, but it makes callers choose infrastructure rather
-than a higher-level behavior. This matters more if the package later adds model
-selection, provider options, fallback order, local-only constraints, or privacy
-policy controls.
-
-The practical design question is whether summary configuration should remain a
-single provider enum or become a slightly richer request/runtime setting that
-can describe what the caller wants and how the package should obtain it.
 
 ### 6. Does `Replacement` need a simpler authoring surface?
 

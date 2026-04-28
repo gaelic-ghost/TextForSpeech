@@ -31,15 +31,15 @@ import Testing
     #expect(options.allSatisfy { !$0.summary.isEmpty })
 }
 
-@Test func `runtime summary provider lists available providers`() throws {
+@Test func `runtime summary settings list available configurations`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    let options = runtime.summaryProvider.list()
+    let options = runtime.summary.list()
 
-    #expect(options.map(\.provider) == [.codexExec, .openAIResponses, .foundationModels])
+    #expect(options.map(\.configuration.provider) == [.codexExec, .openAIResponses, .foundationModels])
     #expect(options.allSatisfy { !$0.summary.isEmpty })
 }
 
@@ -69,7 +69,7 @@ import Testing
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try runtime.summaryProvider.set(.openAIResponses)
+    try runtime.summary.set(.openAIResponses)
     _ = try runtime.profiles.addReplacement(
         TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
     )
@@ -164,19 +164,19 @@ import Testing
     #expect(reader.baseProfile == .builtInBase(style: .compact))
 }
 
-@Test func `runtime can switch summary provider and persist it`() throws {
+@Test func `runtime can switch summary configuration and persist it`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let writer = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try writer.summaryProvider.set(.openAIResponses)
+    try writer.summary.set(.openAIResponses)
 
-    #expect(writer.summaryProvider.get() == .openAIResponses)
+    #expect(writer.summary.get() == .openAIResponses)
 
     let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(reader.summaryProvider.get() == .openAIResponses)
+    #expect(reader.summary.get() == .openAIResponses)
 }
 
 @Test func `runtime creates profiles with generated ids and lists them in stable order`() throws {
@@ -332,7 +332,7 @@ import Testing
     #expect(runtime.profiles.getActive().summary.id == "default")
 }
 
-@Test func `runtime defaults summary provider when persisted state predates provider setting`() throws {
+@Test func `runtime defaults summary configuration when persisted state predates summary setting`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
@@ -359,7 +359,38 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(runtime.summaryProvider.get() == .foundationModels)
+    #expect(runtime.summary.get() == .default)
+}
+
+@Test func `runtime migrates persisted summary provider into summary configuration`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let json = """
+    {
+      "activeCustomProfileID" : "default",
+      "builtInStyle" : "balanced",
+      "summaryProvider" : "openAIResponses",
+      "profiles" : {
+        "default" : {
+          "id" : "default",
+          "name" : "Default",
+          "replacements" : []
+        }
+      },
+      "version" : 1
+    }
+    """
+    try FileManager.default.createDirectory(
+        at: fileURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true,
+    )
+    try Data(json.utf8).write(to: fileURL, options: .atomic)
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+
+    #expect(runtime.summary.get() == .openAIResponses)
 }
 
 @Test func `deleting active named profile reactivates default`() throws {
