@@ -31,7 +31,19 @@ import Testing
     #expect(options.allSatisfy { !$0.summary.isEmpty })
 }
 
-@Test func `runtime normalize uses built in base and active custom profile`() throws {
+@Test func `runtime summary provider lists available providers`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    let options = runtime.summaryProvider.list()
+
+    #expect(options.map(\.provider) == [.codexExec, .openAIResponses, .foundationModels])
+    #expect(options.allSatisfy { !$0.summary.isEmpty })
+}
+
+@Test func `runtime normalize uses built in base and active custom profile`() async throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
@@ -44,11 +56,31 @@ import Testing
     )
     try runtime.profiles.setActive(id: custom.id)
 
-    let normalized = runtime.normalize.text("https://example.com and bar")
+    let normalized = try await runtime.normalize.text("https://example.com and bar")
 
     #expect(runtime.baseProfile == .base)
     #expect(normalized.contains("example dot com"))
     #expect(normalized.contains("baz"))
+}
+
+@Test func `runtime async normalize skips external summarizer when summarize is false`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    try runtime.summaryProvider.set(.openAIResponses)
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
+    )
+
+    let normalized = try await runtime.normalize.text(
+        "https://example.com and stderr",
+        summarize: false,
+    )
+
+    #expect(normalized.contains("example dot com"))
+    #expect(normalized.contains("standard error"))
 }
 
 @Test func `runtime getEffective merges active style with active custom profile`() throws {
@@ -72,7 +104,7 @@ import Testing
     #expect(effective.replacements.contains(where: { $0.id == "base-url" }))
 }
 
-@Test func `runtime normalize can preview stored named profiles without activating them`() throws {
+@Test func `runtime normalize can preview stored named profiles without activating them`() async throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
@@ -84,13 +116,13 @@ import Testing
         toProfile: logs.id,
     )
 
-    let normalized = try runtime.normalize.text("stderr", usingProfileID: logs.id)
+    let normalized = try await runtime.normalize.text("stderr", usingProfileID: logs.id)
 
     #expect(normalized == "standard error")
     #expect(runtime.profiles.getActive().profileID == "default")
 }
 
-@Test func `runtime normalize tracks later profile changes`() throws {
+@Test func `runtime normalize tracks later profile changes`() async throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
@@ -101,14 +133,14 @@ import Testing
         TextForSpeech.Replacement("foo", with: "bar", id: "foo-rule"),
     )
 
-    let firstNormalized = runtime.normalize.text("foo")
+    let firstNormalized = try await runtime.normalize.text("foo")
 
     try runtime.renameActiveProfile(to: "Updated")
     _ = try runtime.profiles.patchReplacement(
         TextForSpeech.Replacement("foo", with: "baz", id: "foo-rule"),
     )
 
-    let secondNormalized = runtime.normalize.text("foo")
+    let secondNormalized = try await runtime.normalize.text("foo")
 
     #expect(firstNormalized == "bar")
     #expect(secondNormalized == "baz")
@@ -130,6 +162,21 @@ import Testing
 
     #expect(reader.style.getActive() == .compact)
     #expect(reader.baseProfile == .builtInBase(style: .compact))
+}
+
+@Test func `runtime can switch summary provider and persist it`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let writer = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    try writer.summaryProvider.set(.openAIResponses)
+
+    #expect(writer.summaryProvider.get() == .openAIResponses)
+
+    let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
+
+    #expect(reader.summaryProvider.get() == .openAIResponses)
 }
 
 @Test func `runtime creates profiles with generated ids and lists them in stable order`() throws {
@@ -283,6 +330,36 @@ import Testing
 
     #expect(runtime.profiles.getActive().profileID == "default")
     #expect(runtime.profiles.getActive().summary.id == "default")
+}
+
+@Test func `runtime defaults summary provider when persisted state predates provider setting`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let json = """
+    {
+      "activeCustomProfileID" : "default",
+      "builtInStyle" : "balanced",
+      "profiles" : {
+        "default" : {
+          "id" : "default",
+          "name" : "Default",
+          "replacements" : []
+        }
+      },
+      "version" : 1
+    }
+    """
+    try FileManager.default.createDirectory(
+        at: fileURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true,
+    )
+    try Data(json.utf8).write(to: fileURL, options: .atomic)
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+
+    #expect(runtime.summaryProvider.get() == .foundationModels)
 }
 
 @Test func `deleting active named profile reactivates default`() throws {

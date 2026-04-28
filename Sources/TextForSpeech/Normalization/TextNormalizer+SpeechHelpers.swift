@@ -31,21 +31,21 @@ extension TextNormalizer {
             plural: "dollars",
             minorSingular: "cent",
             minorPlural: "cents",
-            decimalJoiner: " and "
+            decimalJoiner: " and ",
         ),
         "£": CurrencyDefinition(
             singular: "pound",
             plural: "pounds",
             minorSingular: nil,
             minorPlural: nil,
-            decimalJoiner: ", "
+            decimalJoiner: ", ",
         ),
         "€": CurrencyDefinition(
             singular: "euro",
             plural: "euros",
             minorSingular: "cent",
             minorPlural: "cents",
-            decimalJoiner: " and "
+            decimalJoiner: " and ",
         ),
     ]
 
@@ -153,7 +153,7 @@ extension TextNormalizer {
     static func spokenCodeBlock(
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
@@ -170,7 +170,7 @@ extension TextNormalizer {
     static func spokenInlineCode(
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
@@ -187,7 +187,7 @@ extension TextNormalizer {
     static func spokenEmbeddedCode(
         _ body: String,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {

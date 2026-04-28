@@ -20,6 +20,7 @@
 - [ ] M5 Structured source normalization
 - [x] M6 Forensic surface cleanup
 - [ ] M7 Release and maintainability polish
+- [ ] M8 Summary-aware normalization requests
 
 ## M1 Core normalization package
 
@@ -158,3 +159,26 @@
 - [ ] The package source layout is easy to scan without oversized catch-all files.
 - [ ] Maintainer docs describe the current package architecture instead of the old migration state.
 - [ ] The next minor release can be tagged and published from a clean, verified commit.
+
+## M8 Summary-aware normalization requests
+
+### Scope
+
+- [x] Add an opt-in async normalization path that can summarize text before speech-safe normalization.
+- [x] Keep deterministic normalization provider-free when callers leave `summarize` at its default `false` value.
+- [x] Persist the selected summary provider as runtime state instead of baking one provider into request handling.
+- [ ] Harden provider-specific behavior with live integration checks and caller-facing guidance.
+
+### Tickets
+
+- [x] Add `TextForSpeech.SummaryProvider` with distinct `.codexExec`, `.openAIResponses`, and `.foundationModels` cases.
+- [x] Add `runtime.summaryProvider.get()`, `list()`, and `set(_:)`.
+- [x] Add async `summarize:` normalization arguments for text and source requests.
+- [ ] Add provider-specific integration tests or examples that can be run when credentials and platform support are available.
+- [ ] Decide whether summary model selection needs a first-class package setting beyond provider selection.
+
+### Exit criteria
+
+- [x] Callers can choose deterministic normalization or async summary-aware normalization explicitly at the call site.
+- [x] Provider failures return descriptive errors that name the selected provider and the missing credential, platform support, or response failure.
+- [x] README, maintainer docs, tests, and release notes describe the provider setting and request flag consistently.

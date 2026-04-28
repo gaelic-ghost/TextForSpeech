@@ -24,6 +24,8 @@ The current package model is:
   Named user- or app-owned profiles persisted by `TextForSpeech.Runtime`.
 - built-in style
   The one shipped style preset currently selected by the runtime.
+- summary provider
+  The persisted provider used when a caller opts into async summary-aware normalization.
 - active custom profile id
   The one stored custom profile currently selected by the runtime.
 - effective profile
@@ -45,12 +47,12 @@ It does not carry request-local path context, detected formats, or runtime-owned
 
 That keeps responsibilities clean:
 
-- `TextForSpeech.Context` carries request-local environment such as `cwd`, `repoRoot`, and optional format hints.
+- `TextForSpeech.InputContext` carries request-local environment such as `cwd`, `repoRoot`, and optional format hints.
 - `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, and freeform string attributes.
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
-- `TextForSpeech.Runtime` owns persistence and active-profile selection.
+- `TextForSpeech.Runtime` owns persistence, active-profile selection, and summary-provider selection.
 - the normalizer owns structural document parsing and pipeline routing.
 
 ## Replacement type
@@ -185,6 +187,7 @@ This package exists to reduce downstream TTS damage for developer text, so maint
 
 - `baseProfile`
 - `builtInStyle`
+- `activeSummaryProvider`
 - `persistenceConfiguration`
 - `activeCustomProfileID`
 - `storedCustomProfilesByID`
@@ -193,6 +196,7 @@ Its public grouped surfaces are:
 
 - `profiles`
 - `style`
+- `summaryProvider`
 - `normalize`
 - `persistence`
 
@@ -221,12 +225,20 @@ The runtime style API now centers on:
 - `style.list()`
 - `style.setActive(to:)`
 
+The runtime summary-provider API now centers on:
+
+- `summaryProvider.get()`
+- `summaryProvider.list()`
+- `summaryProvider.set(_:)`
+
 The runtime normalization API now centers on:
 
-- `normalize.text(_:)`
-- `normalize.text(_:usingProfileID:)`
-- `normalize.source(_:as:)`
-- `normalize.source(_:as:usingProfileID:)`
+- `normalize.text(_:withContext:requestContext:summarize:)`
+- `normalize.text(_:usingProfileID:withContext:requestContext:summarize:)`
+- `normalize.source(_:as:withContext:requestContext:summarize:)`
+- `normalize.source(_:as:usingProfileID:withContext:requestContext:summarize:)`
+
+`summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape.
 
 The grouped persistence API centers on:
 
@@ -247,10 +259,11 @@ Startup behavior is:
 2. resolve the effective persistence URL from that configuration
 3. load persisted state if the file exists
 4. restore the persisted built-in style, defaulting to `.balanced` when older archives do not contain it
-5. ensure a stored `default` custom profile exists
-6. create and persist an empty `default` profile if it does not
-7. ensure `activeCustomProfileID` points at a real stored profile
-8. fall back to `default` if the saved active id is missing or invalid
+5. restore the persisted summary provider, defaulting to `.foundationModels` when older archives do not contain it
+6. ensure a stored `default` custom profile exists
+7. create and persist an empty `default` profile if it does not
+8. ensure `activeCustomProfileID` points at a real stored profile
+9. fall back to `default` if the saved active id is missing or invalid
 
 The default Application Support namespace uses the host bundle identifier when available and falls back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default package directory name changes to `TextForSpeech-Debug` so debug sessions do not write into the bundled production namespace.
 
@@ -260,7 +273,7 @@ When touching profile behavior:
 
 - put always-on semantic shipped behavior into `Profile.semanticCore`
 - put built-in presentation differences into shipped style presets
-- put request-local behavior into `Context`
+- put request-local behavior into `InputContext`
 - keep structural parsing and routing logic in the normalizer
 - keep persistence and active-profile selection in `Runtime`
 

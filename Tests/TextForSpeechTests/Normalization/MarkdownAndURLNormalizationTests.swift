@@ -28,18 +28,18 @@ import Testing
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
-@Test func `inline code honors double colon style policy`() {
+@Test func `inline code honors double colon style policy`() async throws {
     let text = "Read `Thing::value` once."
 
-    let balanced = TextForSpeech.Normalize.text(
+    let balanced = try await TextForSpeech.Normalize.text(
         text,
+        withContext: TextForSpeech.InputContext(textFormat: .markdown),
         style: .balanced,
-        format: .markdown,
     )
-    let explicit = TextForSpeech.Normalize.text(
+    let explicit = try await TextForSpeech.Normalize.text(
         text,
+        withContext: TextForSpeech.InputContext(textFormat: .markdown),
         style: .explicit,
-        format: .markdown,
     )
 
     #expect(balanced.contains("Thing value"))

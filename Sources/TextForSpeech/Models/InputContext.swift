@@ -1,7 +1,7 @@
 import Foundation
 
 public extension TextForSpeech {
-    struct Context: Codable, Sendable, Equatable {
+    struct InputContext: Codable, Sendable, Equatable {
         // MARK: Public State
 
         public let cwd: String?
@@ -17,8 +17,8 @@ public extension TextForSpeech {
             textFormat: TextFormat? = nil,
             nestedSourceFormat: SourceFormat? = nil,
         ) {
-            self.cwd = Context.normalizedPath(cwd)
-            self.repoRoot = Context.normalizedPath(repoRoot)
+            self.cwd = InputContext.normalizedPath(cwd)
+            self.repoRoot = InputContext.normalizedPath(repoRoot)
             self.textFormat = textFormat
             self.nestedSourceFormat = nestedSourceFormat
         }

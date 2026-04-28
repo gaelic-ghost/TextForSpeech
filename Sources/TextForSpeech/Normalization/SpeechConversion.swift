@@ -138,11 +138,11 @@ extension TextNormalizer {
         return String(
             characters.enumerated().map { index, character in
                 omittedIndices.contains(index) ? " " : character
-            }
+            },
         )
     }
 
-    static func spokenPath(_ text: String, context: TextForSpeech.Context? = nil) -> String {
+    static func spokenPath(_ text: String, context: TextForSpeech.InputContext? = nil) -> String {
         let contextualPath = contextualizedPath(text, context: context)
         var segments: [String] = []
         var buffer = ""
@@ -314,7 +314,7 @@ extension TextNormalizer {
     static func spokenFileReference(
         _ text: String,
         style: TextForSpeech.Replacement.Transform.FileReferenceStyle,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
     ) -> String {
         let parts = text.split(separator: ":", omittingEmptySubsequences: false).map(String.init)
         guard parts.count == 2 || parts.count == 3 else { return spokenPath(text, context: context) }
