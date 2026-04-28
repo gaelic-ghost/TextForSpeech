@@ -58,6 +58,7 @@ public extension TextForSpeech {
             try container.encode(version, forKey: .version)
             try container.encode(builtInStyle, forKey: .builtInStyle)
             try container.encode(summarizationProvider, forKey: .summarizationProvider)
+            try container.encode(summarizationProvider, forKey: .summaryProvider)
             try container.encode(activeCustomProfileID, forKey: .activeCustomProfileID)
             try container.encode(profiles, forKey: .profiles)
         }

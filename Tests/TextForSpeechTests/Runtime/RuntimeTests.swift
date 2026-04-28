@@ -179,6 +179,20 @@ import Testing
     #expect(reader.summarizationProvider.get() == .openAIResponses)
 }
 
+@Test func `persisted state writes current and legacy summarization provider keys`() throws {
+    let state = TextForSpeech.PersistedState(
+        summarizationProvider: .openAIResponses,
+        activeCustomProfileID: "default",
+        profiles: ["default": .default],
+    )
+
+    let data = try JSONEncoder().encode(state)
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+    #expect(object["summarizationProvider"] as? String == "openAIResponses")
+    #expect(object["summaryProvider"] as? String == "openAIResponses")
+}
+
 @Test func `runtime creates profiles with generated ids and lists them in stable order`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
