@@ -167,13 +167,13 @@
 
 - [x] Add an opt-in async normalization path that can summarize text before speech-safe normalization.
 - [x] Keep deterministic normalization provider-free when callers leave `summarize` at its default `false` value.
-- [x] Persist the selected summary configuration as runtime state instead of baking one provider into request handling.
+- [x] Persist the selected summarization provider as runtime state instead of baking one provider into request handling.
 - [ ] Harden provider-specific behavior with live integration checks and caller-facing guidance.
 
 ### Tickets
 
-- [x] Add `TextForSpeech.SummaryConfiguration` with a concrete `SummaryProvider` backend selector.
-- [x] Add `runtime.summary.get()`, `list()`, and `set(_:)`.
+- [x] Add `TextForSpeech.SummarizationProvider` with `.codexExec`, `.openAIResponses`, and `.foundationModels` backend options.
+- [x] Add `runtime.summarizationProvider.get()`, `list()`, and `set(_:)`.
 - [x] Add async `summarize:` normalization arguments for text and source requests.
 - [ ] Add provider-specific integration tests or examples that can be run when credentials and platform support are available.
 - [ ] Decide whether summary model selection needs a first-class package setting beyond provider selection.

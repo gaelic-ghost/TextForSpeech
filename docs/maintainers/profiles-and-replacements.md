@@ -24,8 +24,8 @@ The current package model is:
   Named user- or app-owned profiles persisted by `TextForSpeech.Runtime`.
 - built-in style
   The one shipped style preset currently selected by the runtime.
-- summary configuration
-  The persisted summary setting used when a caller opts into async summary-aware normalization.
+- summarization provider
+  The persisted backend setting used when a caller opts into async summary-aware normalization.
 - active custom profile id
   The one stored custom profile currently selected by the runtime.
 - effective profile
@@ -52,7 +52,7 @@ That keeps responsibilities clean:
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
-- `TextForSpeech.Runtime` owns persistence, active-profile selection, and summary configuration selection.
+- `TextForSpeech.Runtime` owns persistence, active-profile selection, and summarization provider selection.
 - the normalizer owns structural document parsing and pipeline routing.
 
 ## Replacement type
@@ -187,14 +187,14 @@ This package exists to reduce downstream TTS damage for developer text, so maint
 
 - `baseProfile`
 - `builtInStyle`
-- `activeSummaryConfiguration`
+- `activeSummarizationProvider`
 - `persistenceConfiguration`
 - `activeCustomProfileID`
 - `storedCustomProfilesByID`
 
-The selected built-in style and summary configuration are publicly readable
+The selected built-in style and summarization provider are publicly readable
 runtime state. External callers should mutate them through `runtime.style` and
-`runtime.summary` so changes are persisted consistently.
+`runtime.summarizationProvider` so changes are persisted consistently.
 
 Its public grouped surfaces are:
 
@@ -235,9 +235,9 @@ The runtime style API now centers on:
 
 The runtime summary API now centers on:
 
-- `summary.get()`
-- `summary.list()`
-- `summary.set(_:)`
+- `summarizationProvider.get()`
+- `summarizationProvider.list()`
+- `summarizationProvider.set(_:)`
 
 The runtime normalization API now centers on:
 
@@ -246,7 +246,7 @@ The runtime normalization API now centers on:
 - `normalize.source(_:as:withContext:requestContext:summarize:)`
 - `normalize.source(_:as:usingProfileID:withContext:requestContext:summarize:)`
 
-`summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape. `TextForSpeech.SummaryConfiguration` is the caller-facing setting; `SummaryProvider` remains the concrete backend selector inside that setting.
+`summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape. `TextForSpeech.SummarizationProvider` is the caller-facing backend selector, and the runtime persists the selected provider through `summarizationProvider.get/list/set`.
 
 The grouped persistence API centers on:
 
@@ -267,7 +267,7 @@ Startup behavior is:
 2. resolve the effective persistence URL from that configuration
 3. load persisted state if the file exists
 4. restore the persisted built-in style, defaulting to `.balanced` when older archives do not contain it
-5. restore the persisted summary configuration, defaulting to `.default` when older archives do not contain it
+5. restore the persisted summarization provider, defaulting to `.foundationModels` when older archives do not contain it
 6. ensure a stored `default` custom profile exists
 7. create and persist an empty `default` profile if it does not
 8. ensure `activeCustomProfileID` points at a real stored profile

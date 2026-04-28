@@ -3,7 +3,7 @@ public extension TextForSpeech {
         private enum CodingKeys: String, CodingKey {
             case version
             case builtInStyle
-            case summaryConfiguration
+            case summarizationProvider
             case summaryProvider
             case activeCustomProfileID
             case profiles
@@ -11,20 +11,20 @@ public extension TextForSpeech {
 
         public let version: Int
         public let builtInStyle: TextForSpeech.BuiltInProfileStyle
-        public let summaryConfiguration: TextForSpeech.SummaryConfiguration
+        public let summarizationProvider: TextForSpeech.SummarizationProvider
         public let activeCustomProfileID: String
         public let profiles: [String: Profile]
 
         public init(
             version: Int = 1,
             builtInStyle: TextForSpeech.BuiltInProfileStyle = .balanced,
-            summaryConfiguration: TextForSpeech.SummaryConfiguration = .default,
+            summarizationProvider: TextForSpeech.SummarizationProvider = .foundationModels,
             activeCustomProfileID: String,
             profiles: [String: Profile],
         ) {
             self.version = version
             self.builtInStyle = builtInStyle
-            self.summaryConfiguration = summaryConfiguration
+            self.summarizationProvider = summarizationProvider
             self.activeCustomProfileID = activeCustomProfileID
             self.profiles = profiles
         }
@@ -36,18 +36,18 @@ public extension TextForSpeech {
                 TextForSpeech.BuiltInProfileStyle.self,
                 forKey: .builtInStyle,
             ) ?? .balanced
-            if let decodedConfiguration = try container.decodeIfPresent(
-                TextForSpeech.SummaryConfiguration.self,
-                forKey: .summaryConfiguration,
+            if let decodedProvider = try container.decodeIfPresent(
+                TextForSpeech.SummarizationProvider.self,
+                forKey: .summarizationProvider,
             ) {
-                summaryConfiguration = decodedConfiguration
-            } else if let decodedProvider = try container.decodeIfPresent(
-                TextForSpeech.SummaryProvider.self,
+                summarizationProvider = decodedProvider
+            } else if let legacyProvider = try container.decodeIfPresent(
+                TextForSpeech.SummarizationProvider.self,
                 forKey: .summaryProvider,
             ) {
-                summaryConfiguration = TextForSpeech.SummaryConfiguration(provider: decodedProvider)
+                summarizationProvider = legacyProvider
             } else {
-                summaryConfiguration = .default
+                summarizationProvider = .foundationModels
             }
             activeCustomProfileID = try container.decode(String.self, forKey: .activeCustomProfileID)
             profiles = try container.decode([String: Profile].self, forKey: .profiles)
@@ -57,7 +57,7 @@ public extension TextForSpeech {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(version, forKey: .version)
             try container.encode(builtInStyle, forKey: .builtInStyle)
-            try container.encode(summaryConfiguration, forKey: .summaryConfiguration)
+            try container.encode(summarizationProvider, forKey: .summarizationProvider)
             try container.encode(activeCustomProfileID, forKey: .activeCustomProfileID)
             try container.encode(profiles, forKey: .profiles)
         }

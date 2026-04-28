@@ -11,11 +11,11 @@ public extension TextForSpeech.Normalize {
         requestContext: TextForSpeech.RequestContext? = nil,
         customProfile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,
-        summary: TextForSpeech.SummaryConfiguration = .default,
+        summarizationProvider: TextForSpeech.SummarizationProvider = .foundationModels,
         summarize: Bool = false,
     ) async throws -> String {
         let textToNormalize = if summarize {
-            try await TextSummarizer.summarize(text, configuration: summary)
+            try await TextSummarizer.summarize(text, provider: summarizationProvider)
         } else {
             text
         }
@@ -37,7 +37,7 @@ public extension TextForSpeech.Normalize {
         requestContext: TextForSpeech.RequestContext? = nil,
         customProfile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,
-        summary: TextForSpeech.SummaryConfiguration = .default,
+        summarizationProvider: TextForSpeech.SummarizationProvider = .foundationModels,
         summarize: Bool = false,
     ) async throws -> String {
         let normalizedSource = SourceNormalizer.normalize(
@@ -52,7 +52,7 @@ public extension TextForSpeech.Normalize {
         if summarize {
             let summarizedSource = try await TextSummarizer.summarize(
                 normalizedSource,
-                configuration: summary,
+                provider: summarizationProvider,
             )
 
             return TextNormalizer.normalizeText(

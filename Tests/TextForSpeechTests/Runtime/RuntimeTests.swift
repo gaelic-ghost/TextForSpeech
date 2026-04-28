@@ -31,15 +31,15 @@ import Testing
     #expect(options.allSatisfy { !$0.summary.isEmpty })
 }
 
-@Test func `runtime summary settings list available configurations`() throws {
+@Test func `runtime summarization provider settings list available providers`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    let options = runtime.summary.list()
+    let options = runtime.summarizationProvider.list()
 
-    #expect(options.map(\.configuration.provider) == [.codexExec, .openAIResponses, .foundationModels])
+    #expect(options.map(\.provider) == [.codexExec, .openAIResponses, .foundationModels])
     #expect(options.allSatisfy { !$0.summary.isEmpty })
 }
 
@@ -69,7 +69,7 @@ import Testing
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try runtime.summary.set(.openAIResponses)
+    try runtime.summarizationProvider.set(.openAIResponses)
     _ = try runtime.profiles.addReplacement(
         TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
     )
@@ -164,19 +164,19 @@ import Testing
     #expect(reader.baseProfile == .builtInBase(style: .compact))
 }
 
-@Test func `runtime can switch summary configuration and persist it`() throws {
+@Test func `runtime can switch summarization provider and persist it`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let writer = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try writer.summary.set(.openAIResponses)
+    try writer.summarizationProvider.set(.openAIResponses)
 
-    #expect(writer.summary.get() == .openAIResponses)
+    #expect(writer.summarizationProvider.get() == .openAIResponses)
 
     let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(reader.summary.get() == .openAIResponses)
+    #expect(reader.summarizationProvider.get() == .openAIResponses)
 }
 
 @Test func `runtime creates profiles with generated ids and lists them in stable order`() throws {
@@ -332,7 +332,7 @@ import Testing
     #expect(runtime.profiles.getActive().summary.id == "default")
 }
 
-@Test func `runtime defaults summary configuration when persisted state predates summary setting`() throws {
+@Test func `runtime defaults summarization provider when persisted state predates summary setting`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
@@ -359,10 +359,10 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(runtime.summary.get() == .default)
+    #expect(runtime.summarizationProvider.get() == .foundationModels)
 }
 
-@Test func `runtime migrates persisted summary provider into summary configuration`() throws {
+@Test func `runtime migrates legacy persisted summary provider into summarization provider`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
@@ -390,7 +390,7 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(runtime.summary.get() == .openAIResponses)
+    #expect(runtime.summarizationProvider.get() == .openAIResponses)
 }
 
 @Test func `deleting active named profile reactivates default`() throws {

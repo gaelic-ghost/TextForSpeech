@@ -11,7 +11,7 @@ As of `2026-04-28`, the package now owns:
 - runtime-owned stored custom profiles and active-profile selection
 - default-on profile persistence
 - async mixed-text and whole-source normalization entrypoints
-- summary-configuration selection for opt-in summary-aware normalization
+- summarization-provider selection for opt-in summary-aware normalization
 
 The remaining work has shifted from package extraction to package refinement.
 
@@ -47,7 +47,7 @@ Shared value types and built-in profile definitions:
 - `Replacement.swift`
 - `InputContext.swift`
 - `Format.swift`
-- `SummaryProvider.swift`
+- `SummarizationProvider.swift`
 
 ### `Sources/TextForSpeech/Normalization`
 
@@ -86,8 +86,8 @@ Runtime code is now split by capability:
   Public profile operations.
 - `TextForSpeechRuntime+Persistence.swift`
   Public persistence operations.
-- `TextForSpeechRuntime+Summary.swift`
-  Public summary-configuration selection operations.
+- `TextForSpeechRuntime+SummarizationProvider.swift`
+  Public summarization-provider selection operations.
 - `TextForSpeechRuntime+Storage.swift`
   Default persistence path resolution and runtime state repair helpers.
 - `PersistedState.swift`
@@ -102,7 +102,7 @@ The package is easier to maintain when these boundaries stay explicit:
 - structural parsing and routing stay in normalization code
 - durable lexical policy lives in the built-in profile layers
 - app- or user-owned pronunciation policy lives in stored custom profiles
-- persistence, active-profile identity, and selected summary configuration live in `Runtime`
+- persistence, active-profile identity, and selected summarization provider live in `Runtime`
 - provider-specific summary execution stays opt-in and async so deterministic normalization remains the default behavior
 
 ## Remaining refinement work

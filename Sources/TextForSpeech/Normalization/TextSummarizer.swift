@@ -7,11 +7,11 @@ import FoundationModels
 enum TextSummarizer {
     static func summarize(
         _ text: String,
-        configuration: TextForSpeech.SummaryConfiguration,
+        provider: TextForSpeech.SummarizationProvider,
     ) async throws -> String {
         let prompt = summaryPrompt(for: text)
 
-        return switch configuration.provider {
+        return switch provider {
             case .codexExec:
                 try await summarizeWithCodexExec(prompt: prompt)
             case .openAIResponses:

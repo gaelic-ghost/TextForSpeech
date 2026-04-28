@@ -74,7 +74,7 @@ The runtime currently exposes grouped handles that describe the intended caller
 workflow:
 
 - `runtime.style`
-- `runtime.summary`
+- `runtime.summarizationProvider`
 - `runtime.profiles`
 - `runtime.normalize`
 - `runtime.persistence`
@@ -82,7 +82,7 @@ workflow:
 That shape is good. The selected runtime values remain readable:
 
 - `runtime.builtInStyle`
-- `runtime.activeSummaryConfiguration`
+- `runtime.activeSummarizationProvider`
 
 Their setters are module-internal, so an external caller cannot change runtime
 behavior without going through the operations that persist the change. This
@@ -108,22 +108,22 @@ this?" in one way. `summary.id` remains available for the same profile id inside
 the nested summary, and `details.id` is the direct identity of the details
 record.
 
-### 5. Summary configuration describes the setting, not only the backend
+### 5. Summarization provider names the persisted backend setting
 
-`TextForSpeech.SummaryConfiguration` is now the caller-facing summary setting.
-It carries a concrete `SummaryProvider` backend selector today, but the public
-normalization and runtime APIs no longer treat the provider enum as the whole
-concept:
+`TextForSpeech.SummarizationProvider` is the caller-facing provider enum. The
+request API keeps `summarize` as the boolean action flag, while the runtime API
+persists one selected provider for summary-aware normalization:
 
-- `TextForSpeech.Normalize.text(..., summary:summarize:)`
-- `TextForSpeech.Normalize.source(..., summary:summarize:)`
-- `runtime.summary.get()`
-- `runtime.summary.list()`
-- `runtime.summary.set(_:)`
+- `TextForSpeech.Normalize.text(..., summarizationProvider:summarize:)`
+- `TextForSpeech.Normalize.source(..., summarizationProvider:summarize:)`
+- `runtime.summarizationProvider.get()`
+- `runtime.summarizationProvider.list()`
+- `runtime.summarizationProvider.set(_:)`
 
-Practical reason: callers still choose the concrete backend they need, but the
-API now has a stable place to add model selection, fallback policy, local-only
-constraints, or privacy controls without reshaping every call site again.
+Practical reason: the request asks whether to summarize; the persisted runtime
+setting answers which provider performs that work. Keeping those names separate
+makes the common call site readable and keeps provider selection in one explicit
+get/list/set surface.
 
 ## Deferred design questions
 
