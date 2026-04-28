@@ -24,7 +24,7 @@ extension TextNormalizer {
 
     static func normalizeFencedCodeBlocks(
         _ text: String,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         profile: TextForSpeech.Profile = .base,
@@ -80,7 +80,7 @@ extension TextNormalizer {
 
     static func normalizeInlineCodeSpans(
         _ text: String,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         profile: TextForSpeech.Profile = .base,
@@ -185,6 +185,7 @@ extension TextNormalizer {
         }
 
         guard line.first == "[" else { return nil }
+
         return ParsedListItem(content: line[line.startIndex...])
     }
 

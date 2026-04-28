@@ -14,7 +14,7 @@ extension TextNormalizer {
 
     static func compactRepeatedFilePathPrefixes(
         _ text: String,
-        context: TextForSpeech.Context?,
+        context: TextForSpeech.InputContext?,
     ) -> String {
         var state = PathCompactionState()
 
@@ -47,7 +47,7 @@ extension TextNormalizer {
 
     private static func pathCompactionDescriptor(
         for path: String,
-        context: TextForSpeech.Context?,
+        context: TextForSpeech.InputContext?,
     ) -> PathCompactionDescriptor? {
         let contextualPath = contextualizedPath(path, context: context)
         var comparableAnchor = normalizedComparableAnchor(for: contextualPath)

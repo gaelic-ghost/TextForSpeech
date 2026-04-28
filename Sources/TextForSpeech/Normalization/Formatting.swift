@@ -48,7 +48,7 @@ extension TextNormalizer {
             .joined(separator: "\n")
     }
 
-    private static func normalizeWhitespaceWithinLine<S: StringProtocol>(_ line: S) -> String {
+    private static func normalizeWhitespaceWithinLine(_ line: some StringProtocol) -> String {
         line
             .split(whereSeparator: \.isWhitespace)
             .joined(separator: " ")

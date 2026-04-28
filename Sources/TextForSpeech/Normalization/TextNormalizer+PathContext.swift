@@ -39,7 +39,7 @@ extension TextNormalizer {
 
     static func contextualizedPath(
         _ path: String,
-        context: TextForSpeech.Context?,
+        context: TextForSpeech.InputContext?,
     ) -> ContextualizedPath {
         guard path.hasPrefix("/") else {
             return ContextualizedPath(path: path, spokenContextPrefix: nil)

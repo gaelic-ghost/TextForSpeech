@@ -7,7 +7,7 @@ public extension TextForSpeech {
 public extension TextForSpeech.Normalize {
     static func text(
         _ text: String,
-        withContext context: TextForSpeech.Context? = nil,
+        withContext context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         customProfile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,
@@ -33,7 +33,7 @@ public extension TextForSpeech.Normalize {
     static func source(
         _ source: String,
         as format: TextForSpeech.SourceFormat,
-        withContext context: TextForSpeech.Context? = nil,
+        withContext context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         customProfile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,

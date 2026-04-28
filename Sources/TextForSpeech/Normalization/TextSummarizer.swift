@@ -39,18 +39,19 @@ enum TextSummarizer {
 
 extension TextSummarizer {
     private static func summarizeWithCodexExec(prompt: String) async throws -> String {
-        #if os(macOS)
+#if os(macOS)
         try await Task.detached {
             try runCodexExec(prompt: prompt)
-        }.value
-        #else
+        }
+        .value
+#else
         throw TextForSpeech.SummaryError.providerUnavailable(
             "TextForSpeech could not summarize with codex exec because Process-based CLI execution is only supported by this package on macOS.",
         )
-        #endif
+#endif
     }
 
-    #if os(macOS)
+#if os(macOS)
     private static func runCodexExec(prompt: String) throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
@@ -93,7 +94,7 @@ extension TextSummarizer {
 
         return outputText.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    #endif
+#endif
 }
 
 extension TextSummarizer {
@@ -132,7 +133,13 @@ extension TextSummarizer {
         }
 
         let model = ProcessInfo.processInfo.environment["TEXT_FOR_SPEECH_OPENAI_SUMMARY_MODEL"] ?? "gpt-5.4-mini"
-        var request = URLRequest(url: URL(string: "https://api.openai.com/v1/responses")!)
+        guard let url = URL(string: "https://api.openai.com/v1/responses") else {
+            throw TextForSpeech.SummaryError.providerFailed(
+                "TextForSpeech could not summarize with the OpenAI Responses API because the responses endpoint URL is invalid.",
+            )
+        }
+
+        var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -159,9 +166,8 @@ extension TextSummarizer {
                 "TextForSpeech could not summarize with the OpenAI Responses API because the response was not an HTTP response.",
             )
         }
-
-        guard (200 ..< 300).contains(httpResponse.statusCode) else {
-            let details = String(decoding: data.prefix(1_000), as: UTF8.self)
+        guard (200..<300).contains(httpResponse.statusCode) else {
+            let details = String(decoding: data.prefix(1000), as: UTF8.self)
             throw TextForSpeech.SummaryError.providerFailed(
                 "TextForSpeech could not summarize with the OpenAI Responses API because the service returned HTTP \(httpResponse.statusCode). \(details)",
             )
@@ -174,8 +180,7 @@ extension TextSummarizer {
                 .first(where: { $0.type == "output_text" })?
                 .text?
                 .trimmingCharacters(in: .whitespacesAndNewlines),
-                !text.isEmpty
-            {
+                !text.isEmpty {
                 return text
             }
         } catch {
@@ -192,7 +197,7 @@ extension TextSummarizer {
 
 extension TextSummarizer {
     private static func summarizeWithFoundationModels(prompt: String) async throws -> String {
-        #if canImport(FoundationModels)
+#if canImport(FoundationModels)
         if #available(macOS 26.0, iOS 26.0, *) {
             let session = LanguageModelSession(
                 instructions: "Summarize text for text-to-speech playback. Return only concise, speakable prose.",
@@ -200,7 +205,7 @@ extension TextSummarizer {
             let response = try await session.respond(to: prompt)
             return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
         }
-        #endif
+#endif
 
         throw TextForSpeech.SummaryError.providerUnavailable(
             "TextForSpeech could not summarize with Foundation Models because Apple's FoundationModels framework is not available in this build or on this operating system.",

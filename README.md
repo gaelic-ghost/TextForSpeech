@@ -46,7 +46,7 @@ Add the package from its GitHub repository:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.18.7"),
+    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.18.8"),
 ],
 targets: [
     .executableTarget(
@@ -60,14 +60,14 @@ targets: [
 
 ## Usage
 
-Normalize mixed text directly when you want the default built-in `.balanced` style, optional path-and-format context, and optional request metadata:
+Normalize mixed text directly when you want the default built-in `.balanced` style, optional input context, and optional request metadata:
 
 ```swift
 import TextForSpeech
 
 let normalized = try await TextForSpeech.Normalize.text(
     "stderr: /workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
-    withContext: TextForSpeech.Context(
+    withContext: TextForSpeech.InputContext(
         cwd: "/workspace/SpeakSwiftly",
         repoRoot: "/workspace/SpeakSwiftly"
     ),
@@ -79,7 +79,7 @@ let normalized = try await TextForSpeech.Normalize.text(
 )
 ```
 
-If you omit `format`, `TextForSpeech` detects a likely outer text format before running the text normalization path.
+If `InputContext.textFormat` is omitted, `TextForSpeech` detects a likely outer text format before running the text normalization path.
 
 If you want a different shipped listening mode, pass `style:`:
 
@@ -105,7 +105,7 @@ The semantic core also ships extension aliases for especially speech-hostile fil
 
 For repeated file paths in the same utterance, the text path compacts repeated anchors before the built-in path-speaking pass. File-path separators collapse to spacing rather than spoken words, and later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
 
-When the outer document is mixed text but the embedded code language is known, pass `nestedFormat` so fenced or inline code can route through the source path:
+When the outer document is mixed text but the embedded code language is known, pass `InputContext.nestedSourceFormat` so fenced or inline code can route through the source path:
 
 ```swift
 import TextForSpeech
@@ -118,7 +118,7 @@ let normalized = try await TextForSpeech.Normalize.text(
     let sampleRate = profile?.sampleRate ?? 24000
     ```
     """,
-    withContext: TextForSpeech.Context(
+    withContext: TextForSpeech.InputContext(
         textFormat: .markdown,
         nestedSourceFormat: .swift
     )
@@ -151,7 +151,7 @@ import TextForSpeech
 
 let normalized = try await TextForSpeech.Normalize.text(
     longDeveloperUpdate,
-    withContext: TextForSpeech.Context(textFormat: .markdown),
+    withContext: TextForSpeech.InputContext(textFormat: .markdown),
     summaryProvider: .openAIResponses,
     summarize: true
 )
@@ -284,7 +284,7 @@ Run those formatter and lint commands when style-tooling changes are in scope or
 `Sources/TextForSpeech` is organized by responsibility:
 
 - `API/` contains public namespace-first entrypoints such as `Normalize`.
-- `Models/` contains core value types such as `Profile`, `Replacement`, `Context`, and `SummaryProvider`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
+- `Models/` contains core value types such as `Profile`, `Replacement`, `InputContext`, and `SummaryProvider`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
 - `Normalization/` contains the text path, source path, structural markdown parsing, replacement-rule engine, speech helpers, format detection, and summary-provider execution support.
 - `Runtime/` contains runtime ownership, grouped profile, style, summary-provider, and persistence handles, persisted state, and runtime-facing errors.
 

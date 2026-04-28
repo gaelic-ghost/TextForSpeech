@@ -6,7 +6,7 @@ enum SourceNormalizer {
     static func normalize(
         _ source: String,
         as format: TextForSpeech.SourceFormat,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,

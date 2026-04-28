@@ -165,7 +165,7 @@
 ### Scope
 
 - [x] Add an opt-in async normalization path that can summarize text before speech-safe normalization.
-- [x] Keep the existing synchronous normalization API deterministic and provider-free.
+- [x] Keep deterministic normalization provider-free when callers leave `summarize` at its default `false` value.
 - [x] Persist the selected summary provider as runtime state instead of baking one provider into request handling.
 - [ ] Harden provider-specific behavior with live integration checks and caller-facing guidance.
 
@@ -173,12 +173,12 @@
 
 - [x] Add `TextForSpeech.SummaryProvider` with distinct `.codexExec`, `.openAIResponses`, and `.foundationModels` cases.
 - [x] Add `runtime.summaryProvider.get()`, `list()`, and `set(_:)`.
-- [x] Add async `summarize:` normalization entrypoints for text and source requests.
+- [x] Add async `summarize:` normalization arguments for text and source requests.
 - [ ] Add provider-specific integration tests or examples that can be run when credentials and platform support are available.
 - [ ] Decide whether summary model selection needs a first-class package setting beyond provider selection.
 
 ### Exit criteria
 
-- [ ] Callers can choose deterministic normalization or async summary-aware normalization explicitly at the call site.
-- [ ] Provider failures return descriptive errors that name the selected provider and the missing credential, platform support, or response failure.
-- [ ] README, maintainer docs, tests, and release notes describe the provider setting and request flag consistently.
+- [x] Callers can choose deterministic normalization or async summary-aware normalization explicitly at the call site.
+- [x] Provider failures return descriptive errors that name the selected provider and the missing credential, platform support, or response failure.
+- [x] README, maintainer docs, tests, and release notes describe the provider setting and request flag consistently.

@@ -7,7 +7,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
 // MARK: - File Paths and Names
 
-@Test func `file paths become spoken paths`() async throws {
+@Test func `file paths become spoken paths`() {
     let text = "Path: /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift."
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
@@ -16,7 +16,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("Speech Text Normalizer dot swift"))
 }
 
-@Test func `file paths use configured gale aliases`() async throws {
+@Test func `file paths use configured gale aliases`() {
     let text = "Path: /Users/galem/Workspace/SpeakSwiftly."
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
@@ -24,7 +24,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("gale mini Workspace Speak Swiftly"))
 }
 
-@Test func `dashed file paths become speech safe spacing`() async throws {
+@Test func `dashed file paths become speech safe spacing`() {
     let text = "Path: /tmp/speak-to-user/path-now."
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
@@ -33,12 +33,12 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("dash"))
 }
 
-@Test func `file paths inside current directory omit the absolute prefix`() async throws {
+@Test func `file paths inside current directory omit the absolute prefix`() {
     let text = "Path: /Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/SpeechTextNormalizer.swift."
 
     let normalized = TextNormalizer.normalizeFilePaths(
         text,
-        context: TextForSpeech.Context(
+        context: TextForSpeech.InputContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -50,12 +50,12 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("gale wumbo Workspace Speak Swiftly slash"))
 }
 
-@Test func `file paths inside repo root but outside current directory keep repo root context`() async throws {
+@Test func `file paths inside repo root but outside current directory keep repo root context`() {
     let text = "Path: /Users/galew/Workspace/SpeakSwiftly/README.md."
 
     let normalized = TextNormalizer.normalizeFilePaths(
         text,
-        context: TextForSpeech.Context(
+        context: TextForSpeech.InputContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -65,7 +65,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("gale wumbo slash Workspace slash Speak Swiftly"))
 }
 
-@Test func `relative file paths become directory aware speech`() async throws {
+@Test func `relative file paths become directory aware speech`() {
     let text = "Path: ./Sources/WorkerRuntime.swift and ../README.md."
 
     let normalized = TextNormalizer.normalizeFilePaths(text)
@@ -76,7 +76,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("dot dot slash README"))
 }
 
-@Test func `standalone gale aliases become spoken names`() async throws {
+@Test func `standalone gale aliases become spoken names`() {
     let text = "Please ask galew, galem, and Galew again."
 
     let normalized = TextNormalizer.normalizeStandaloneGaleAliases(text)
@@ -120,7 +120,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `file line references preserve line narration after extension aliases`() async throws {
     let text = "Inspect project.pbxproj:42:7 and App.xcodeproj:18."
 
-    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.Context(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.InputContext(textFormat: .plain))
 
     #expect(normalized.contains("project dot xcode project file line 42 column 7"))
     #expect(normalized.contains("App dot xcode project at line 18"))
@@ -128,7 +128,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
 // MARK: - Identifier and Code Speech
 
-@Test func `dotted identifiers become spoken identifiers`() async throws {
+@Test func `dotted identifiers become spoken identifiers`() {
     let text = "Read NSApplication.didFinishLaunchingNotification once."
 
     let normalized = TextNormalizer.normalizeDottedIdentifiers(text)
@@ -136,13 +136,13 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("NSApplication dot did Finish Launching Notification"))
 }
 
-@Test func `dotted identifiers accept hyphenated alias segments`() async throws {
+@Test func `dotted identifiers accept hyphenated alias segments`() {
     let normalized = TextNormalizer.normalizeDottedIdentifiers("guide.markdown-jsx")
 
     #expect(normalized.contains("guide dot markdown jsx"))
 }
 
-@Test func `snake case identifiers become spoken identifiers`() async throws {
+@Test func `snake case identifiers become spoken identifiers`() {
     let text = "Read snake_case_stuff once."
 
     let normalized = TextNormalizer.normalizeSnakeCaseIdentifiers(text)
@@ -151,14 +151,14 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("underscore"))
 }
 
-@Test func `dashed identifiers become speech safe spacing`() async throws {
+@Test func `dashed identifiers become speech safe spacing`() {
     let normalized = TextNormalizer.spokenIdentifier("kebab-case-stuff")
 
     #expect(normalized.contains("kebab case stuff"))
     #expect(!normalized.contains("dash"))
 }
 
-@Test func `camel case identifiers become spoken identifiers`() async throws {
+@Test func `camel case identifiers become spoken identifiers`() {
     let text = "Read camelCaseStuff once."
 
     let normalized = TextNormalizer.normalizeCamelCaseIdentifiers(text)
@@ -169,7 +169,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `math and typed identifiers become speech safe phrases`() async throws {
     let text = "Read cosF32, sinF64, and tanU32 once."
 
-    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.Context(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.InputContext(textFormat: .plain))
 
     #expect(normalized.contains("cosine float thirty two"))
     #expect(normalized.contains("sine float sixty four"))
@@ -179,7 +179,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `standalone typed scalar tokens use base pronunciations`() async throws {
     let text = "Use f32, i64, and usize once."
 
-    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.Context(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.InputContext(textFormat: .plain))
 
     #expect(normalized.contains("float thirty two"))
     #expect(normalized.contains("signed integer sixty four"))
@@ -189,7 +189,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `currency amounts become spoken currency phrases`() async throws {
     let text = "Use $73, £4, £3.72, $9.39, and €2.05 once."
 
-    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.Context(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.InputContext(textFormat: .plain))
 
     #expect(normalized.contains("seventy three dollars"))
     #expect(normalized.contains("four pounds"))
@@ -201,7 +201,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `measured values become spoken unit phrases with or without one space`() async throws {
     let text = "Read 42km, 42 km, 32in, 256GB, 512Gb, 4500RPM, and 165lbs once."
 
-    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.Context(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.InputContext(textFormat: .plain))
 
     #expect(normalized.contains("forty two kilometers"))
     #expect(occurrenceCount(of: "forty two kilometers", in: normalized) == 2)
@@ -215,7 +215,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `measured values cover storage bandwidth and additional distance weight units`() async throws {
     let text = "Read 8 MB, 9Mb, 10 mb, 2TB, 2Tb, 11KBps, 12KB/s, 13Kbps, 14kbps, 15Kb/s, 16MBps, 17MB/s, 18Mbps, 19mbps, 20Mb/s, 21GBps, 22GB/s, 23Gbps, 24gbps, 25Gb/s, 26TBps, 27TB/s, 28Tbps, 29tbps, 30Tb/s, 83 mi, and 90 kg once."
 
-    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.Context(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.InputContext(textFormat: .plain))
 
     #expect(normalized.contains("eight megabytes"))
     #expect(normalized.contains("nine megabits"))
@@ -249,7 +249,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `measured values use singular unit names for one`() async throws {
     let text = "Read 1 in, 1GB, 1Gb, 1MB, 1Mb, 1TB, 1Tb, 1KBps, 1Kbps, 1MBps, 1Mbps, 1GBps, 1Gbps, 1TBps, 1Tbps, 1lb, 1mi, 1kg, and 1RPM once."
 
-    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.Context(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.InputContext(textFormat: .plain))
 
     #expect(normalized.contains("one inch"))
     #expect(normalized.contains("one gigabyte"))
@@ -275,12 +275,12 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `line only file references use at line narration`() async throws {
     let text = "Read MarvisTTSModel.swift:208 once."
 
-    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.Context(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(text, withContext: TextForSpeech.InputContext(textFormat: .plain))
 
     #expect(normalized.contains("Marvis TTS Model dot swift at line 208"))
 }
 
-@Test func `code heavy lines become spoken code`() async throws {
+@Test func `code heavy lines become spoken code`() {
     let text = #"let fallback = weirdWords.first(where: { $0.hasPrefix("q") }) ?? "nothing""#
 
     let normalized = TextNormalizer.normalizeCodeHeavyLines(
@@ -293,7 +293,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("has Prefix"))
 }
 
-@Test func `unmatched code delimiters still speak`() async throws {
+@Test func `unmatched code delimiters still speak`() {
     let text = #"let fallback = weirdWords.first(where: { $0.hasPrefix("q") ]"#
 
     let normalized = TextNormalizer.normalizeCodeHeavyLines(
@@ -305,7 +305,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("close bracket"))
 }
 
-@Test func `spiral prone words are spelled out`() async throws {
+@Test func `spiral prone words are spelled out`() {
     let text = "Also say chrommmaticallly and qqqwweerrtyy once."
 
     let normalized = TextNormalizer.normalizeSpiralProneWords(text)

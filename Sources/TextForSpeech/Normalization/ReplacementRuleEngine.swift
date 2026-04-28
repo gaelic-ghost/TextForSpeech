@@ -17,7 +17,7 @@ extension TextNormalizer {
         profile: TextForSpeech.Profile,
         format: NormalizationFormat,
         phase: TextForSpeech.Replacement.Phase,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
@@ -196,7 +196,7 @@ extension TextNormalizer {
         _ rule: TextForSpeech.Replacement,
         to text: String,
         profile: TextForSpeech.Profile,
-        context: TextForSpeech.Context?,
+        context: TextForSpeech.InputContext?,
         requestContext: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat?,
@@ -281,6 +281,7 @@ extension TextNormalizer {
     private static func isSpokenCodeLineRule(_ rule: TextForSpeech.Replacement) -> Bool {
         guard case .line = rule.match else { return false }
         guard case .spokenCode = rule.transform else { return false }
+
         return true
     }
 
@@ -290,6 +291,7 @@ extension TextNormalizer {
         text: String,
     ) -> String {
         guard isSpokenCodeLineRule(rule), lineKind == .nonEmpty else { return text }
+
         return omittingMatchedSpeechDelimiters(in: text)
     }
 
@@ -305,7 +307,7 @@ extension TextNormalizer {
         for text: String,
         rule: TextForSpeech.Replacement,
         profile: TextForSpeech.Profile,
-        context: TextForSpeech.Context?,
+        context: TextForSpeech.InputContext?,
         requestContext _: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat?,
@@ -374,6 +376,7 @@ extension TextNormalizer {
     ) -> Bool {
         guard case .line(.nonEmpty) = rule.match else { return false }
         guard case .spokenCode = rule.transform else { return false }
+
         return true
     }
 }

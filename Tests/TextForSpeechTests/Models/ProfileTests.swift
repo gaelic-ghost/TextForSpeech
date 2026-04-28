@@ -145,13 +145,14 @@ import Testing
 }
 
 @Test func `request context decodes missing attributes as empty dictionary`() throws {
-    let data = """
+    let json = """
     {
       "source": "codex",
       "app": "SpeakSwiftly",
       "project": "TextForSpeech"
     }
-    """.data(using: .utf8)!
+    """
+    let data = Data(json.utf8)
 
     let decoded = try JSONDecoder().decode(TextForSpeech.RequestContext.self, from: data)
 

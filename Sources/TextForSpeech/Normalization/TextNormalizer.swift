@@ -9,7 +9,7 @@ enum TextNormalizer {
     typealias ContextualNormalizationPass =
         (
             String,
-            TextForSpeech.Context?,
+            TextForSpeech.InputContext?,
             TextForSpeech.RequestContext?,
             TextForSpeech.Profile,
             NormalizationFormat,
@@ -113,7 +113,7 @@ enum TextNormalizer {
 
     static func normalizeText(
         _ text: String,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .default,
         format: TextForSpeech.TextFormat? = nil,
@@ -133,7 +133,7 @@ enum TextNormalizer {
 
     static func normalizeSource(
         _ source: String,
-        context: TextForSpeech.Context? = nil,
+        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .default,
         format: TextForSpeech.SourceFormat,
@@ -152,7 +152,7 @@ enum TextNormalizer {
 
     private static func normalize(
         _ text: String,
-        context: TextForSpeech.Context?,
+        context: TextForSpeech.InputContext?,
         requestContext: TextForSpeech.RequestContext?,
         profile: TextForSpeech.Profile,
         format: NormalizationFormat,
