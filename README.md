@@ -46,7 +46,7 @@ Add the package from its GitHub repository:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.18.8"),
+    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.18.9"),
 ],
 targets: [
     .executableTarget(
