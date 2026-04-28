@@ -1,7 +1,7 @@
 import Foundation
 
 public extension TextForSpeech {
-    enum SummaryProvider: String, Codable, Sendable, Equatable, CaseIterable, Identifiable {
+    enum SummarizationProvider: String, Codable, Sendable, Equatable, CaseIterable, Identifiable {
         case codexExec
         case openAIResponses
         case foundationModels

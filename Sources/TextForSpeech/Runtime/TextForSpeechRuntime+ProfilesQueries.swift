@@ -4,7 +4,7 @@ public extension TextForSpeech.Runtime.Profiles {
     func getActive() -> Details {
         let profile = runtime.activeCustomProfile()
         return Details(
-            profileID: runtime.activeCustomProfileID,
+            id: runtime.activeCustomProfileID,
             summary: Summary(profile: profile),
             replacements: profile.replacements,
         )
@@ -13,7 +13,7 @@ public extension TextForSpeech.Runtime.Profiles {
     func getEffective() -> Details {
         let profile = runtime.baseProfile.merged(with: runtime.activeCustomProfile())
         return Details(
-            profileID: runtime.activeCustomProfileID,
+            id: runtime.activeCustomProfileID,
             summary: Summary(profile: profile),
             replacements: profile.replacements,
         )
@@ -22,7 +22,7 @@ public extension TextForSpeech.Runtime.Profiles {
     func get(id: String) throws -> Details {
         let profile = try runtime.storedCustomProfile(id: id)
         return Details(
-            profileID: id,
+            id: id,
             summary: Summary(profile: profile),
             replacements: profile.replacements,
         )

@@ -46,7 +46,7 @@ Add the package from its GitHub repository:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.18.8"),
+    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.18.9"),
 ],
 targets: [
     .executableTarget(
@@ -152,22 +152,22 @@ import TextForSpeech
 let normalized = try await TextForSpeech.Normalize.text(
     longDeveloperUpdate,
     withContext: TextForSpeech.InputContext(textFormat: .markdown),
-    summaryProvider: .openAIResponses,
+    summarizationProvider: .openAIResponses,
     summarize: true
 )
 ```
 
-The summary provider is explicit because each option has a different operating surface:
+The summarization provider is explicit because each backend option has a different operating surface:
 
 - `.openAIResponses` calls the OpenAI Responses API and reads `OPENAI_API_KEY` from the process environment.
 - `.codexExec` runs the local Codex CLI through `codex exec`.
 - `.foundationModels` uses Apple's on-device Foundation Models framework when the framework and operating system support it.
 
-The `summarize` argument defaults to `false`, so deterministic callers do not need a separate convenience method.
+The `summarize` argument defaults to `false`, so deterministic callers do not need a separate convenience method. `TextForSpeech.SummarizationProvider` selects the backend used when `summarize` is `true`.
 
 ### Runtime Profiles
 
-Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, one selected built-in style, one selected summary provider, and JSON-backed persistence configured through a small enum:
+Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, one selected built-in style, one selected summarization provider, and JSON-backed persistence configured through a small enum:
 
 ```swift
 import TextForSpeech
@@ -187,7 +187,7 @@ try runtime.profiles.setActive(id: logs.id)
 
 let normalized = try await runtime.normalize.text("stderr and stdout")
 
-try runtime.summaryProvider.set(.openAIResponses)
+try runtime.summarizationProvider.set(.openAIResponses)
 let summarized = try await runtime.normalize.text(
     longDeveloperUpdate,
     summarize: true
@@ -203,17 +203,17 @@ The runtime model is intentionally explicit:
 - `TextForSpeech.Profile.default` is the empty default custom profile value.
 - `runtime.style.getActive()` returns the currently selected shipped style preset.
 - `runtime.style.list()` returns the available built-in style presets with short summaries.
-- `runtime.summaryProvider.get()` returns the provider used by async summary-aware normalization requests.
-- `runtime.summaryProvider.list()` returns the available summary providers with short summaries.
-- `runtime.summaryProvider.set(_:)` persists the selected summary provider.
+- `runtime.summarizationProvider.get()` returns the provider used by async summary-aware normalization requests.
+- `runtime.summarizationProvider.list()` returns the available summarization providers with short summaries.
+- `runtime.summarizationProvider.set(_:)` persists the selected summarization provider.
 - `runtime.profiles.getActive()` returns the active custom profile's id, a summary, and its replacements.
 - `runtime.profiles.getEffective()` returns the active custom profile as merged with the currently selected built-in style.
 - `runtime.profiles.get(id:)` reads one stored custom profile summary and its replacements by id.
 - `runtime.profiles.create(name:)` creates one stored custom profile and returns its generated id to the caller.
 - `runtime.normalize.text(...)` and `runtime.normalize.source(...)` apply `builtInBase(style: style.getActive()) + active custom` without exposing the merged profile value. `summarize` defaults to `false`.
-- `try await runtime.normalize.text(..., summarize: true)` and `try await runtime.normalize.source(..., summarize: true)` use the active summary provider before returning normalized speech-safe text.
+- `try await runtime.normalize.text(..., summarize: true)` and `try await runtime.normalize.source(..., summarize: true)` use the active summarization provider before returning normalized speech-safe text.
 
-Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default store uses `TextForSpeech-Debug` instead so local debug runs do not touch the production namespace. Callers that need an explicit location can pass `.file(url)`. The selected built-in style and selected summary provider are persisted alongside the active custom profile id and stored custom profiles.
+Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default store uses `TextForSpeech-Debug` instead so local debug runs do not touch the production namespace. Callers that need an explicit location can pass `.file(url)`. The selected built-in style and selected summarization provider are persisted alongside the active custom profile id and stored custom profiles.
 
 ## Development
 
@@ -284,9 +284,9 @@ Run those formatter and lint commands when style-tooling changes are in scope or
 `Sources/TextForSpeech` is organized by responsibility:
 
 - `API/` contains public namespace-first entrypoints such as `Normalize`.
-- `Models/` contains core value types such as `Profile`, `Replacement`, `InputContext`, and `SummaryProvider`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
-- `Normalization/` contains the text path, source path, structural markdown parsing, replacement-rule engine, speech helpers, format detection, and summary-provider execution support.
-- `Runtime/` contains runtime ownership, grouped profile, style, summary-provider, and persistence handles, persisted state, and runtime-facing errors.
+- `Models/` contains core value types such as `Profile`, `Replacement`, `InputContext`, and `SummarizationProvider`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
+- `Normalization/` contains the text path, source path, structural markdown parsing, replacement-rule engine, speech helpers, format detection, and summary execution support.
+- `Runtime/` contains runtime ownership, grouped profile, style, summary, and persistence handles, persisted state, and runtime-facing errors.
 
 The current source split keeps structural normalization logic separate from durable lexical policy:
 

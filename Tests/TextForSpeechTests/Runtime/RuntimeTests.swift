@@ -12,7 +12,7 @@ import Testing
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     #expect(runtime.style.getActive() == .balanced)
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
     #expect(runtime.profiles.getActive().summary.id == "default")
     #expect(runtime.profiles.getActive().summary.replacementCount == 0)
     #expect(try runtime.profiles.get(id: "default").summary.id == "default")
@@ -31,13 +31,13 @@ import Testing
     #expect(options.allSatisfy { !$0.summary.isEmpty })
 }
 
-@Test func `runtime summary provider lists available providers`() throws {
+@Test func `runtime summarization provider settings list available providers`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    let options = runtime.summaryProvider.list()
+    let options = runtime.summarizationProvider.list()
 
     #expect(options.map(\.provider) == [.codexExec, .openAIResponses, .foundationModels])
     #expect(options.allSatisfy { !$0.summary.isEmpty })
@@ -69,7 +69,7 @@ import Testing
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try runtime.summaryProvider.set(.openAIResponses)
+    try runtime.summarizationProvider.set(.openAIResponses)
     _ = try runtime.profiles.addReplacement(
         TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
     )
@@ -98,7 +98,7 @@ import Testing
 
     let effective = runtime.profiles.getEffective()
 
-    #expect(effective.profileID == logs.id)
+    #expect(effective.id == logs.id)
     #expect(effective.summary.id == logs.id)
     #expect(effective.replacements.contains(where: { $0.id == "logs-rule" }))
     #expect(effective.replacements.contains(where: { $0.id == "base-url" }))
@@ -119,7 +119,7 @@ import Testing
     let normalized = try await runtime.normalize.text("stderr", usingProfileID: logs.id)
 
     #expect(normalized == "standard error")
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
 }
 
 @Test func `runtime normalize tracks later profile changes`() async throws {
@@ -164,19 +164,33 @@ import Testing
     #expect(reader.baseProfile == .builtInBase(style: .compact))
 }
 
-@Test func `runtime can switch summary provider and persist it`() throws {
+@Test func `runtime can switch summarization provider and persist it`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
 
     let writer = try TextForSpeech.Runtime(persistence: .file(fileURL))
-    try writer.summaryProvider.set(.openAIResponses)
+    try writer.summarizationProvider.set(.openAIResponses)
 
-    #expect(writer.summaryProvider.get() == .openAIResponses)
+    #expect(writer.summarizationProvider.get() == .openAIResponses)
 
     let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(reader.summaryProvider.get() == .openAIResponses)
+    #expect(reader.summarizationProvider.get() == .openAIResponses)
+}
+
+@Test func `persisted state writes current and legacy summarization provider keys`() throws {
+    let state = TextForSpeech.PersistedState(
+        summarizationProvider: .openAIResponses,
+        activeCustomProfileID: "default",
+        profiles: ["default": .default],
+    )
+
+    let data = try JSONEncoder().encode(state)
+    let object = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+
+    #expect(object["summarizationProvider"] as? String == "openAIResponses")
+    #expect(object["summaryProvider"] as? String == "openAIResponses")
 }
 
 @Test func `runtime creates profiles with generated ids and lists them in stable order`() throws {
@@ -304,7 +318,7 @@ import Testing
 
     let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(reader.profiles.getActive().profileID == ops.id)
+    #expect(reader.profiles.getActive().id == ops.id)
     #expect(reader.profiles.getActive().summary.id == ops.id)
     #expect(reader.profiles.getActive().replacements.first?.replacement == "standard output")
     #expect(try reader.profiles.get(id: logs.id).replacements.first?.replacement == "standard error")
@@ -328,11 +342,11 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
     #expect(runtime.profiles.getActive().summary.id == "default")
 }
 
-@Test func `runtime defaults summary provider when persisted state predates provider setting`() throws {
+@Test func `runtime defaults summarization provider when persisted state predates summary setting`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
     defer { try? FileManager.default.removeItem(at: directoryURL) }
@@ -359,7 +373,38 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(runtime.summaryProvider.get() == .foundationModels)
+    #expect(runtime.summarizationProvider.get() == .foundationModels)
+}
+
+@Test func `runtime migrates legacy persisted summary provider into summarization provider`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let json = """
+    {
+      "activeCustomProfileID" : "default",
+      "builtInStyle" : "balanced",
+      "summaryProvider" : "openAIResponses",
+      "profiles" : {
+        "default" : {
+          "id" : "default",
+          "name" : "Default",
+          "replacements" : []
+        }
+      },
+      "version" : 1
+    }
+    """
+    try FileManager.default.createDirectory(
+        at: fileURL.deletingLastPathComponent(),
+        withIntermediateDirectories: true,
+    )
+    try Data(json.utf8).write(to: fileURL, options: .atomic)
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+
+    #expect(runtime.summarizationProvider.get() == .openAIResponses)
 }
 
 @Test func `deleting active named profile reactivates default`() throws {
@@ -373,7 +418,7 @@ import Testing
 
     try runtime.profiles.delete(id: logs.id)
 
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
     #expect(try runtime.profiles.get(id: "default").summary.id == "default")
 }
 
@@ -392,7 +437,7 @@ import Testing
     try runtime.profiles.factoryReset()
 
     #expect(runtime.profiles.list().map(\.id) == ["default"])
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
 }
 
 @Test func `runtime restore rejects unsupported persisted state version`() throws {
@@ -444,6 +489,6 @@ private func write(state: TextForSpeech.PersistedState, to url: URL) throws {
 
 private extension TextForSpeech.Runtime {
     func renameActiveProfile(to name: String) throws {
-        _ = try profiles.rename(profile: profiles.getActive().profileID, to: name)
+        _ = try profiles.rename(profile: profiles.getActive().id, to: name)
     }
 }

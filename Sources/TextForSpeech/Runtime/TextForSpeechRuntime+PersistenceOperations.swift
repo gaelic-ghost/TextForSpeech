@@ -5,7 +5,7 @@ public extension TextForSpeech.Runtime.Persistence {
         TextForSpeech.PersistedState(
             version: TextForSpeech.Runtime.Versioning.currentPersistedStateVersion,
             builtInStyle: runtime.builtInStyle,
-            summaryProvider: runtime.activeSummaryProvider,
+            summarizationProvider: runtime.activeSummarizationProvider,
             activeCustomProfileID: runtime.activeCustomProfileID,
             profiles: runtime.storedCustomProfilesByID,
         )
@@ -17,7 +17,7 @@ public extension TextForSpeech.Runtime.Persistence {
         }
 
         runtime.builtInStyle = state.builtInStyle
-        runtime.activeSummaryProvider = state.summaryProvider
+        runtime.activeSummarizationProvider = state.summarizationProvider
         runtime.activeCustomProfileID = state.activeCustomProfileID
         runtime.storedCustomProfilesByID = state.profiles
         try runtime.repairProfileState(persistIfChanged: false)

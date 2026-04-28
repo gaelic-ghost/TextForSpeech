@@ -1,4 +1,4 @@
-public extension TextForSpeech.Profile {
+extension TextForSpeech.Profile {
     /// Whole-token scalar pronunciations for terse typed-width forms that are
     /// consistently unpleasant for speech models to interpret raw.
     static let scalarPronunciationReplacements: [TextForSpeech.Replacement] = [

@@ -13,7 +13,7 @@ public extension TextForSpeech.Runtime.Normalization {
             requestContext: requestContext,
             customProfile: runtime.activeCustomProfile(),
             style: runtime.builtInStyle,
-            summaryProvider: runtime.activeSummaryProvider,
+            summarizationProvider: runtime.activeSummarizationProvider,
             summarize: summarize,
         )
     }
@@ -31,7 +31,7 @@ public extension TextForSpeech.Runtime.Normalization {
             requestContext: requestContext,
             customProfile: runtime.storedCustomProfile(id: id),
             style: runtime.builtInStyle,
-            summaryProvider: runtime.activeSummaryProvider,
+            summarizationProvider: runtime.activeSummarizationProvider,
             summarize: summarize,
         )
     }
@@ -50,7 +50,7 @@ public extension TextForSpeech.Runtime.Normalization {
             requestContext: requestContext,
             customProfile: runtime.activeCustomProfile(),
             style: runtime.builtInStyle,
-            summaryProvider: runtime.activeSummaryProvider,
+            summarizationProvider: runtime.activeSummarizationProvider,
             summarize: summarize,
         )
     }
@@ -70,7 +70,7 @@ public extension TextForSpeech.Runtime.Normalization {
             requestContext: requestContext,
             customProfile: runtime.storedCustomProfile(id: id),
             style: runtime.builtInStyle,
-            summaryProvider: runtime.activeSummaryProvider,
+            summarizationProvider: runtime.activeSummarizationProvider,
             summarize: summarize,
         )
     }

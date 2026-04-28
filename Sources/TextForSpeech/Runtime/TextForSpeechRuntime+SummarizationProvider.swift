@@ -1,12 +1,12 @@
 import Foundation
 
 public extension TextForSpeech.Runtime {
-    struct SummaryProviderSettings {
+    struct SummarizationProviderSettings {
         public struct Option: Sendable, Equatable, Identifiable {
-            public let provider: TextForSpeech.SummaryProvider
+            public let provider: TextForSpeech.SummarizationProvider
             public let summary: String
 
-            public var id: TextForSpeech.SummaryProvider { provider }
+            public var id: TextForSpeech.SummarizationProvider.ID { provider.id }
         }
 
         let runtime: TextForSpeech.Runtime
@@ -17,21 +17,21 @@ public extension TextForSpeech.Runtime {
     }
 }
 
-public extension TextForSpeech.Runtime.SummaryProviderSettings {
-    func get() -> TextForSpeech.SummaryProvider {
-        runtime.activeSummaryProvider
+public extension TextForSpeech.Runtime.SummarizationProviderSettings {
+    func get() -> TextForSpeech.SummarizationProvider {
+        runtime.activeSummarizationProvider
     }
 
     func list() -> [Option] {
-        TextForSpeech.SummaryProvider.allCases.map(Self.option(for:))
+        TextForSpeech.SummarizationProvider.allCases.map(Self.option(for:))
     }
 
-    func set(_ provider: TextForSpeech.SummaryProvider) throws {
-        runtime.activeSummaryProvider = provider
+    func set(_ provider: TextForSpeech.SummarizationProvider) throws {
+        runtime.activeSummarizationProvider = provider
         try runtime.persistCurrentState()
     }
 
-    private static func option(for provider: TextForSpeech.SummaryProvider) -> Option {
+    private static func option(for provider: TextForSpeech.SummarizationProvider) -> Option {
         let summary = switch provider {
             case .codexExec:
                 "Runs summarization through the local Codex CLI with codex exec."

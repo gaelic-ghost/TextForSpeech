@@ -7,7 +7,7 @@ import FoundationModels
 enum TextSummarizer {
     static func summarize(
         _ text: String,
-        provider: TextForSpeech.SummaryProvider,
+        provider: TextForSpeech.SummarizationProvider,
     ) async throws -> String {
         let prompt = summaryPrompt(for: text)
 

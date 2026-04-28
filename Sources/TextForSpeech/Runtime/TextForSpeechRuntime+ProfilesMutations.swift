@@ -26,7 +26,7 @@ public extension TextForSpeech.Runtime.Profiles {
         runtime.storedCustomProfilesByID[id] = profile
         try runtime.persistCurrentState()
         return Details(
-            profileID: id,
+            id: id,
             summary: Summary(profile: profile),
             replacements: profile.replacements,
         )
@@ -41,7 +41,7 @@ public extension TextForSpeech.Runtime.Profiles {
         runtime.storedCustomProfilesByID[id] = updatedProfile
         try runtime.persistCurrentState()
         return Details(
-            profileID: id,
+            id: id,
             summary: Summary(profile: updatedProfile),
             replacements: updatedProfile.replacements,
         )
@@ -60,7 +60,7 @@ public extension TextForSpeech.Runtime.Profiles {
         runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
         try runtime.persistCurrentState()
         return Details(
-            profileID: runtime.activeCustomProfileID,
+            id: runtime.activeCustomProfileID,
             summary: Summary(profile: updatedProfile),
             replacements: updatedProfile.replacements,
         )
@@ -75,7 +75,7 @@ public extension TextForSpeech.Runtime.Profiles {
         runtime.storedCustomProfilesByID[id] = updatedProfile
         try runtime.persistCurrentState()
         return Details(
-            profileID: id,
+            id: id,
             summary: Summary(profile: updatedProfile),
             replacements: updatedProfile.replacements,
         )
@@ -89,7 +89,7 @@ public extension TextForSpeech.Runtime.Profiles {
         runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
         try runtime.persistCurrentState()
         return Details(
-            profileID: runtime.activeCustomProfileID,
+            id: runtime.activeCustomProfileID,
             summary: Summary(profile: updatedProfile),
             replacements: updatedProfile.replacements,
         )
@@ -104,7 +104,7 @@ public extension TextForSpeech.Runtime.Profiles {
         runtime.storedCustomProfilesByID[id] = updatedProfile
         try runtime.persistCurrentState()
         return Details(
-            profileID: id,
+            id: id,
             summary: Summary(profile: updatedProfile),
             replacements: updatedProfile.replacements,
         )
@@ -118,7 +118,7 @@ public extension TextForSpeech.Runtime.Profiles {
         runtime.storedCustomProfilesByID[runtime.activeCustomProfileID] = updatedProfile
         try runtime.persistCurrentState()
         return Details(
-            profileID: runtime.activeCustomProfileID,
+            id: runtime.activeCustomProfileID,
             summary: Summary(profile: updatedProfile),
             replacements: updatedProfile.replacements,
         )
@@ -133,7 +133,7 @@ public extension TextForSpeech.Runtime.Profiles {
         runtime.storedCustomProfilesByID[id] = updatedProfile
         try runtime.persistCurrentState()
         return Details(
-            profileID: id,
+            id: id,
             summary: Summary(profile: updatedProfile),
             replacements: updatedProfile.replacements,
         )
