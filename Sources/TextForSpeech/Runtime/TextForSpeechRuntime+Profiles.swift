@@ -15,11 +15,9 @@ public extension TextForSpeech.Runtime {
         }
 
         public struct Details: Sendable, Equatable, Identifiable {
-            public let profileID: String
+            public let id: String
             public let summary: Summary
             public let replacements: [TextForSpeech.Replacement]
-
-            public var id: String { profileID }
         }
 
         let runtime: TextForSpeech.Runtime

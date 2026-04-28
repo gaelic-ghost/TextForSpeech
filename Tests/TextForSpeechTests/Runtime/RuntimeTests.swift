@@ -12,7 +12,7 @@ import Testing
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
     #expect(runtime.style.getActive() == .balanced)
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
     #expect(runtime.profiles.getActive().summary.id == "default")
     #expect(runtime.profiles.getActive().summary.replacementCount == 0)
     #expect(try runtime.profiles.get(id: "default").summary.id == "default")
@@ -98,7 +98,7 @@ import Testing
 
     let effective = runtime.profiles.getEffective()
 
-    #expect(effective.profileID == logs.id)
+    #expect(effective.id == logs.id)
     #expect(effective.summary.id == logs.id)
     #expect(effective.replacements.contains(where: { $0.id == "logs-rule" }))
     #expect(effective.replacements.contains(where: { $0.id == "base-url" }))
@@ -119,7 +119,7 @@ import Testing
     let normalized = try await runtime.normalize.text("stderr", usingProfileID: logs.id)
 
     #expect(normalized == "standard error")
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
 }
 
 @Test func `runtime normalize tracks later profile changes`() async throws {
@@ -304,7 +304,7 @@ import Testing
 
     let reader = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(reader.profiles.getActive().profileID == ops.id)
+    #expect(reader.profiles.getActive().id == ops.id)
     #expect(reader.profiles.getActive().summary.id == ops.id)
     #expect(reader.profiles.getActive().replacements.first?.replacement == "standard output")
     #expect(try reader.profiles.get(id: logs.id).replacements.first?.replacement == "standard error")
@@ -328,7 +328,7 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
 
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
     #expect(runtime.profiles.getActive().summary.id == "default")
 }
 
@@ -373,7 +373,7 @@ import Testing
 
     try runtime.profiles.delete(id: logs.id)
 
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
     #expect(try runtime.profiles.get(id: "default").summary.id == "default")
 }
 
@@ -392,7 +392,7 @@ import Testing
     try runtime.profiles.factoryReset()
 
     #expect(runtime.profiles.list().map(\.id) == ["default"])
-    #expect(runtime.profiles.getActive().profileID == "default")
+    #expect(runtime.profiles.getActive().id == "default")
 }
 
 @Test func `runtime restore rejects unsupported persisted state version`() throws {
@@ -444,6 +444,6 @@ private func write(state: TextForSpeech.PersistedState, to url: URL) throws {
 
 private extension TextForSpeech.Runtime {
     func renameActiveProfile(to name: String) throws {
-        _ = try profiles.rename(profile: profiles.getActive().profileID, to: name)
+        _ = try profiles.rename(profile: profiles.getActive().id, to: name)
     }
 }

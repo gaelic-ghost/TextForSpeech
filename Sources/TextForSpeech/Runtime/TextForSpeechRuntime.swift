@@ -14,8 +14,8 @@ public extension TextForSpeech {
         }
 
         public let persistenceConfiguration: PersistenceConfiguration
-        public var builtInStyle: TextForSpeech.BuiltInProfileStyle
-        public var activeSummaryProvider: TextForSpeech.SummaryProvider
+        public internal(set) var builtInStyle: TextForSpeech.BuiltInProfileStyle
+        public internal(set) var activeSummaryProvider: TextForSpeech.SummaryProvider
 
         let fileManager: FileManager
         let persistenceURL: URL

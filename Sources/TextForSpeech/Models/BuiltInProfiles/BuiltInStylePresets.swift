@@ -1,4 +1,4 @@
-public extension TextForSpeech.Profile {
+extension TextForSpeech.Profile {
     /// The default shipped listening mode for general-purpose spoken output.
     static let balancedBuiltInStyle = TextForSpeech.Profile(
         id: "base",

@@ -192,6 +192,10 @@ This package exists to reduce downstream TTS damage for developer text, so maint
 - `activeCustomProfileID`
 - `storedCustomProfilesByID`
 
+The selected built-in style and summary provider are publicly readable runtime
+state. External callers should mutate them through `runtime.style` and
+`runtime.summaryProvider` so changes are persisted consistently.
+
 Its public grouped surfaces are:
 
 - `profiles`
@@ -218,6 +222,10 @@ The runtime profile API now centers on:
 - `profiles.removeReplacement(id:fromProfile:)`
 - `profiles.factoryReset()`
 - `profiles.reset(id:)`
+
+`Runtime.Profiles.Details.id` is the profile identity for detailed profile
+reads. `Details.summary.id` carries the same profile identity inside the nested
+summary value.
 
 The runtime style API now centers on:
 

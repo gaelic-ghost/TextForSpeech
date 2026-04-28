@@ -1,4 +1,4 @@
-public extension TextForSpeech.Profile {
+extension TextForSpeech.Profile {
     /// Always-on semantic aliases for stable names that should be rewritten
     /// before any broader token transforms run.
     static let semanticAliasReplacements: [TextForSpeech.Replacement] = [
