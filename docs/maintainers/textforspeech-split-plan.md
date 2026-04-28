@@ -45,6 +45,7 @@ Shared value types and built-in profile definitions:
 - `Replacement.swift`
 - `Context.swift`
 - `Format.swift`
+- `SummaryProvider.swift`
 
 ### `Sources/TextForSpeech/Normalization`
 
@@ -70,6 +71,8 @@ The normalization engine is now split by role instead of collecting all helpers 
   Smaller focused helpers for heuristics, path context, speech helpers, and detection.
 - `SourceNormalizer.swift`
   Source-lane routing.
+- `TextSummarizer.swift`
+  Async summary-provider execution used only when callers opt into summary-aware normalization.
 
 ### `Sources/TextForSpeech/Runtime`
 
@@ -81,6 +84,8 @@ Runtime code is now split by capability:
   Public profile operations.
 - `TextForSpeechRuntime+Persistence.swift`
   Public persistence operations.
+- `TextForSpeechRuntime+SummaryProvider.swift`
+  Public summary-provider selection operations.
 - `TextForSpeechRuntime+Storage.swift`
   Default persistence path resolution and runtime state repair helpers.
 - `PersistedState.swift`
@@ -95,7 +100,8 @@ The package is easier to maintain when these boundaries stay explicit:
 - structural parsing and routing stay in normalization code
 - durable lexical policy lives in the built-in profile layers
 - app- or user-owned pronunciation policy lives in stored custom profiles
-- persistence and active-profile identity live in `Runtime`
+- persistence, active-profile identity, and selected summary provider live in `Runtime`
+- provider-specific summary execution stays opt-in and async so deterministic normalization remains the default behavior
 
 ## Remaining refinement work
 

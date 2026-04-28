@@ -15,6 +15,7 @@ public extension TextForSpeech {
 
         public let persistenceConfiguration: PersistenceConfiguration
         public var builtInStyle: TextForSpeech.BuiltInProfileStyle
+        public var activeSummaryProvider: TextForSpeech.SummaryProvider
 
         let fileManager: FileManager
         let persistenceURL: URL
@@ -33,6 +34,7 @@ public extension TextForSpeech {
             bundle: Bundle = .main,
         ) throws {
             self.builtInStyle = builtInStyle
+            activeSummaryProvider = .foundationModels
             self.fileManager = fileManager
             persistenceConfiguration = persistence
             persistenceURL = switch persistence {
@@ -59,6 +61,10 @@ public extension TextForSpeech.Runtime {
 
     var style: Style {
         Style(runtime: self)
+    }
+
+    var summaryProvider: SummaryProviderSettings {
+        SummaryProviderSettings(runtime: self)
     }
 
     var normalize: Normalization {

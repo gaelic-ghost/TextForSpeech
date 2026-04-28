@@ -43,4 +43,19 @@ public extension TextForSpeech {
             }
         }
     }
+
+    enum SummaryError: Swift.Error, Sendable, Equatable, LocalizedError {
+        case missingCredential(String)
+        case providerUnavailable(String)
+        case providerFailed(String)
+
+        public var errorDescription: String? {
+            switch self {
+                case let .missingCredential(message),
+                     let .providerUnavailable(message),
+                     let .providerFailed(message):
+                    message
+            }
+        }
+    }
 }

@@ -7,32 +7,40 @@ public extension TextForSpeech {
 public extension TextForSpeech.Normalize {
     static func text(
         _ text: String,
-        context: TextForSpeech.Context? = nil,
+        withContext context: TextForSpeech.Context? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         customProfile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,
-        format: TextForSpeech.TextFormat? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
-    ) -> String {
-        TextNormalizer.normalizeText(
-            text,
+        summaryProvider: TextForSpeech.SummaryProvider = .foundationModels,
+        summarize: Bool = false,
+    ) async throws -> String {
+        let textToNormalize = if summarize {
+            try await TextSummarizer.summarize(text, provider: summaryProvider)
+        } else {
+            text
+        }
+
+        return TextNormalizer.normalizeText(
+            textToNormalize,
             context: context,
             requestContext: requestContext,
             profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: customProfile),
-            format: format,
-            nestedFormat: nestedFormat,
+            format: nil,
+            nestedFormat: nil,
         )
     }
 
     static func source(
         _ source: String,
         as format: TextForSpeech.SourceFormat,
-        context: TextForSpeech.Context? = nil,
+        withContext context: TextForSpeech.Context? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         customProfile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,
-    ) -> String {
-        SourceNormalizer.normalize(
+        summaryProvider: TextForSpeech.SummaryProvider = .foundationModels,
+        summarize: Bool = false,
+    ) async throws -> String {
+        let normalizedSource = SourceNormalizer.normalize(
             source,
             as: format,
             context: context,
@@ -40,6 +48,24 @@ public extension TextForSpeech.Normalize {
             profile: customProfile,
             style: style,
         )
+
+        if summarize {
+            let summarizedSource = try await TextSummarizer.summarize(
+                normalizedSource,
+                provider: summaryProvider,
+            )
+
+            return TextNormalizer.normalizeText(
+                summarizedSource,
+                context: context,
+                requestContext: requestContext,
+                profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: customProfile),
+                format: .plain,
+                nestedFormat: nil,
+            )
+        } else {
+            return normalizedSource
+        }
     }
 
     static func detectTextFormat(in text: String) -> TextForSpeech.TextFormat {

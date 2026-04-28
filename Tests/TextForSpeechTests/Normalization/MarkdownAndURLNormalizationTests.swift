@@ -3,7 +3,7 @@ import Testing
 
 // MARK: - Markdown and URL Handling
 
-@Test func `fenced code blocks become spoken code samples`() {
+@Test func `fenced code blocks become spoken code samples`() async throws {
     let text = """
     Before
     ```swift
@@ -19,7 +19,7 @@ import Testing
     #expect(normalized.contains("End code sample."))
 }
 
-@Test func `inline code spans become speakable`() {
+@Test func `inline code spans become speakable`() async throws {
     let text = "Read `profile?.sampleRate ?? 24000` once."
 
     let normalized = TextNormalizer.normalizeInlineCodeSpans(text)
@@ -28,18 +28,18 @@ import Testing
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
-@Test func `inline code honors double colon style policy`() {
+@Test func `inline code honors double colon style policy`() async throws {
     let text = "Read `Thing::value` once."
 
-    let balanced = TextForSpeech.Normalize.text(
+    let balanced = try await TextForSpeech.Normalize.text(
         text,
+        withContext: TextForSpeech.Context(textFormat: .markdown),
         style: .balanced,
-        format: .markdown,
     )
-    let explicit = TextForSpeech.Normalize.text(
+    let explicit = try await TextForSpeech.Normalize.text(
         text,
+        withContext: TextForSpeech.Context(textFormat: .markdown),
         style: .explicit,
-        format: .markdown,
     )
 
     #expect(balanced.contains("Thing value"))
@@ -47,7 +47,7 @@ import Testing
     #expect(explicit.contains("Thing double colon value"))
 }
 
-@Test func `inline file path spans do not fall back to spoken slash code`() {
+@Test func `inline file path spans do not fall back to spoken slash code`() async throws {
     let text = "Read `/tmp/Thing.swift` once."
 
     let normalized = TextNormalizer.normalizeInlineCodeSpans(text)
@@ -56,7 +56,7 @@ import Testing
     #expect(!normalized.contains("tmp slash Thing"))
 }
 
-@Test func `slash operators inside inline code stay code shaped`() {
+@Test func `slash operators inside inline code stay code shaped`() async throws {
     let text = "Read `a/b` once."
 
     let normalized = TextNormalizer.normalizeInlineCodeSpans(text)
@@ -65,7 +65,7 @@ import Testing
     #expect(!normalized.contains("same path"))
 }
 
-@Test func `markdown links preserve label and destination`() {
+@Test func `markdown links preserve label and destination`() async throws {
     let text = "Open [the docs](https://example.com/docs) now."
 
     let normalized = TextNormalizer.normalizeMarkdownLinks(text)
@@ -73,7 +73,7 @@ import Testing
     #expect(normalized.contains("the docs, link https://example.com/docs"))
 }
 
-@Test func `priority bullets become spoken levels`() {
+@Test func `priority bullets become spoken levels`() async throws {
     let text = """
     - [P1] Fix the crash
     - [P2] Add coverage
@@ -87,7 +87,7 @@ import Testing
     #expect(!normalized.contains("- [P2]"))
 }
 
-@Test func `priority numbered lists become spoken levels`() {
+@Test func `priority numbered lists become spoken levels`() async throws {
     let text = """
     1. [P3] Investigate logs
     2. [P12] Follow up later
@@ -100,7 +100,7 @@ import Testing
     #expect(!normalized.contains("1. [P3]"))
 }
 
-@Test func `priority task lists become spoken levels`() {
+@Test func `priority task lists become spoken levels`() async throws {
     let text = """
     - [ ] [P1] Fix the crash
     - [x] [P2]: Add coverage
@@ -114,7 +114,7 @@ import Testing
     #expect(!normalized.contains("[x] [P2]:"))
 }
 
-@Test func `priority labels only rewrite at list item starts`() {
+@Test func `priority labels only rewrite at list item starts`() async throws {
     let text = "We mentioned [P1] inline, not as a list item."
 
     let normalized = TextNormalizer.normalizePriorityListItems(text)
@@ -122,7 +122,7 @@ import Testing
     #expect(normalized == text)
 }
 
-@Test func `urls become spoken urls`() {
+@Test func `urls become spoken urls`() async throws {
     let text = "Open https://example.com/docs now."
 
     let normalized = TextNormalizer.normalizeURLs(text)
@@ -131,7 +131,7 @@ import Testing
     #expect(!normalized.contains("https"))
 }
 
-@Test func `urls omit leading WWW`() {
+@Test func `urls omit leading WWW`() async throws {
     let text = "Open https://www.example.com/docs now."
 
     let normalized = TextNormalizer.normalizeURLs(text)
@@ -140,7 +140,7 @@ import Testing
     #expect(!normalized.contains("www"))
 }
 
-@Test func `urls omit mixed case leading WWW`() {
+@Test func `urls omit mixed case leading WWW`() async throws {
     let text = "Open https://WWW.Example.com/docs now."
 
     let normalized = TextNormalizer.normalizeURLs(text)
@@ -149,7 +149,7 @@ import Testing
     #expect(!normalized.contains("WWW"))
 }
 
-@Test func `non HTTPUR ls keep their scheme`() {
+@Test func `non HTTPUR ls keep their scheme`() async throws {
     let text = "Open file://tmp/Thing now."
 
     let normalized = TextNormalizer.normalizeURLs(text)
