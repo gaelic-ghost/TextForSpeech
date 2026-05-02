@@ -122,6 +122,45 @@ import Testing
     #expect(runtime.profiles.getActive().id == "default")
 }
 
+@Test func `runtime normalize source uses active custom profile`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("sampleRate", with: "sample rate override", id: "sample-rate-rule"),
+    )
+
+    let normalized = try await runtime.normalize.source("let sampleRate = 48_000", as: .swift)
+
+    #expect(normalized.contains("sample rate override"))
+    #expect(normalized.contains("48 000"))
+}
+
+@Test func `runtime normalize source can preview stored named profiles without activating them`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    let sourceProfile = try runtime.profiles.create(name: "Source")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("sampleRate", with: "sample rate override", id: "sample-rate-rule"),
+        toProfile: sourceProfile.id,
+    )
+
+    let normalized = try await runtime.normalize.source(
+        "let sampleRate = 48_000",
+        as: .swift,
+        usingProfileID: sourceProfile.id,
+    )
+
+    #expect(normalized.contains("sample rate override"))
+    #expect(normalized.contains("48 000"))
+    #expect(runtime.profiles.getActive().id == "default")
+}
+
 @Test func `runtime normalize tracks later profile changes`() async throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
@@ -473,6 +512,63 @@ import Testing
 #else
     #expect(url.path.removingPercentEncoding?.contains("Application Support/com.example.HostApp/TextForSpeech/profiles.json") == true)
 #endif
+}
+
+@Test func `runtime errors describe profile failures with concrete ids`() {
+    #expect(
+        TextForSpeech.RuntimeError.profileAlreadyExists("logs").errorDescription?
+            .contains("profile 'logs'") == true,
+    )
+    #expect(
+        TextForSpeech.RuntimeError.profileNotFound("missing-profile").errorDescription?
+            .contains("missing-profile") == true,
+    )
+    #expect(
+        TextForSpeech.RuntimeError.replacementNotFound("stderr-rule", profileID: "logs").errorDescription?
+            .contains("replacement 'stderr-rule' in profile 'logs'") == true,
+    )
+}
+
+@Test func `persistence errors describe the failed file operation`() {
+    let url = URL(fileURLWithPath: "/tmp/TextForSpeech/profiles.json")
+
+    #expect(
+        TextForSpeech.PersistenceError.missingPersistenceURL.errorDescription?
+            .contains("no persistence URL was configured") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.unsupportedPersistedStateVersion(99).errorDescription?
+            .contains("archive version 99") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.couldNotRead(url, "permission denied").errorDescription?
+            .contains("read persisted profiles") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.couldNotDecode(url, "invalid JSON").errorDescription?
+            .contains("decode persisted profiles") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.couldNotCreateDirectory(url.deletingLastPathComponent(), "permission denied")
+            .errorDescription?
+            .contains("create the directory") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.couldNotWrite(url, "disk full").errorDescription?
+            .contains("write persisted profiles") == true,
+    )
+}
+
+@Test func `summary errors surface provider messages directly`() {
+    #expect(
+        TextForSpeech.SummaryError.missingCredential("missing key").errorDescription == "missing key",
+    )
+    #expect(
+        TextForSpeech.SummaryError.providerUnavailable("provider unavailable").errorDescription == "provider unavailable",
+    )
+    #expect(
+        TextForSpeech.SummaryError.providerFailed("provider failed").errorDescription == "provider failed",
+    )
 }
 
 private func write(state: TextForSpeech.PersistedState, to url: URL) throws {

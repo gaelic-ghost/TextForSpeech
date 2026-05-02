@@ -53,6 +53,7 @@
 - [x] Keep `TextForSpeech.Runtime` as the owner of the active custom profile and stored profile state.
 - [x] Support profile creation, storage, replacement updates, and removal through the runtime API.
 - [x] Keep persistence errors descriptive and tied to concrete file operations.
+- [x] Add focused tests that assert persistence and runtime error descriptions stay concrete and operator-readable.
 
 ### Exit criteria
 
@@ -73,6 +74,7 @@
 - [x] Split the public format model into `TextFormat` and `SourceFormat`.
 - [x] Remove the old `normalize(... as:)` and `detectFormat(in:)` compatibility surface.
 - [x] Update package docs and tests to reflect the new API shape.
+- [x] Cover `runtime.normalize.source(...)` active-profile and named-profile flows so the runtime source lane stays aligned with the public source API.
 
 ### Exit criteria
 
@@ -133,6 +135,7 @@
 - [x] Remove the old public `TextForSpeech.Forensics` namespace once SpeakSwiftly no longer depends on it.
 - [x] Delete leftover helper code that only existed to support that surface when no internal production caller still uses it.
 - [x] Refresh roadmap and maintainer-facing docs so they no longer describe a separate forensic area or public forensic capability.
+- [ ] Audit low-coverage parsing helpers and either cover the production callers or remove helpers that no longer materially support normalization.
 
 ### Exit criteria
 
@@ -154,6 +157,7 @@
 - [x] Split normalization helpers by markdown passes, token passes, replacement engine, and format detection.
 - [x] Refresh README and maintainer docs to reflect the current runtime and normalization model.
 - [x] Prepare the next minor release notes and tag plan.
+- [x] Add a small coverage-audit checklist for format detection, parsing helpers, runtime wrappers, and operator-facing error strings.
 
 ### Exit criteria
 
@@ -175,6 +179,7 @@
 - [x] Add `TextForSpeech.SummarizationProvider` with `.codexExec`, `.openAIResponses`, and `.foundationModels` backend options.
 - [x] Add `runtime.summarizationProvider.get()`, `list()`, and `set(_:)`.
 - [x] Add async `summarize:` normalization arguments for text and source requests.
+- [ ] Add a deterministic summary-execution test seam so `summarize: true` branches can be covered without live Codex, OpenAI, or Foundation Models calls.
 - [ ] Add provider-specific integration tests or examples that can be run when credentials and platform support are available.
 - [ ] Decide whether summary model selection needs a first-class package setting beyond provider selection.
 
