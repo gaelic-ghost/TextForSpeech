@@ -39,7 +39,7 @@ import Testing
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
     let options = runtime.summarizationProvider.list()
 
-    #expect(options.map(\.provider) == [.codexExec, .openAIResponses, .foundationModels])
+    #expect(options.map(\.provider) == [.codexExec, .openAIResponses, .foundationModels, .test])
     #expect(options.allSatisfy { !$0.summary.isEmpty })
 }
 
@@ -81,6 +81,47 @@ import Testing
 
     #expect(normalized.contains("example dot com"))
     #expect(normalized.contains("standard error"))
+}
+
+@Test func `runtime normalize text can use active test summarization provider`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    try runtime.summarizationProvider.set(.test)
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
+    )
+
+    let normalized = try await runtime.normalize.text(
+        "Read https://example.com and stderr.",
+        summarize: true,
+    )
+
+    #expect(normalized.contains("example dot com"))
+    #expect(normalized.contains("standard error"))
+}
+
+@Test func `runtime normalize source can use active test summarization provider`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    try runtime.summarizationProvider.set(.test)
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("sampleRate", with: "sample rate override", id: "sample-rate-rule"),
+    )
+
+    let normalized = try await runtime.normalize.source(
+        "let sampleRate = 48_000",
+        as: .swift,
+        summarize: true,
+    )
+
+    #expect(normalized.contains("sample rate override"))
+    #expect(normalized.contains("48 000"))
 }
 
 @Test func `runtime getEffective merges active style with active custom profile`() throws {

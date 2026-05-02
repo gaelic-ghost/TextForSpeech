@@ -246,7 +246,7 @@ The runtime normalization API now centers on:
 - `normalize.source(_:as:withContext:requestContext:summarize:)`
 - `normalize.source(_:as:usingProfileID:withContext:requestContext:summarize:)`
 
-`summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape. `TextForSpeech.SummarizationProvider` is the caller-facing backend selector, and the runtime persists the selected provider through `summarizationProvider.get/list/set`.
+`summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape. `TextForSpeech.SummarizationProvider` is the caller-facing backend selector, and the runtime persists the selected provider through `summarizationProvider.get/list/set`. The `.test` provider is intentionally deterministic and returns the input unchanged so package tests can cover the summary-aware path without invoking Codex, OpenAI, or Foundation Models.
 
 The grouped persistence API centers on:
 

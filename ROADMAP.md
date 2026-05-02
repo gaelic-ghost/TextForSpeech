@@ -176,10 +176,10 @@
 
 ### Tickets
 
-- [x] Add `TextForSpeech.SummarizationProvider` with `.codexExec`, `.openAIResponses`, and `.foundationModels` backend options.
+- [x] Add `TextForSpeech.SummarizationProvider` with `.codexExec`, `.openAIResponses`, `.foundationModels`, and `.test` backend options.
 - [x] Add `runtime.summarizationProvider.get()`, `list()`, and `set(_:)`.
 - [x] Add async `summarize:` normalization arguments for text and source requests.
-- [ ] Add a deterministic summary-execution test seam so `summarize: true` branches can be covered without live Codex, OpenAI, or Foundation Models calls.
+- [x] Add a deterministic summary-execution test seam so `summarize: true` branches can be covered without live Codex, OpenAI, or Foundation Models calls.
 - [ ] Add provider-specific integration tests or examples that can be run when credentials and platform support are available.
 - [ ] Decide whether summary model selection needs a first-class package setting beyond provider selection.
 

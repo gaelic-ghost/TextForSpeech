@@ -123,7 +123,9 @@ persists one selected provider for summary-aware normalization:
 Practical reason: the request asks whether to summarize; the persisted runtime
 setting answers which provider performs that work. Keeping those names separate
 makes the common call site readable and keeps provider selection in one explicit
-get/list/set surface.
+get/list/set surface. The `.test` provider is part of that enum so tests can
+exercise the same summary-aware public entrypoints without network, process, or
+Apple framework availability.
 
 ## Deferred design questions
 

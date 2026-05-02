@@ -39,6 +39,8 @@ public extension TextForSpeech.Runtime.SummarizationProviderSettings {
                 "Calls the OpenAI Responses API with OPENAI_API_KEY from the process environment."
             case .foundationModels:
                 "Uses Apple's on-device Foundation Models framework when available on this device."
+            case .test:
+                "Returns the input unchanged so tests can exercise summary-aware normalization without live providers."
         }
 
         return Option(provider: provider, summary: summary)

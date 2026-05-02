@@ -162,6 +162,7 @@ The summarization provider is explicit because each backend option has a differe
 - `.openAIResponses` calls the OpenAI Responses API and reads `OPENAI_API_KEY` from the process environment.
 - `.codexExec` runs the local Codex CLI through `codex exec`.
 - `.foundationModels` uses Apple's on-device Foundation Models framework when the framework and operating system support it.
+- `.test` returns the input unchanged so tests can exercise summary-aware normalization without calling a live provider.
 
 The `summarize` argument defaults to `false`, so deterministic callers do not need a separate convenience method. `TextForSpeech.SummarizationProvider` selects the backend used when `summarize` is `true`.
 
