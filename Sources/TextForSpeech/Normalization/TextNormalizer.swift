@@ -119,7 +119,7 @@ enum TextNormalizer {
         format: TextForSpeech.TextFormat? = nil,
         nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
-        let resolvedFormat = format ?? context?.textFormat ?? detectTextFormat(in: text)
+        let resolvedFormat = format ?? detectTextFormat(in: text)
         return normalize(
             canonicalize(text),
             context: context,

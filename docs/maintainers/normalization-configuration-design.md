@@ -54,10 +54,11 @@ Path-aware normalization should read path context from `RequestContext`. This
 includes standalone path speaking, file-reference speaking, inline-code path
 speaking, and repeated-path compaction.
 
-`InputContext` should not become a behavior container. After `cwd` and
-`repoRoot` move to `RequestContext`, its remaining fields are `textFormat` and
-`nestedSourceFormat`; both should be replaced by detection or removed before the
-public surface grows around them.
+`InputContext` should not become a behavior container. The previous
+`InputContext.textFormat` hint has been removed entirely; callers should not
+provide a text-format hint. After `cwd` and `repoRoot` move to
+`RequestContext`, the remaining `nestedSourceFormat` field should be replaced
+by per-fence detection or removed before the public surface grows around it.
 
 ## Style and Replacement Review
 
@@ -84,16 +85,15 @@ Today, `Runtime` already persists the active built-in style through
 
 ## Format Detection
 
-`textFormat` and `nestedSourceFormat` are not request facts. They currently act
-as caller-provided hints for routing normalization, but both should be narrowed
-or removed.
+Text format and `nestedSourceFormat` are not request facts. Text-format routing
+is detection-owned; `nestedSourceFormat` remains a temporary migration target
+until per-fence detection replaces it.
 
 Outer text format already has a detection path through
-`TextForSpeech.Normalize.detectTextFormat(in:)`. The next pass should determine
-whether the normalizer can rely entirely on detection for ordinary text input.
-If a real caller proves that forced text routing is needed, prefer an explicit
-normalize argument over a context field, because the call site should say that
-the caller is overriding detection.
+`TextForSpeech.Normalize.detectTextFormat(in:)`. The normalizer should rely on
+detection for ordinary text input. Do not add an explicit text-format override
+unless a future real caller proves that detection-owned routing cannot cover a
+necessary use case.
 
 Nested source format should be detected per embedded code span instead of stored
 as one context-wide value. Markdown fenced code has the strongest signal: the
@@ -154,8 +154,8 @@ examples prove that style/profile/replacement behavior cannot cover the need.
 
 1. Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` and
    update path-speaking and path-compaction call sites.
-2. Review current format detection and decide whether `textFormat` can be
-   removed entirely or replaced by an explicit override argument.
+2. Remove the previous `InputContext.textFormat` hint entirely and keep outer
+   text-format routing detection-owned.
 3. Replace `InputContext.nestedSourceFormat` with per-fence nested source
    detection and generic inline-code fallback.
 4. Remove `InputContext` if no input-local facts remain.

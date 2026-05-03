@@ -79,7 +79,7 @@ let normalized = try await TextForSpeech.Normalize.text(
 )
 ```
 
-If `InputContext.textFormat` is omitted, `TextForSpeech` detects a likely outer text format before running the text normalization path.
+The mixed-text path detects the likely outer text format before running normalization. Callers do not provide a text-format hint.
 
 If you want a different shipped listening mode, pass `style:`:
 
@@ -109,11 +109,11 @@ Configurable URL, markdown-link, and path handling is planned. The current
 defaults are deterministic and always on; future work will review those
 behaviors through the existing built-in styles rather than adding a separate
 normalization policy type. That same cleanup is expected to move `cwd` and
-`repoRoot` into `RequestContext`, determine whether `InputContext.textFormat`
-can be removed in favor of text-format detection, and replace
-`InputContext.nestedSourceFormat` with per-fence source detection plus generic
-inline-code fallback. Codex hook payload cleanup will be reviewed with real
-examples before deciding whether it belongs in this package or downstream.
+`repoRoot` into `RequestContext` and replace `InputContext.nestedSourceFormat`
+with per-fence source detection plus generic inline-code fallback.
+Caller-provided text-format hints have been removed in favor of text-format
+detection. Codex hook payload cleanup will be reviewed with real examples
+before deciding whether it belongs in this package or downstream.
 
 When the outer document is mixed text but the embedded code language is known, pass `InputContext.nestedSourceFormat` so fenced or inline code can route through the source path:
 
@@ -129,7 +129,6 @@ let normalized = try await TextForSpeech.Normalize.text(
     ```
     """,
     withContext: TextForSpeech.InputContext(
-        textFormat: .markdown,
         nestedSourceFormat: .swift
     )
 )
@@ -161,7 +160,6 @@ import TextForSpeech
 
 let normalized = try await TextForSpeech.Normalize.text(
     longDeveloperUpdate,
-    withContext: TextForSpeech.InputContext(textFormat: .markdown),
     summarizationProvider: .openAIResponses,
     summarize: true
 )

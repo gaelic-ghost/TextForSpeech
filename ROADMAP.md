@@ -218,14 +218,14 @@
 ### Scope
 
 - [ ] Review URL, markdown-link, and path behavior through the existing built-in style model instead of adding a separate normalization policy type.
-- [ ] Determine whether text-format detection is sufficient, and remove or narrow explicit format hints accordingly.
+- [ ] Remove caller-provided text-format hints and rely on text-format detection for mixed-text normalization.
 - [ ] Review Codex hook payload cleanup with real examples before deciding whether cleanup belongs in style presets, replacements, request context, or downstream callers.
 
 ### Tickets
 
 - [x] Design the style/context direction for URL, markdown-link, path, hook, and format-detection cleanup without adding a new normalization policy type.
 - [ ] Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` so path shortening and request metadata share one context value.
-- [ ] Review current outer text-format detection and decide whether `InputContext.textFormat` can be removed entirely or replaced by an explicit override argument.
+- [x] Remove the previous `InputContext.textFormat` hint entirely and keep outer text-format routing detection-owned.
 - [ ] Replace `InputContext.nestedSourceFormat` with per-fence nested source detection and generic inline-code fallback.
 - [ ] Remove `InputContext` if no durable input-local facts remain after the context and format cleanup.
 - [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, path, and hook cleanup behavior.

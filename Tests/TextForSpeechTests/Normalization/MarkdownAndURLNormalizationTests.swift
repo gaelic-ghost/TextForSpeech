@@ -33,12 +33,10 @@ import Testing
 
     let balanced = try await TextForSpeech.Normalize.text(
         text,
-        withContext: TextForSpeech.InputContext(textFormat: .markdown),
         style: .balanced,
     )
     let explicit = try await TextForSpeech.Normalize.text(
         text,
-        withContext: TextForSpeech.InputContext(textFormat: .markdown),
         style: .explicit,
     )
 

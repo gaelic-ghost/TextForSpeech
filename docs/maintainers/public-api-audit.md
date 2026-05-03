@@ -175,9 +175,9 @@ while preserving useful failure context, paths, commands, and operator-facing
 messages.
 
 The design direction is to move request facts such as `cwd` and `repoRoot` into
-`TextForSpeech.RequestContext`, while `InputContext.textFormat` and
-`InputContext.nestedSourceFormat` should be replaced by outer text-format
-detection and per-fence nested source detection. Do not add
+`TextForSpeech.RequestContext`, keep outer text-format routing detection-owned,
+and replace `InputContext.nestedSourceFormat` with per-fence nested source
+detection. Do not add
 `TextForSpeech.NormalizationPolicy`; review `BuiltInProfileStyle`, `Profile`,
 and `Replacement` so URL, link, path, and hook behavior fit the existing
 style/profile model or are left downstream. See

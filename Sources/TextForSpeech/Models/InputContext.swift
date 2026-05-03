@@ -6,7 +6,6 @@ public extension TextForSpeech {
 
         public let cwd: String?
         public let repoRoot: String?
-        public let textFormat: TextFormat?
         public let nestedSourceFormat: SourceFormat?
 
         // MARK: Initializers
@@ -14,12 +13,10 @@ public extension TextForSpeech {
         public init(
             cwd: String? = nil,
             repoRoot: String? = nil,
-            textFormat: TextFormat? = nil,
             nestedSourceFormat: SourceFormat? = nil,
         ) {
             self.cwd = InputContext.normalizedPath(cwd)
             self.repoRoot = InputContext.normalizedPath(repoRoot)
-            self.textFormat = textFormat
             self.nestedSourceFormat = nestedSourceFormat
         }
 
