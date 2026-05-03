@@ -229,6 +229,8 @@
 - [ ] Add a token-first detection pass using `NSDataDetector` for platform-supported semantic tokens such as links, addresses, dates, and phone numbers.
 - [ ] Review developer-specific token detectors for paths, file-line references, identifiers, CLI flags, issue references, measured values, and scalar shorthands so they run independently from surrounding document format.
 - [x] Add `swift-markdown` and SwiftSoup dependencies, parser-backed structure helpers, and smoke tests for markdown and HTML detection.
+- [x] Add an internal `AttributedString` semantic-run surface that annotates platform tokens and developer tokens before normalization passes consume them.
+- [ ] Move URL, path, identifier, file-reference, and CLI-flag normalization passes onto the `AttributedString` semantic-run surface so token detection happens once.
 - [ ] Replace remaining markdown and HTML normalization helpers with parser-backed traversal where structured extraction is needed.
 - [ ] Replace `InputContext.nestedSourceFormat` with per-fence nested source detection and generic inline-code fallback.
 - [ ] Remove `InputContext` if no durable input-local facts remain after the context and format cleanup.

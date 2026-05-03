@@ -171,7 +171,7 @@ extension TextNormalizer {
         return String(token[start..<end])
     }
 
-    private static func preservesLeadingRelativePathPrefix(
+    static func preservesLeadingRelativePathPrefix(
         in token: String,
         at index: String.Index,
     ) -> Bool {

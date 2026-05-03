@@ -97,6 +97,14 @@ speech treatment no matter whether the surrounding document is prose, markdown,
 HTML, CLI output, logs, or a Codex hook payload. Detect those token ranges first,
 then let document-structure detection decide how to traverse larger containers.
 
+Use `AttributedString` as the internal marked-text carrier for those detections.
+Apple's `AttributedString` model already represents contiguous ranges with the
+same attributes as runs, supports system-defined scopes such as links, and lets
+the package define its own custom attribute keys for developer token kinds. That
+gives the normalizer one place to mark "this range is a URL," "this range is a
+file reference," or "this range is a CLI flag" before style-specific speech
+rules decide what to do with the marked runs.
+
 The intended detection model is:
 
 1. Use `NSDataDetector` for platform-supported semantic token ranges such as
