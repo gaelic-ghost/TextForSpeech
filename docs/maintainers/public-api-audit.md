@@ -174,9 +174,12 @@ The package needs a hook-oriented text mode that filters low-value metadata
 while preserving useful failure context, paths, commands, and operator-facing
 messages.
 
-The design direction is a `TextForSpeech.NormalizationConfiguration` value that
-travels through `InputContext`, the public `TextForSpeech.Normalize`
-entrypoints, and runtime normalization calls without creating a second
-normalization pipeline. See
+The design direction is a `TextForSpeech.NormalizationPolicy` value that
+travels through the public `TextForSpeech.Normalize` entrypoints and runtime
+normalization calls without creating a second normalization pipeline. Request
+facts such as `cwd` and `repoRoot` should move into
+`TextForSpeech.RequestContext`, while `InputContext.textFormat` and
+`InputContext.nestedSourceFormat` should be replaced by outer text-format
+detection and per-fence nested source detection. See
 [`normalization-configuration-design.md`](normalization-configuration-design.md)
 for the proposed shape and implementation order.

@@ -223,8 +223,12 @@
 
 ### Tickets
 
-- [x] Design a normalization configuration model that can choose how aggressively URLs, markdown links, and file paths are spoken, shortened, preserved, or omitted.
-- [ ] Thread normalization configuration through `InputContext`, runtime normalization calls, and the public `TextForSpeech.Normalize` entrypoints without adding duplicate codepaths.
+- [x] Design a normalization policy model that can choose how aggressively URLs, markdown links, and file paths are spoken, shortened, preserved, or omitted.
+- [ ] Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` so path shortening and request metadata share one context value.
+- [ ] Replace `InputContext.textFormat` with outer text-format detection, keeping an explicit override only if a real caller proves detection is not enough.
+- [ ] Replace `InputContext.nestedSourceFormat` with per-fence nested source detection and generic inline-code fallback.
+- [ ] Remove `InputContext` if no durable input-local facts remain after the context and format cleanup.
+- [ ] Thread `NormalizationPolicy` through runtime normalization calls and the public `TextForSpeech.Normalize` entrypoints without adding duplicate codepaths.
 - [ ] Define a Codex hook text mode that filters non-speech metadata while preserving the actionable hook message, paths, commands, and failure context.
 - [ ] Add tests with representative Codex hook payloads, including noisy metadata, useful path references, command output, and user-facing hook messages.
 - [ ] Document which parts of Codex hook filtering are stable defaults and which parts are caller-configurable policy.
@@ -233,4 +237,4 @@
 
 - [ ] Callers can select URL, markdown-link, and path handling policy explicitly instead of relying only on built-in defaults.
 - [ ] Codex hook payloads can be normalized into concise speech-safe text without reading out low-value metadata.
-- [ ] The mode and configuration model are documented and covered by focused Swift Testing cases.
+- [ ] The mode and policy model are documented and covered by focused Swift Testing cases.
