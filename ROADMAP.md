@@ -55,11 +55,14 @@
 - [x] Support profile creation, storage, replacement updates, and removal through the runtime API.
 - [x] Keep persistence errors descriptive and tied to concrete file operations.
 - [x] Add focused tests that assert persistence and runtime error descriptions stay concrete and operator-readable.
+- [x] Keep default debug persistence separate from the production package store for bundled hosts and fallback package runs.
+- [x] Cover real file-backed persistence failures for invalid JSON, directory-backed reads, blocked parent directories, and directory-backed writes.
 
 ### Exit criteria
 
 - [x] A caller can create or edit stored profiles, read the active and effective profile views, and persist state to disk.
 - [x] Runtime behavior is covered by the current Swift Testing suite.
+- [x] Debug builds do not write into the production package store when callers use default persistence.
 
 ## M3 Text and source lane API split
 

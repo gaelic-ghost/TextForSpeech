@@ -542,7 +542,11 @@ import Testing
 @Test func `default persistence URL uses text for speech fallback when bundle identifier is missing`() {
     let url = TextForSpeech.Runtime.defaultPersistenceURL(bundle: .init())
 
+#if DEBUG
+    #expect(url.path.removingPercentEncoding?.contains("Application Support/TextForSpeech/TextForSpeech-Debug/profiles.json") == true)
+#else
     #expect(url.path.removingPercentEncoding?.contains("Application Support/TextForSpeech/profiles.json") == true)
+#endif
 }
 
 @Test func `default persistence URL uses debug directory name for bundled targets in debug builds`() {
@@ -553,6 +557,76 @@ import Testing
 #else
     #expect(url.path.removingPercentEncoding?.contains("Application Support/com.example.HostApp/TextForSpeech/profiles.json") == true)
 #endif
+}
+
+@Test func `runtime reports decode failures from real persisted state files`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    try FileManager.default.createDirectory(
+        at: directoryURL,
+        withIntermediateDirectories: true,
+    )
+    try Data("{ not valid JSON".utf8).write(to: fileURL, options: .atomic)
+
+    #expect(throws: TextForSpeech.PersistenceError.self) {
+        _ = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    }
+}
+
+@Test func `runtime reports read failures from real directory backed persistence paths`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    try FileManager.default.createDirectory(
+        at: fileURL,
+        withIntermediateDirectories: true,
+    )
+
+    let runtime = try TextForSpeech.Runtime(
+        persistence: .file(directoryURL.appending(path: "working-profiles.json")),
+    )
+
+    #expect(throws: TextForSpeech.PersistenceError.self) {
+        try runtime.persistence.load(from: fileURL)
+    }
+}
+
+@Test func `runtime reports directory creation failures from real blocked parent paths`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let blockingFileURL = directoryURL.appending(path: "blocked-parent")
+    let nestedFileURL = blockingFileURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    try FileManager.default.createDirectory(
+        at: directoryURL,
+        withIntermediateDirectories: true,
+    )
+    try Data("not a directory".utf8).write(to: blockingFileURL, options: .atomic)
+
+    #expect(throws: TextForSpeech.PersistenceError.self) {
+        _ = try TextForSpeech.Runtime(persistence: .file(nestedFileURL))
+    }
+}
+
+@Test func `runtime reports write failures from real directory backed output paths`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let writableFileURL = directoryURL.appending(path: "profiles.json")
+    let directoryBackedFileURL = directoryURL.appending(path: "directory-backed-profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    try FileManager.default.createDirectory(
+        at: directoryBackedFileURL,
+        withIntermediateDirectories: true,
+    )
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(writableFileURL))
+
+    #expect(throws: TextForSpeech.PersistenceError.self) {
+        try runtime.persistence.save(to: directoryBackedFileURL)
+    }
 }
 
 @Test func `runtime errors describe profile failures with concrete ids`() {

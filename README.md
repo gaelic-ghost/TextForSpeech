@@ -216,7 +216,7 @@ The runtime model is intentionally explicit:
 - `runtime.normalize.text(...)` and `runtime.normalize.source(...)` apply `builtInBase(style: style.getActive()) + active custom` without exposing the merged profile value. `summarize` defaults to `false`.
 - `try await runtime.normalize.text(..., summarize: true)` and `try await runtime.normalize.source(..., summarize: true)` use the active summarization provider before returning normalized speech-safe text.
 
-Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default store uses `TextForSpeech-Debug` instead so local debug runs do not touch the production namespace. Callers that need an explicit location can pass `.file(url)`. The selected built-in style and selected summarization provider are persisted alongside the active custom profile id and stored custom profiles.
+Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. Debug builds place the package store under `TextForSpeech-Debug`, including the fallback namespace, so local debug runs do not touch the production package store. Callers that need an explicit location can pass `.file(url)`. The selected built-in style and selected summarization provider are persisted alongside the active custom profile id and stored custom profiles.
 
 ## Development
 

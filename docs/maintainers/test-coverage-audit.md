@@ -2,7 +2,7 @@
 
 ## Current status
 
-The first coverage and parsing utility passes raised the default Swift Testing suite from 108 tests to 123 tests and moved measured line coverage from 84.24% to 88.38%.
+The first coverage, parsing utility, and persistence passes raised the default Swift Testing suite from 108 tests to 127 tests and moved measured line coverage from 84.24% to 88.79%.
 
 The strongest current coverage is the deterministic normalization path:
 
@@ -53,13 +53,12 @@ Useful coverage targets:
 
 ### Persistence I/O failure behavior
 
-Error descriptions are covered, and unsupported persisted-state versions are covered. Real filesystem failure modes are only partially covered.
+Error descriptions are covered, unsupported persisted-state versions are covered, and real filesystem failure tests now exercise invalid JSON decode failures, directory-backed read failures, blocked parent-directory creation, and directory-backed write failures.
 
-Useful coverage targets:
+Remaining useful coverage targets:
 
-- invalid JSON decode failures from a real persisted-state file
-- read failures when a path exists but is not readable, if the test can stay reliable on macOS
-- write failures when the destination path is not a writable file, if the test can avoid brittle permission assumptions
+- read failures when a path exists but is not readable, if the test can stay reliable on macOS without brittle permission assumptions
+- additional migration fixtures if the persisted archive shape changes
 
 ## Roadmap-backed follow-up work
 

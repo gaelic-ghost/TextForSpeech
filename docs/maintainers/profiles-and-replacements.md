@@ -273,7 +273,7 @@ Startup behavior is:
 8. ensure `activeCustomProfileID` points at a real stored profile
 9. fall back to `default` if the saved active id is missing or invalid
 
-The default Application Support namespace uses the host bundle identifier when available and falls back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default package directory name changes to `TextForSpeech-Debug` so debug sessions do not write into the bundled production namespace.
+The default Application Support namespace uses the host bundle identifier when available and falls back to `TextForSpeech` when it is not. In debug builds, the package directory name changes to `TextForSpeech-Debug` for both bundled hosts and the fallback namespace so debug sessions do not write into the production package store.
 
 ## Practical maintainer rules
 
