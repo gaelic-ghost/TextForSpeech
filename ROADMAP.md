@@ -223,7 +223,7 @@
 
 ### Tickets
 
-- [ ] Design a normalization configuration model that can choose how aggressively URLs, markdown links, and file paths are spoken, shortened, preserved, or omitted.
+- [x] Design a normalization configuration model that can choose how aggressively URLs, markdown links, and file paths are spoken, shortened, preserved, or omitted.
 - [ ] Thread normalization configuration through `InputContext`, runtime normalization calls, and the public `TextForSpeech.Normalize` entrypoints without adding duplicate codepaths.
 - [ ] Define a Codex hook text mode that filters non-speech metadata while preserving the actionable hook message, paths, commands, and failure context.
 - [ ] Add tests with representative Codex hook payloads, including noisy metadata, useful path references, command output, and user-facing hook messages.
