@@ -1,25 +1,17 @@
 import Foundation
+import Markdown
 
 extension TextNormalizer {
-    private struct ParsedListItem {
-        let content: Substring
+    private struct MarkdownReplacement {
+        let range: Range<String.Index>
+        let text: String
     }
 
     // MARK: Markdown Code Normalization
 
     static func normalizePriorityListItems(_ text: String) -> String {
-        transformLines(in: text) { line in
-            guard let item = priorityListItem(in: line) else { return nil }
-
-            let spokenPriority = spokenPriorityLevel(item.level)
-            let remainder = item.remainder.trimmingCharacters(in: .whitespaces)
-
-            if remainder.isEmpty {
-                return spokenPriority
-            }
-
-            return "\(spokenPriority). \(remainder)"
-        }
+        let replacements = priorityListItemReplacements(in: text)
+        return applyingMarkdownReplacements(replacements, to: text)
     }
 
     static func normalizeFencedCodeBlocks(
@@ -29,53 +21,14 @@ extension TextNormalizer {
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
-        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        guard !lines.isEmpty else { return text }
-
-        var output: [String] = []
-        var bufferedCode: [String] = []
-        var insideFence = false
-
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("```") {
-                if insideFence {
-                    let body = bufferedCode.joined(separator: "\n")
-                    output.append(
-                        spokenCodeBlock(
-                            body,
-                            nestedFormat: nestedFormat,
-                            context: context,
-                            requestContext: requestContext,
-                            profile: profile,
-                        ),
-                    )
-                    bufferedCode.removeAll(keepingCapacity: true)
-                }
-                insideFence.toggle()
-                continue
-            }
-
-            if insideFence {
-                bufferedCode.append(line)
-            } else {
-                output.append(line)
-            }
-        }
-
-        if insideFence, !bufferedCode.isEmpty {
-            output.append(
-                spokenCodeBlock(
-                    bufferedCode.joined(separator: "\n"),
-                    nestedFormat: nestedFormat,
-                    context: context,
-                    requestContext: requestContext,
-                    profile: profile,
-                ),
-            )
-        }
-
-        return output.joined(separator: "\n")
+        let replacements = codeBlockReplacements(
+            in: text,
+            context: context,
+            requestContext: requestContext,
+            nestedFormat: nestedFormat,
+            profile: profile,
+        )
+        return applyingMarkdownReplacements(replacements, to: text)
     }
 
     static func normalizeInlineCodeSpans(
@@ -85,159 +38,92 @@ extension TextNormalizer {
         nestedFormat: TextForSpeech.SourceFormat? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
-        let bodies = inlineCodeBodies(in: text)
-        guard !bodies.isEmpty else { return text }
-
-        var result = ""
-        var index = text.startIndex
-        var bodyIterator = bodies.makeIterator()
-        var nextBody = bodyIterator.next()
-
-        while index < text.endIndex {
-            guard text[index] == "`", let expectedBody = nextBody else {
-                result.append(text[index])
-                index = text.index(after: index)
-                continue
-            }
-
-            let contentStart = text.index(after: index)
-            guard let closing = text[contentStart...].firstIndex(of: "`") else {
-                result.append(text[index])
-                index = text.index(after: index)
-                continue
-            }
-
-            let body = String(text[contentStart..<closing])
-            if body == expectedBody {
-                result += spokenInlineCode(
-                    body,
-                    nestedFormat: nestedFormat,
-                    context: context,
-                    requestContext: requestContext,
-                    profile: profile,
-                )
-                index = text.index(after: closing)
-                nextBody = bodyIterator.next()
-            } else {
-                result.append(text[index])
-                index = text.index(after: index)
-            }
-        }
-
-        return result
+        let replacements = inlineCodeReplacements(
+            in: text,
+            context: context,
+            requestContext: requestContext,
+            nestedFormat: nestedFormat,
+            profile: profile,
+        )
+        return applyingMarkdownReplacements(replacements, to: text)
     }
 
     static func normalizeMarkdownLinks(_ text: String) -> String {
-        let links = markdownLinks(in: text)
-        guard !links.isEmpty else { return text }
+        let replacements = linkReplacements(in: text)
+        return applyingMarkdownReplacements(replacements, to: text)
+    }
 
-        var result = ""
-        var cursor = text.startIndex
+    // MARK: Markdown Replacement Collection
 
-        for link in links {
-            result += text[cursor..<link.fullRange.lowerBound]
-            let label = link.label.trimmingCharacters(in: .whitespacesAndNewlines)
-            let destination = link.destination.trimmingCharacters(in: .whitespacesAndNewlines)
+    private static func codeBlockReplacements(
+        in text: String,
+        context: TextForSpeech.InputContext?,
+        requestContext: TextForSpeech.RequestContext?,
+        nestedFormat: TextForSpeech.SourceFormat?,
+        profile: TextForSpeech.Profile,
+    ) -> [MarkdownReplacement] {
+        var collector = CodeBlockReplacementCollector(
+            source: text,
+            context: context,
+            requestContext: requestContext,
+            nestedFormat: nestedFormat,
+            profile: profile,
+        )
+        collector.visit(markdownDocument(from: text))
+        return collector.replacements
+    }
 
-            if label.isEmpty {
-                result += " \(destination) "
-            } else {
-                result += " \(label), link \(destination) "
+    private static func inlineCodeReplacements(
+        in text: String,
+        context: TextForSpeech.InputContext?,
+        requestContext: TextForSpeech.RequestContext?,
+        nestedFormat: TextForSpeech.SourceFormat?,
+        profile: TextForSpeech.Profile,
+    ) -> [MarkdownReplacement] {
+        var collector = InlineCodeReplacementCollector(
+            source: text,
+            context: context,
+            requestContext: requestContext,
+            nestedFormat: nestedFormat,
+            profile: profile,
+        )
+        collector.visit(markdownDocument(from: text))
+        return collector.replacements
+    }
+
+    private static func linkReplacements(in text: String) -> [MarkdownReplacement] {
+        var collector = LinkReplacementCollector(source: text)
+        collector.visit(markdownDocument(from: text))
+        return collector.replacements
+    }
+
+    private static func priorityListItemReplacements(in text: String) -> [MarkdownReplacement] {
+        var collector = PriorityListItemReplacementCollector(source: text)
+        collector.visit(markdownDocument(from: text))
+        return collector.replacements
+    }
+
+    private static func applyingMarkdownReplacements(
+        _ replacements: [MarkdownReplacement],
+        to text: String,
+    ) -> String {
+        guard !replacements.isEmpty else { return text }
+
+        let sorted = replacements.sorted { first, second in
+            first.range.lowerBound > second.range.lowerBound
+        }
+
+        var result = text
+        for replacement in sorted {
+            guard replacement.range.lowerBound >= result.startIndex,
+                  replacement.range.upperBound <= result.endIndex else {
+                continue
             }
 
-            cursor = link.fullRange.upperBound
+            result.replaceSubrange(replacement.range, with: replacement.text)
         }
 
-        result += text[cursor...]
         return result
-    }
-
-    // MARK: Priority List Parsing
-
-    private static func priorityListItem(in line: String) -> (level: Int, remainder: String)? {
-        let trimmed = line.trimmingCharacters(in: .whitespaces)
-        guard !trimmed.isEmpty else { return nil }
-
-        let content = parsedListItem(in: trimmed)?.content ?? trimmed[trimmed.startIndex...]
-        guard let labelEnd = content.firstIndex(of: "]") else { return nil }
-        guard content.first == "[" else { return nil }
-
-        let labelBody = content[content.index(after: content.startIndex)..<labelEnd]
-        guard let first = labelBody.first, first == "P" || first == "p" else { return nil }
-
-        let digits = labelBody.dropFirst()
-        guard !digits.isEmpty, digits.allSatisfy(\.isNumber), let level = Int(digits) else {
-            return nil
-        }
-
-        let remainderStart = content.index(after: labelEnd)
-        let remainder = trimmedPriorityRemainder(content[remainderStart...])
-        return (level, remainder)
-    }
-
-    private static func parsedListItem(in line: String) -> ParsedListItem? {
-        if let bulletContent = bulletListItemContent(in: line) {
-            return ParsedListItem(content: bulletContent)
-        }
-
-        if let numberedContent = numberedListItemContent(in: line) {
-            return ParsedListItem(content: numberedContent)
-        }
-
-        guard line.first == "[" else { return nil }
-
-        return ParsedListItem(content: line[line.startIndex...])
-    }
-
-    private static func bulletListItemContent(in line: String) -> Substring? {
-        guard let first = line.first, "-*+".contains(first) else { return nil }
-
-        let afterMarker = line.index(after: line.startIndex)
-        guard afterMarker < line.endIndex, line[afterMarker].isWhitespace else { return nil }
-
-        var content = line[afterMarker...].drop(while: \.isWhitespace)
-        content = content[taskListMarkerEnd(in: content)...]
-        return content
-    }
-
-    private static func numberedListItemContent(in line: String) -> Substring? {
-        var index = line.startIndex
-        while index < line.endIndex, line[index].isNumber {
-            index = line.index(after: index)
-        }
-
-        guard index > line.startIndex, index < line.endIndex, line[index] == "." else {
-            return nil
-        }
-
-        let afterDot = line.index(after: index)
-        guard afterDot < line.endIndex, line[afterDot].isWhitespace else { return nil }
-
-        return line[afterDot...].drop(while: \.isWhitespace)
-    }
-
-    private static func taskListMarkerEnd(in content: Substring) -> Substring.Index {
-        guard content.count >= 3 else { return content.startIndex }
-        guard content.first == "[" else { return content.startIndex }
-
-        let second = content.index(after: content.startIndex)
-        let third = content.index(after: second)
-
-        guard third < content.endIndex, content[third] == "]" else {
-            return content.startIndex
-        }
-
-        let marker = content[second]
-        guard marker == " " || marker == "x" || marker == "X" else {
-            return content.startIndex
-        }
-
-        let afterMarker = content.index(after: third)
-        guard afterMarker < content.endIndex, content[afterMarker].isWhitespace else {
-            return content.startIndex
-        }
-
-        return content[afterMarker...].drop(while: \.isWhitespace).startIndex
     }
 
     private static func trimmedPriorityRemainder(_ remainder: Substring) -> String {
@@ -259,5 +145,217 @@ extension TextNormalizer {
             .capitalized ?? String(level)
 
         return "Priority Level \(spokenLevel)"
+    }
+
+    private struct CodeBlockReplacementCollector: MarkupWalker {
+        let source: String
+        let context: TextForSpeech.InputContext?
+        let requestContext: TextForSpeech.RequestContext?
+        let nestedFormat: TextForSpeech.SourceFormat?
+        let profile: TextForSpeech.Profile
+        var replacements: [MarkdownReplacement] = []
+
+        mutating func visitCodeBlock(_ codeBlock: CodeBlock) {
+            guard let range = stringRange(for: codeBlock, in: source) else { return }
+
+            replacements.append(
+                MarkdownReplacement(
+                    range: range,
+                    text: spokenCodeBlock(
+                        codeBlock.code,
+                        nestedFormat: nestedFormat,
+                        context: context,
+                        requestContext: requestContext,
+                        profile: profile,
+                    ),
+                ),
+            )
+        }
+    }
+
+    private struct InlineCodeReplacementCollector: MarkupWalker {
+        let source: String
+        let context: TextForSpeech.InputContext?
+        let requestContext: TextForSpeech.RequestContext?
+        let nestedFormat: TextForSpeech.SourceFormat?
+        let profile: TextForSpeech.Profile
+        var replacements: [MarkdownReplacement] = []
+
+        mutating func visitInlineCode(_ inlineCode: InlineCode) {
+            guard let range = stringRange(for: inlineCode, in: source) else { return }
+
+            replacements.append(
+                MarkdownReplacement(
+                    range: range,
+                    text: spokenInlineCode(
+                        inlineCode.code,
+                        nestedFormat: nestedFormat,
+                        context: context,
+                        requestContext: requestContext,
+                        profile: profile,
+                    ),
+                ),
+            )
+        }
+    }
+
+    private struct LinkReplacementCollector: MarkupWalker {
+        let source: String
+        var replacements: [MarkdownReplacement] = []
+
+        mutating func visitLink(_ link: Link) {
+            guard let range = stringRange(for: link, in: source),
+                  let destination = link.destination?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !destination.isEmpty else {
+                return
+            }
+
+            let label = link.plainText.trimmingCharacters(in: .whitespacesAndNewlines)
+            let replacement = if label.isEmpty {
+                " \(destination) "
+            } else {
+                " \(label), link \(destination) "
+            }
+
+            replacements.append(MarkdownReplacement(range: range, text: replacement))
+        }
+    }
+
+    private struct PriorityListItemReplacementCollector: MarkupWalker {
+        let source: String
+        var replacements: [MarkdownReplacement] = []
+
+        mutating func visitParagraph(_ paragraph: Paragraph) {
+            guard let range = stringRange(for: paragraph, in: source),
+                  let replacement = priorityParagraphReplacement(in: String(source[range])) else {
+                descendInto(paragraph)
+                return
+            }
+
+            replacements.append(
+                MarkdownReplacement(
+                    range: range,
+                    text: replacement,
+                ),
+            )
+        }
+
+        mutating func visitListItem(_ listItem: ListItem) {
+            guard let range = stringRange(for: listItem, in: source),
+                  let item = priorityListItem(in: listItem) else {
+                descendInto(listItem)
+                return
+            }
+
+            replacements.append(
+                MarkdownReplacement(
+                    range: range,
+                    text: priorityReplacement(level: item.level, remainder: item.remainder),
+                ),
+            )
+        }
+    }
+
+    private static func priorityListItem(in listItem: ListItem) -> (level: Int, remainder: String)? {
+        priorityItem(in: plainText(in: listItem))
+    }
+
+    private static func priorityItem(in text: String) -> (level: Int, remainder: String)? {
+        let content = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let labelEnd = content.firstIndex(of: "]") else { return nil }
+        guard content.first == "[" else { return nil }
+
+        let labelBody = content[content.index(after: content.startIndex)..<labelEnd]
+        guard let first = labelBody.first, first == "P" || first == "p" else { return nil }
+
+        let digits = labelBody.dropFirst()
+        guard !digits.isEmpty, digits.allSatisfy(\.isNumber), let level = Int(digits) else {
+            return nil
+        }
+
+        let remainderStart = content.index(after: labelEnd)
+        return (level, trimmedPriorityRemainder(content[remainderStart...]))
+    }
+
+    private static func priorityReplacement(level: Int, remainder: String) -> String {
+        let spokenPriority = spokenPriorityLevel(level)
+        let trimmedRemainder = remainder.trimmingCharacters(in: .whitespaces)
+
+        return trimmedRemainder.isEmpty ? spokenPriority : "\(spokenPriority). \(trimmedRemainder)"
+    }
+
+    private static func priorityParagraphReplacement(in text: String) -> String? {
+        var changed = false
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map { line in
+            guard let item = priorityItem(in: String(line)) else {
+                return String(line)
+            }
+
+            changed = true
+            return priorityReplacement(level: item.level, remainder: item.remainder)
+        }
+
+        return changed ? lines.joined(separator: "\n") : nil
+    }
+
+    private static func plainText(in markup: Markup) -> String {
+        if let inline = markup as? InlineMarkup {
+            return inline.plainText
+        }
+
+        return markup.children.map { plainText(in: $0) }.joined(separator: " ")
+    }
+
+    private static func stringRange(for markup: Markup, in source: String) -> Range<String.Index>? {
+        guard let sourceRange = markup.range else { return nil }
+
+        return stringRange(for: sourceRange, in: source)
+    }
+
+    private static func stringRange(for sourceRange: SourceRange, in source: String) -> Range<String.Index>? {
+        guard let lowerBound = stringIndex(
+            line: sourceRange.lowerBound.line,
+            column: sourceRange.lowerBound.column,
+            in: source,
+        ),
+            let upperBound = stringIndex(
+                line: sourceRange.upperBound.line,
+                column: sourceRange.upperBound.column,
+                in: source,
+            ),
+            lowerBound <= upperBound else {
+            return nil
+        }
+
+        return lowerBound..<upperBound
+    }
+
+    private static func stringIndex(line: Int, column: Int, in source: String) -> String.Index? {
+        guard line >= 1, column >= 1 else { return nil }
+
+        var currentLine = 1
+        var lineStart = source.startIndex
+        var index = source.startIndex
+
+        while currentLine < line {
+            guard index < source.endIndex else { return nil }
+            if source[index] == "\n" {
+                currentLine += 1
+                lineStart = source.index(after: index)
+            }
+            index = source.index(after: index)
+        }
+
+        let utf8Offset = column - 1
+        guard let utf8LineStart = lineStart.samePosition(in: source.utf8),
+              let target = source.utf8.index(
+            utf8LineStart,
+            offsetBy: utf8Offset,
+            limitedBy: source.utf8.endIndex,
+        ) else {
+            return nil
+        }
+
+        return target.samePosition(in: source)
     }
 }

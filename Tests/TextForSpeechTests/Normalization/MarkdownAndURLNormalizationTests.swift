@@ -28,6 +28,15 @@ import Testing
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
+@Test func `inline code ignores unterminated spans`() {
+    let text = "Read `profile?.sampleRate` then ignore `unterminated."
+
+    let normalized = TextNormalizer.normalizeInlineCodeSpans(text)
+
+    #expect(normalized.contains("profile optional chaining sample Rate"))
+    #expect(normalized.contains("`unterminated"))
+}
+
 @Test func `inline code honors double colon style policy`() async throws {
     let text = "Read `Thing::value` once."
 
@@ -69,6 +78,16 @@ import Testing
     let normalized = TextNormalizer.normalizeMarkdownLinks(text)
 
     #expect(normalized.contains("the docs, link https://example.com/docs"))
+}
+
+@Test func `markdown links normalize multiple valid links and leave malformed links alone`() {
+    let text = "Broken [label only] and [docs](https://example.com/docs) plus [repo](https://github.com/example/repo)."
+
+    let normalized = TextNormalizer.normalizeMarkdownLinks(text)
+
+    #expect(normalized.contains("[label only]"))
+    #expect(normalized.contains("docs, link https://example.com/docs"))
+    #expect(normalized.contains("repo, link https://github.com/example/repo"))
 }
 
 @Test func `priority bullets become spoken levels`() {

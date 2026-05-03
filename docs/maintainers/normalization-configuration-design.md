@@ -133,10 +133,11 @@ not because the whole input was classified as a particular text format.
 The current implementation still uses a conservative ordered classifier for the
 outer `TextFormat` value, but markdown and HTML structure checks now go through
 the package-owned `swift-markdown` and SwiftSoup parser helpers instead of
-regex-like document detection. That is still only a transition state: the next
-implementation pass should introduce the token-first detection surface and then
-replace remaining markdown and HTML normalization helpers with parser-backed
-traversal wherever structured extraction is needed.
+regex-like document detection. Markdown code blocks, inline code, links,
+priority list items, and plain priority paragraphs are normalized through
+`swift-markdown` traversal. HTML currently has no custom normalization helper
+beyond SwiftSoup-backed structure detection. The remaining transition work is
+to move reusable token normalization onto the token-first detection surface.
 
 Nested source format should be detected per embedded code span instead of stored
 as one context-wide value. Markdown fenced code has the strongest signal: the

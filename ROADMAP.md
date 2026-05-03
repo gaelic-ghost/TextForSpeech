@@ -231,7 +231,7 @@
 - [x] Add `swift-markdown` and SwiftSoup dependencies, parser-backed structure helpers, and smoke tests for markdown and HTML detection.
 - [x] Add an internal `AttributedString` semantic-run surface that annotates platform tokens and developer tokens before normalization passes consume them.
 - [ ] Move URL, path, identifier, file-reference, and CLI-flag normalization passes onto the `AttributedString` semantic-run surface so token detection happens once.
-- [ ] Replace remaining markdown and HTML normalization helpers with parser-backed traversal where structured extraction is needed.
+- [x] Replace remaining markdown normalization helpers with `swift-markdown` traversal where structured extraction is needed; HTML has no custom normalization helper beyond SwiftSoup-backed structure detection.
 - [ ] Replace `InputContext.nestedSourceFormat` with per-fence nested source detection and generic inline-code fallback.
 - [ ] Remove `InputContext` if no durable input-local facts remain after the context and format cleanup.
 - [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, path, and hook cleanup behavior.
