@@ -228,7 +228,8 @@
 - [x] Remove the previous `InputContext.textFormat` hint entirely and keep outer text-format routing detection-owned.
 - [ ] Add a token-first detection pass using `NSDataDetector` for platform-supported semantic tokens such as links, addresses, dates, and phone numbers.
 - [ ] Review developer-specific token detectors for paths, file-line references, identifiers, CLI flags, issue references, measured values, and scalar shorthands so they run independently from surrounding document format.
-- [ ] Evaluate parser-backed markdown and HTML structure detection, preferring `swift-markdown` and SwiftSoup-style DOM parsing when structure is needed.
+- [x] Add `swift-markdown` and SwiftSoup dependencies, parser-backed structure helpers, and smoke tests for markdown and HTML detection.
+- [ ] Replace remaining markdown and HTML normalization helpers with parser-backed traversal where structured extraction is needed.
 - [ ] Replace `InputContext.nestedSourceFormat` with per-fence nested source detection and generic inline-code fallback.
 - [ ] Remove `InputContext` if no durable input-local facts remain after the context and format cleanup.
 - [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, path, and hook cleanup behavior.

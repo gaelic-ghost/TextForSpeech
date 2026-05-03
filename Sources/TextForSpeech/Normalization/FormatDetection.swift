@@ -2,7 +2,9 @@ import Foundation
 
 extension TextNormalizer {
     static func looksLikeHTML(_ text: String) -> Bool {
-        text.contains(/<([A-Za-z][A-Za-z0-9:-]*)(\s[^>]*)?>/) && text.contains("</")
+        guard text.contains("</") else { return false }
+
+        return htmlHasStructure(text)
     }
 
     static func looksLikeMarkdownList(_ text: String) -> Bool {
@@ -19,11 +21,7 @@ extension TextNormalizer {
     }
 
     static func looksLikeMarkdown(_ text: String) -> Bool {
-        text.contains("```")
-            || text.split(separator: "\n", omittingEmptySubsequences: false)
-            .contains(where: { markdownHeaderTitle(in: String($0)) != nil })
-            || !markdownLinks(in: text).isEmpty
-            || !inlineCodeBodies(in: text).isEmpty
+        markdownHasStructure(text)
     }
 
     static func looksLikeCLIOutput(_ text: String) -> Bool {

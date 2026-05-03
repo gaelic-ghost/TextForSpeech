@@ -122,10 +122,13 @@ whether URL-like, address-like, link-like, or path-like tokens are normalized.
 Those token ranges should be normalized because they were detected as tokens,
 not because the whole input was classified as a particular text format.
 
-The current implementation still uses a conservative ordered heuristic for the
-outer `TextFormat` value. That is acceptable only as a transition state. The
-next implementation pass should introduce the token-first detection surface and
-then decide how much of `TextFormat` remains useful for replacement scoping.
+The current implementation still uses a conservative ordered classifier for the
+outer `TextFormat` value, but markdown and HTML structure checks now go through
+the package-owned `swift-markdown` and SwiftSoup parser helpers instead of
+regex-like document detection. That is still only a transition state: the next
+implementation pass should introduce the token-first detection surface and then
+replace remaining markdown and HTML normalization helpers with parser-backed
+traversal wherever structured extraction is needed.
 
 Nested source format should be detected per embedded code span instead of stored
 as one context-wide value. Markdown fenced code has the strongest signal: the
