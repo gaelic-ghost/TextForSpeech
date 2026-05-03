@@ -17,9 +17,7 @@ extension TextNormalizer {
         profile: TextForSpeech.Profile,
         format: NormalizationFormat,
         phase: TextForSpeech.Replacement.Phase,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let replacements: [TextForSpeech.Replacement] = switch format {
             case let .text(textFormat):
@@ -33,10 +31,8 @@ extension TextNormalizer {
                 rule,
                 to: partial,
                 profile: profile,
-                context: context,
                 requestContext: requestContext,
                 format: format,
-                nestedFormat: nestedFormat,
             )
         }
     }
@@ -196,10 +192,8 @@ extension TextNormalizer {
         _ rule: TextForSpeech.Replacement,
         to text: String,
         profile: TextForSpeech.Profile,
-        context: TextForSpeech.InputContext?,
         requestContext: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
-        nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
         switch rule.match {
             case .exactPhrase:
@@ -211,10 +205,8 @@ extension TextNormalizer {
                         for: rule.text,
                         rule: rule,
                         profile: profile,
-                        context: context,
                         requestContext: requestContext,
                         format: format,
-                        nestedFormat: nestedFormat,
                     ),
                     options: rule.isCaseSensitive ? [] : [.caseInsensitive],
                 )
@@ -228,10 +220,8 @@ extension TextNormalizer {
                             for: token,
                             rule: rule,
                             profile: profile,
-                            context: context,
                             requestContext: requestContext,
                             format: format,
-                            nestedFormat: nestedFormat,
                         )
                         : nil
                 }
@@ -243,10 +233,8 @@ extension TextNormalizer {
                             for: token,
                             rule: rule,
                             profile: profile,
-                            context: context,
                             requestContext: requestContext,
                             format: format,
-                            nestedFormat: nestedFormat,
                         )
                         : nil
                 }
@@ -268,10 +256,8 @@ extension TextNormalizer {
                             ),
                             rule: rule,
                             profile: profile,
-                            context: context,
                             requestContext: requestContext,
                             format: format,
-                            nestedFormat: nestedFormat,
                         )
                         : nil
                 }
@@ -307,10 +293,8 @@ extension TextNormalizer {
         for text: String,
         rule: TextForSpeech.Replacement,
         profile: TextForSpeech.Profile,
-        context: TextForSpeech.InputContext?,
         requestContext: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
-        nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
         switch rule.transform {
             case let .literal(replacement):
@@ -344,14 +328,10 @@ extension TextNormalizer {
                             spokenSource(text, format: sourceFormat, profile: profile)
                         }
                     case .text:
-                        if let nestedFormat {
-                            spokenSource(text, format: nestedFormat, profile: profile)
-                        } else {
-                            spokenCode(
-                                text,
-                                doubleColonPolicy: doubleColonSpeechPolicy(for: profile),
-                            )
-                        }
+                        spokenCode(
+                            text,
+                            doubleColonPolicy: doubleColonSpeechPolicy(for: profile),
+                        )
                 }
 
             case let .spokenFunctionCall(style):

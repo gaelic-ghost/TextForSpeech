@@ -15,7 +15,7 @@ surfaces are:
 - file-path normalization and repeated-path compaction
 - Codex hook payload cleanup
 - request-local path context such as `cwd` and `repoRoot`
-- outer text-format detection and nested source-format detection
+- outer text-format detection and embedded-code fallback
 
 The current defaults are deterministic and useful, but some of the behavior is
 more accurately presentation style than standalone configuration. For example,
@@ -56,11 +56,10 @@ Path-aware normalization should read path context from `RequestContext`. This
 includes standalone path speaking, file-reference speaking, inline-code path
 speaking, and repeated-path compaction.
 
-`InputContext` should not become a behavior container. The previous
-`InputContext.textFormat` hint has been removed entirely; callers should not
-provide a text-format hint. `cwd` and `repoRoot` now live on `RequestContext`;
-the remaining `InputContext.nestedSourceFormat` field should be replaced by
-per-fence detection or removed before the public surface grows around it.
+`InputContext` has been removed. The previous text-format and nested-source
+hints are no longer caller-provided behavior knobs. `cwd` and `repoRoot` now
+live on `RequestContext`, and text normalization uses detection plus generic
+embedded-code fallback instead of request-wide source hints.
 
 ## Style and Replacement Review
 
@@ -87,9 +86,10 @@ Today, `Runtime` already persists the active built-in style through
 
 ## Format Detection
 
-Text format and `nestedSourceFormat` are not request facts. Text-format routing
-is detection-owned; `nestedSourceFormat` remains a temporary migration target
-until per-fence detection replaces it.
+Text format and embedded source format are not request facts. Text-format
+routing is detection-owned, and embedded code in mixed text uses local
+structural detection plus generic code speech unless the whole input enters the
+explicit source-normalization API.
 
 Format detection must not be the main way reusable tokens are found. URLs,
 addresses, links, dates, phone numbers, paths, and similar spans need the same
@@ -139,12 +139,9 @@ priority list items, and plain priority paragraphs are normalized through
 beyond SwiftSoup-backed structure detection. The remaining transition work is
 to move reusable token normalization onto the token-first detection surface.
 
-Nested source format should be detected per embedded code span instead of stored
-as one context-wide value. Markdown fenced code has the strongest signal: the
-opening fence can carry an info string such as `swift`, `python`, or `rust`.
-The markdown pass should map known fence language identifiers to `SourceFormat`,
-route that block through the source normalizer, and fall back to generic spoken
-code for unlabeled or unknown fences.
+Embedded code in mixed text should not use one context-wide source format.
+Markdown fenced code and inline code should stay in the generic embedded-code
+path unless the whole input enters the explicit source-normalization API.
 
 Inline code usually has no language signal. The first implementation pass should
 keep the current useful heuristics for file references, URLs, and paths, then
@@ -152,8 +149,8 @@ use generic spoken code for the rest. That preserves the current behavior
 without pretending a request-wide nested language is reliable for mixed prose.
 
 The package may keep `TextForSpeech.Normalize.detectTextFormat(in:)` as a public
-preflight and diagnostics helper. Source-format detection for nested markdown
-should start as an internal helper unless a concrete caller needs to inspect it.
+preflight and diagnostics helper. Do not add public nested source-format
+detection unless a concrete caller needs to inspect that signal separately.
 
 ## URL, Link, and Path Behavior
 
@@ -200,8 +197,8 @@ examples prove that style/profile/replacement behavior cannot cover the need.
    text-format routing detection-owned.
 2. Keep path-speaking and path-compaction call sites reading `cwd` and
    `repoRoot` from `RequestContext`.
-3. Replace `InputContext.nestedSourceFormat` with per-fence nested source
-   detection and generic inline-code fallback.
+3. Remove `InputContext.nestedSourceFormat` and use generic embedded-code
+   fallback for mixed-text code spans.
 4. Remove `InputContext` if no input-local facts remain.
 5. Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link,
    path, and hook cleanup behavior.
@@ -218,5 +215,5 @@ examples prove that style/profile/replacement behavior cannot cover the need.
 - Do not expose arbitrary regex cleanup rules in the first implementation pass.
 - Do not change the current default behavior for ordinary callers without a
   focused style review and tests.
-- Do not keep both `InputContext` and `RequestContext` as overlapping context
-  objects after the migration unless Gale explicitly approves that compromise.
+- Do not reintroduce overlapping input and request context objects unless Gale
+  explicitly approves that compromise.

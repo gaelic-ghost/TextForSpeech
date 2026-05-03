@@ -107,30 +107,10 @@ Configurable URL, markdown-link, and path handling is planned. The current
 defaults are deterministic and always on; future work will review those
 behaviors through the existing built-in styles rather than adding a separate
 normalization policy type. Path context now lives on `RequestContext`; the
-remaining cleanup is expected to replace `InputContext.nestedSourceFormat` with
-per-fence source detection plus generic inline-code fallback.
-Caller-provided text-format hints have been removed in favor of text-format
-detection. Codex hook payload cleanup will be reviewed with real examples
-before deciding whether it belongs in this package or downstream.
-
-When the outer document is mixed text but the embedded code language is known, pass `InputContext.nestedSourceFormat` so fenced or inline code can route through the source path:
-
-```swift
-import TextForSpeech
-
-let normalized = try await TextForSpeech.Normalize.text(
-    """
-    Read this first:
-
-    ```swift
-    let sampleRate = profile?.sampleRate ?? 24000
-    ```
-    """,
-    withContext: TextForSpeech.InputContext(
-        nestedSourceFormat: .swift
-    )
-)
-```
+previous `InputContext` type has been removed. Caller-provided text-format and
+nested-source hints have been removed in favor of detection and generic
+embedded-code fallback. Codex hook payload cleanup will be reviewed with real
+examples before deciding whether it belongs in this package or downstream.
 
 Use the source path when the whole input is a source file or editor buffer and the caller already knows the language:
 
@@ -291,7 +271,7 @@ Run those formatter and lint commands when style-tooling changes are in scope or
 `Sources/TextForSpeech` is organized by responsibility:
 
 - `API/` contains public namespace-first entrypoints such as `Normalize`.
-- `Models/` contains core value types such as `Profile`, `Replacement`, `RequestContext`, `InputContext`, and `SummarizationProvider`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
+- `Models/` contains core value types such as `Profile`, `Replacement`, `RequestContext`, and `SummarizationProvider`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
 - `Normalization/` contains the text path, source path, structural markdown parsing, replacement-rule engine, speech helpers, format detection, and summary execution support.
 - `Runtime/` contains runtime ownership, grouped profile, style, summary, and persistence handles, persisted state, and runtime-facing errors.
 

@@ -47,7 +47,6 @@ It does not carry request-local path context, detected formats, or runtime-owned
 
 That keeps responsibilities clean. In the current public API:
 
-- `TextForSpeech.InputContext` temporarily carries `nestedSourceFormat` until per-fence source detection replaces it.
 - `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, request-local path context such as `cwd` and `repoRoot`, and freeform string attributes.
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
@@ -56,9 +55,10 @@ That keeps responsibilities clean. In the current public API:
 - the normalizer owns structural document parsing and pipeline routing.
 
 The M10 design direction has moved `cwd` and `repoRoot` into `RequestContext`.
-Remaining cleanup should replace `nestedSourceFormat` with detection and review
-URL, link, path, and hook behavior through the existing built-in style, profile,
-and replacement model instead of adding a separate normalization policy type.
+`InputContext` has been removed instead of becoming another behavior container.
+Remaining cleanup should review URL, link, path, and hook behavior through the
+existing built-in style, profile, and replacement model instead of adding a
+separate normalization policy type.
 
 ## Replacement type
 
@@ -246,10 +246,10 @@ The runtime summary API now centers on:
 
 The runtime normalization API now centers on:
 
-- `normalize.text(_:withContext:requestContext:summarize:)`
-- `normalize.text(_:usingProfileID:withContext:requestContext:summarize:)`
-- `normalize.source(_:as:withContext:requestContext:summarize:)`
-- `normalize.source(_:as:usingProfileID:withContext:requestContext:summarize:)`
+- `normalize.text(_:requestContext:summarize:)`
+- `normalize.text(_:usingProfileID:requestContext:summarize:)`
+- `normalize.source(_:as:requestContext:summarize:)`
+- `normalize.source(_:as:usingProfileID:requestContext:summarize:)`
 
 `summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape. `TextForSpeech.SummarizationProvider` is the caller-facing backend selector, and the runtime persists the selected provider through `summarizationProvider.get/list/set`. The `.test` provider is intentionally deterministic and returns the input unchanged so package tests can cover the summary-aware path without invoking Codex, OpenAI, or Foundation Models.
 

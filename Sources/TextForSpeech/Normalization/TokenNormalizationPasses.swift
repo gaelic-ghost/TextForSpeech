@@ -45,7 +45,6 @@ extension TextNormalizer {
         requestContext: TextForSpeech.RequestContext? = nil,
         profile _: TextForSpeech.Profile = .default,
         format _: NormalizationFormat = .text(.plain),
-        nestedFormat _: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         applySingleBaseRule(
             id: "base-file-path",
@@ -92,7 +91,6 @@ extension TextNormalizer {
     static func normalizeCodeHeavyLines(
         _ text: String,
         format: NormalizationFormat,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         let ruleID = switch format {
             case .text:
@@ -105,7 +103,6 @@ extension TextNormalizer {
             id: ruleID,
             to: text,
             format: format,
-            nestedFormat: nestedFormat,
         )
     }
 
@@ -125,9 +122,7 @@ extension TextNormalizer {
         id: String,
         to text: String,
         format: NormalizationFormat,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
         guard let rule = TextForSpeech.Profile.base.replacement(id: id) else { return text }
 
@@ -140,9 +135,7 @@ extension TextNormalizer {
             ),
             format: format,
             phase: .beforeBuiltIns,
-            context: context,
             requestContext: requestContext,
-            nestedFormat: nestedFormat,
         )
     }
 }

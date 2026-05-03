@@ -16,16 +16,12 @@ extension TextNormalizer {
 
     static func normalizeFencedCodeBlocks(
         _ text: String,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
         let replacements = codeBlockReplacements(
             in: text,
-            context: context,
             requestContext: requestContext,
-            nestedFormat: nestedFormat,
             profile: profile,
         )
         return applyingMarkdownReplacements(replacements, to: text)
@@ -33,16 +29,12 @@ extension TextNormalizer {
 
     static func normalizeInlineCodeSpans(
         _ text: String,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
         let replacements = inlineCodeReplacements(
             in: text,
-            context: context,
             requestContext: requestContext,
-            nestedFormat: nestedFormat,
             profile: profile,
         )
         return applyingMarkdownReplacements(replacements, to: text)
@@ -57,16 +49,12 @@ extension TextNormalizer {
 
     private static func codeBlockReplacements(
         in text: String,
-        context: TextForSpeech.InputContext?,
         requestContext: TextForSpeech.RequestContext?,
-        nestedFormat: TextForSpeech.SourceFormat?,
         profile: TextForSpeech.Profile,
     ) -> [MarkdownReplacement] {
         var collector = CodeBlockReplacementCollector(
             source: text,
-            context: context,
             requestContext: requestContext,
-            nestedFormat: nestedFormat,
             profile: profile,
         )
         collector.visit(markdownDocument(from: text))
@@ -75,16 +63,12 @@ extension TextNormalizer {
 
     private static func inlineCodeReplacements(
         in text: String,
-        context: TextForSpeech.InputContext?,
         requestContext: TextForSpeech.RequestContext?,
-        nestedFormat: TextForSpeech.SourceFormat?,
         profile: TextForSpeech.Profile,
     ) -> [MarkdownReplacement] {
         var collector = InlineCodeReplacementCollector(
             source: text,
-            context: context,
             requestContext: requestContext,
-            nestedFormat: nestedFormat,
             profile: profile,
         )
         collector.visit(markdownDocument(from: text))
@@ -149,9 +133,7 @@ extension TextNormalizer {
 
     private struct CodeBlockReplacementCollector: MarkupWalker {
         let source: String
-        let context: TextForSpeech.InputContext?
         let requestContext: TextForSpeech.RequestContext?
-        let nestedFormat: TextForSpeech.SourceFormat?
         let profile: TextForSpeech.Profile
         var replacements: [MarkdownReplacement] = []
 
@@ -163,8 +145,6 @@ extension TextNormalizer {
                     range: range,
                     text: spokenCodeBlock(
                         codeBlock.code,
-                        nestedFormat: nestedFormat,
-                        context: context,
                         requestContext: requestContext,
                         profile: profile,
                     ),
@@ -175,9 +155,7 @@ extension TextNormalizer {
 
     private struct InlineCodeReplacementCollector: MarkupWalker {
         let source: String
-        let context: TextForSpeech.InputContext?
         let requestContext: TextForSpeech.RequestContext?
-        let nestedFormat: TextForSpeech.SourceFormat?
         let profile: TextForSpeech.Profile
         var replacements: [MarkdownReplacement] = []
 
@@ -189,8 +167,6 @@ extension TextNormalizer {
                     range: range,
                     text: spokenInlineCode(
                         inlineCode.code,
-                        nestedFormat: nestedFormat,
-                        context: context,
                         requestContext: requestContext,
                         profile: profile,
                     ),

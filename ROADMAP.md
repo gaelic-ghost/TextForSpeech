@@ -70,7 +70,7 @@
 
 - [x] Split mixed-text normalization from whole-source normalization at the public API level.
 - [x] Finish the split in one pass instead of leaving compatibility shims behind.
-- [x] Let mixed documents carry an explicit nested source hint for embedded code.
+- [x] Remove mixed-text nested source hints and keep embedded code generic unless the whole input uses the source lane.
 
 ### Tickets
 
@@ -83,7 +83,7 @@
 ### Exit criteria
 
 - [x] Callers can choose a text lane or a source lane explicitly.
-- [x] Mixed markdown-like inputs can route embedded snippets through an explicit nested source format.
+- [x] Mixed markdown-like inputs normalize embedded snippets without a request-wide source hint.
 - [x] The package validates cleanly without compatibility shims or duplicate codepaths.
 
 ## M4 Runtime lookup and profile ergonomics
@@ -232,8 +232,8 @@
 - [x] Add an internal `AttributedString` semantic-run surface that annotates platform tokens and developer tokens before normalization passes consume them.
 - [ ] Move URL, path, identifier, file-reference, and CLI-flag normalization passes onto the `AttributedString` semantic-run surface so token detection happens once.
 - [x] Replace remaining markdown normalization helpers with `swift-markdown` traversal where structured extraction is needed; HTML has no custom normalization helper beyond SwiftSoup-backed structure detection.
-- [ ] Replace `InputContext.nestedSourceFormat` with per-fence nested source detection and generic inline-code fallback.
-- [ ] Remove `InputContext` if no durable input-local facts remain after the context and format cleanup.
+- [x] Remove `InputContext.nestedSourceFormat`; text normalization now uses generic embedded-code fallback instead of request-wide source hints.
+- [x] Remove `InputContext` after moving durable request-local facts onto `RequestContext`.
 - [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, path, and hook cleanup behavior.
 - [ ] Adjust built-in style presets, replacement transforms, and tests according to the style review.
 - [ ] Decide whether Codex hook cleanup should be selected explicitly, inferred from `RequestContext`, or left to downstream callers before text enters this package.
@@ -243,5 +243,5 @@
 ### Exit criteria
 
 - [ ] Built-in styles have documented URL, markdown-link, and path behavior.
-- [ ] Text-format and nested-source-format routing are documented, tested, and no longer depend on broad context fields.
+- [x] Text-format routing and embedded-code fallback are documented, tested, and no longer depend on broad context fields.
 - [ ] Codex hook ownership is settled and covered by focused Swift Testing cases if package-owned behavior remains.

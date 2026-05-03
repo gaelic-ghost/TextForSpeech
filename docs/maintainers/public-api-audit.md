@@ -175,12 +175,11 @@ while preserving useful failure context, paths, commands, and operator-facing
 messages.
 
 Request facts such as `cwd` and `repoRoot` now live on
-`TextForSpeech.RequestContext`. The remaining design direction is to add
+`TextForSpeech.RequestContext`. `InputContext` has been removed instead of
+becoming another behavior container. The remaining design direction is to add
 token-first detection for reusable spans such as links, addresses, dates, phone
-numbers, paths, and file references, and replace
-`InputContext.nestedSourceFormat` with per-fence nested source detection. Do not add
-`TextForSpeech.NormalizationPolicy`; review `BuiltInProfileStyle`, `Profile`,
-and `Replacement` so URL, link, path, and hook behavior fit the existing
-style/profile model or are left downstream. See
+numbers, paths, and file references. Do not add `TextForSpeech.NormalizationPolicy`;
+review `BuiltInProfileStyle`, `Profile`, and `Replacement` so URL, link, path,
+and hook behavior fit the existing style/profile model or are left downstream. See
 [`normalization-configuration-design.md`](normalization-configuration-design.md)
 for the proposed shape and implementation order.
