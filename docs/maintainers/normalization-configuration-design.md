@@ -51,7 +51,40 @@ prefer clear use sites and defaulted parameters over a family of similar methods
 when the common call should stay simple and the advanced call needs explicit
 policy.
 
-## Proposed Public Shape
+## Review Before New Policy
+
+Do not add `NormalizationPolicy` until a review pass determines whether the
+needed behavior belongs in an existing model instead.
+
+The current package already has three behavior surfaces:
+
+- `BuiltInProfileStyle` chooses shipped verbosity and presentation behavior.
+- `Profile` and `Replacement` express reusable pronunciation and token rewrite
+  behavior.
+- `RequestContext` carries facts about the request, including the planned
+  `cwd` and `repoRoot` move.
+
+The review pass should answer:
+
+- whether URL, markdown-link, and path handling are really style or verbosity
+  choices
+- whether Codex hook cleanup is a request mode, a style preset, a profile, or a
+  small separate policy
+- whether `Replacement` needs new transform cases for URL/link/path behavior
+  instead of a new policy container
+- whether runtime should persist only the active built-in style, or whether a
+  downstream caller should persist a richer app-specific choice outside this
+  package
+
+Today, `Runtime` already persists the active built-in style through
+`runtime.style.setActive(to:)` and `PersistedState.builtInStyle`. Direct
+`TextForSpeech.Normalize` calls use a per-call `style:` parameter with
+`.balanced` as the default and do not persist anything by themselves.
+
+## Possible Public Shape
+
+Only add this value if the review pass proves that style/profile/replacement
+surfaces cannot model the needed behavior cleanly.
 
 Use one policy value with conservative defaults:
 
@@ -225,17 +258,24 @@ small explicit rule model after real hook examples prove the need.
 3. Replace `InputContext.nestedSourceFormat` with per-fence nested source
    detection and generic inline-code fallback.
 4. Remove `InputContext` if no input-local facts remain.
-5. Add `NormalizationPolicy` and thread it through public normalize methods and
-   runtime normalization methods as a trailing defaulted argument.
-6. Teach URL, markdown-link, and path passes to read policy from the resolved
-   policy value.
-7. Add `RequestMode.codexHook` with a small pre-normalization cleanup pass.
-8. Add representative hook payload fixtures and tests.
-9. Update README, roadmap, maintainer docs, and release notes together.
+5. Review `BuiltInProfileStyle`, `Profile`, and `Replacement` to decide whether
+   URL, markdown-link, path, and hook behavior should fit existing style/profile
+   surfaces before introducing a new `NormalizationPolicy`.
+6. If the review proves a new policy is warranted, add `NormalizationPolicy` and
+   thread it through public normalize methods and runtime normalization methods
+   as a trailing defaulted argument.
+7. Teach URL, markdown-link, and path passes to read the chosen model, whether
+   that is style/profile/replacement behavior or a new policy value.
+8. Add Codex hook cleanup with a small pre-normalization cleanup pass only after
+   its owner is settled.
+9. Add representative hook payload fixtures and tests.
+10. Update README, roadmap, maintainer docs, and release notes together.
 
 ## Non-Goals
 
 - Do not add a separate `Normalize.codexHook(...)` pipeline in the first pass.
+- Do not add `NormalizationPolicy` before reviewing whether style, profile, or
+  replacement changes can express the needed behavior.
 - Do not persist normalization policy in `Runtime` until a real caller needs
   stored per-runtime policy.
 - Do not expose arbitrary regex cleanup rules in the first implementation pass.

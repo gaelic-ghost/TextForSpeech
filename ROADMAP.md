@@ -228,7 +228,8 @@
 - [ ] Replace `InputContext.textFormat` with outer text-format detection, keeping an explicit override only if a real caller proves detection is not enough.
 - [ ] Replace `InputContext.nestedSourceFormat` with per-fence nested source detection and generic inline-code fallback.
 - [ ] Remove `InputContext` if no durable input-local facts remain after the context and format cleanup.
-- [ ] Thread `NormalizationPolicy` through runtime normalization calls and the public `TextForSpeech.Normalize` entrypoints without adding duplicate codepaths.
+- [ ] Review `BuiltInProfileStyle`, `Profile`, and `Replacement` before adding `NormalizationPolicy`, and decide whether URL, link, path, and hook behavior can fit the existing style/profile model.
+- [ ] Thread `NormalizationPolicy` through runtime normalization calls and the public `TextForSpeech.Normalize` entrypoints only if the style/profile/replacement review proves a new policy value is warranted.
 - [ ] Define a Codex hook text mode that filters non-speech metadata while preserving the actionable hook message, paths, commands, and failure context.
 - [ ] Add tests with representative Codex hook payloads, including noisy metadata, useful path references, command output, and user-facing hook messages.
 - [ ] Document which parts of Codex hook filtering are stable defaults and which parts are caller-configurable policy.
