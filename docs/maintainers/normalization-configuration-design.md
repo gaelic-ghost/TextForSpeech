@@ -95,6 +95,30 @@ detection for ordinary text input. Do not add an explicit text-format override
 unless a future real caller proves that detection-owned routing cannot cover a
 necessary use case.
 
+The intended input text-format detector is a conservative ordered classifier,
+not a full document parser. It should trim surrounding whitespace and then apply
+format checks in this precedence order:
+
+1. `html`: the text contains an opening HTML-like tag and also contains a
+   closing tag. Incomplete tag examples in prose stay `.plain`.
+2. `list`: at least two lines are markdown-style bullet or numbered list items.
+   A single bullet-like sentence stays `.plain`.
+3. `markdown`: the text contains a fenced code marker, a markdown header,
+   a valid markdown link, or a closed inline-code span.
+4. `cli`: the text contains a prompt-like line such as `$ command`,
+   `% command`, an angle prompt that looks command-shaped, or a user/host prompt.
+   Quoted prose like `> This sentence...` stays `.plain`.
+5. `log`: the text contains an ISO-date-prefixed line, uppercase severity tokens
+   such as `ERROR`, `WARN`, or `INFO`, or bracketed lower-case severity markers.
+6. `plain`: the fallback for empty text, ordinary prose, incomplete syntax, or
+   ambiguous single-signal input.
+
+That ordering is deliberate. More structured container formats win before
+general markdown, command prompts win before logs, and ambiguous prose falls
+back to `.plain` instead of being over-classified. The detector only decides
+which replacement scopes can run; the normalizer still runs the same mixed-text
+pipeline.
+
 Nested source format should be detected per embedded code span instead of stored
 as one context-wide value. Markdown fenced code has the strongest signal: the
 opening fence can carry an info string such as `swift`, `python`, or `rust`.
