@@ -12,35 +12,6 @@ extension TextNormalizer {
 
     // MARK: Code Span Extraction
 
-    static func fencedCodeBlockBodies(in text: String) -> [String] {
-        let lines = text.split(separator: "\n", omittingEmptySubsequences: false).map(String.init)
-        var bodies: [String] = []
-        var buffer: [String] = []
-        var insideFence = false
-
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.hasPrefix("```") {
-                if insideFence {
-                    bodies.append(buffer.joined(separator: "\n"))
-                    buffer.removeAll(keepingCapacity: true)
-                }
-                insideFence.toggle()
-                continue
-            }
-
-            if insideFence {
-                buffer.append(line)
-            }
-        }
-
-        if insideFence, !buffer.isEmpty {
-            bodies.append(buffer.joined(separator: "\n"))
-        }
-
-        return bodies
-    }
-
     static func inlineCodeBodies(in text: String) -> [String] {
         var bodies: [String] = []
         var index = text.startIndex
@@ -75,9 +46,19 @@ extension TextNormalizer {
                 cursor = text.index(after: labelStart)
                 continue
             }
+            let labelBody = text[text.index(after: labelStart)..<labelEnd]
+            guard !labelBody.contains("[") else {
+                cursor = text.index(after: labelStart)
+                continue
+            }
 
             let destinationStart = text.index(labelEnd, offsetBy: 2)
             guard let destinationEnd = text[destinationStart...].firstIndex(of: ")") else {
+                cursor = text.index(after: labelStart)
+                continue
+            }
+            let destinationBody = text[destinationStart..<destinationEnd]
+            guard !destinationBody.contains("[") else {
                 cursor = text.index(after: labelStart)
                 continue
             }
@@ -86,61 +67,14 @@ extension TextNormalizer {
             matches.append(
                 MarkdownLinkMatch(
                     fullRange: fullRange,
-                    label: String(text[text.index(after: labelStart)..<labelEnd]),
-                    destination: String(text[destinationStart..<destinationEnd]),
+                    label: String(labelBody),
+                    destination: String(destinationBody),
                 ),
             )
             cursor = fullRange.upperBound
         }
 
         return matches
-    }
-
-    // MARK: Token Candidates
-
-    static func candidateTokens(in text: String) -> [String] {
-        text
-            .split(whereSeparator: \.isWhitespace)
-            .map(String.init)
-            .map(trimmedCandidateToken)
-            .filter { !$0.isEmpty }
-    }
-
-    static func filePathFragments(in text: String) -> [String] {
-        var fragments: [String] = []
-        var index = text.startIndex
-
-        while index < text.endIndex {
-            let character = text[index]
-            let startsTildePath = character == "~"
-                && text.index(after: index) < text.endIndex
-                && text[text.index(after: index)] == "/"
-
-            guard character == "/" || startsTildePath else {
-                index = text.index(after: index)
-                continue
-            }
-
-            let start = index
-            var end = index
-
-            while end < text.endIndex {
-                let current = text[end]
-                if current.isWhitespace || "`),;\"[]{}".contains(current) {
-                    break
-                }
-                end = text.index(after: end)
-            }
-
-            let fragment = String(text[start..<end])
-            if isLikelyFilePath(fragment) {
-                fragments.append(fragment)
-            }
-
-            index = end
-        }
-
-        return fragments
     }
 
     // MARK: Natural Language Tokens

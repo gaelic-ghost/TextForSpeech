@@ -160,3 +160,21 @@ or token differently."
 The practical design question is whether to add convenience factories or a
 small authoring facade for the common custom-profile cases while keeping the
 advanced replacement model available.
+
+### 7. How should callers configure URL, link, path, and hook cleanup policy?
+
+The current normalization defaults are built into the text pipeline. That keeps
+ordinary calls simple, but it does not give callers a first-class way to choose
+how aggressively URLs, markdown links, and file paths should be spoken,
+shortened, preserved, or omitted.
+
+Codex hook payloads make that configuration more important. Hook requests can
+contain useful user-facing text alongside metadata that is bad speech content.
+The package needs a hook-oriented text mode that filters low-value metadata
+while preserving useful failure context, paths, commands, and operator-facing
+messages.
+
+The practical design question is where this policy should live. The likely
+shape is a normalization configuration value that can travel through
+`InputContext`, the public `TextForSpeech.Normalize` entrypoints, and runtime
+normalization calls without creating a second normalization pipeline.

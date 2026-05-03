@@ -105,6 +105,8 @@ The semantic core also ships extension aliases for especially speech-hostile fil
 
 For repeated file paths in the same utterance, the text path compacts repeated anchors before the built-in path-speaking pass. File-path separators collapse to spacing rather than spoken words, and later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
 
+Configurable URL, markdown-link, and path handling is planned. The current defaults are deterministic and always on; future work will let callers choose how aggressively those surfaces are spoken, shortened, preserved, or filtered. A Codex hook-oriented text mode is also planned for hook payloads that mix useful text with metadata that should not be read aloud.
+
 When the outer document is mixed text but the embedded code language is known, pass `InputContext.nestedSourceFormat` so fenced or inline code can route through the source path:
 
 ```swift

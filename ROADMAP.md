@@ -22,6 +22,7 @@
 - [ ] M7 Release and maintainability polish
 - [ ] M8 Summary-aware normalization requests
 - [ ] M9 Public API model cleanup
+- [ ] M10 Configurable normalization policy and Codex hook mode
 
 ## M1 Core normalization package
 
@@ -135,7 +136,7 @@
 - [x] Remove the old public `TextForSpeech.Forensics` namespace once SpeakSwiftly no longer depends on it.
 - [x] Delete leftover helper code that only existed to support that surface when no internal production caller still uses it.
 - [x] Refresh roadmap and maintainer-facing docs so they no longer describe a separate forensic area or public forensic capability.
-- [ ] Audit low-coverage parsing helpers and either cover the production callers or remove helpers that no longer materially support normalization.
+- [x] Audit low-coverage parsing helpers and either cover the production callers or remove helpers that no longer materially support normalization.
 
 ### Exit criteria
 
@@ -208,3 +209,25 @@
 - [ ] Ordinary callers can save, load, back up, or restore runtime state without depending on accidental storage details.
 - [ ] Ordinary callers can add common custom pronunciation rules without constructing the full low-level `Replacement` rule shape by hand.
 - [ ] Advanced callers still have access to the full rule model when they need format scoping, phases, token transforms, or priorities.
+
+## M10 Configurable normalization policy and Codex hook mode
+
+### Scope
+
+- [ ] Add caller-owned configuration for URL, markdown-link, and path normalization behavior.
+- [ ] Add a Codex hook-oriented text normalization mode for hook payloads that contain useful text mixed with unwanted metadata.
+- [ ] Keep hook cleanup configurable so callers can tune filtering rules without hard-coding one Codex payload shape forever.
+
+### Tickets
+
+- [ ] Design a normalization configuration model that can choose how aggressively URLs, markdown links, and file paths are spoken, shortened, preserved, or omitted.
+- [ ] Thread normalization configuration through `InputContext`, runtime normalization calls, and the public `TextForSpeech.Normalize` entrypoints without adding duplicate codepaths.
+- [ ] Define a Codex hook text mode that filters non-speech metadata while preserving the actionable hook message, paths, commands, and failure context.
+- [ ] Add tests with representative Codex hook payloads, including noisy metadata, useful path references, command output, and user-facing hook messages.
+- [ ] Document which parts of Codex hook filtering are stable defaults and which parts are caller-configurable policy.
+
+### Exit criteria
+
+- [ ] Callers can select URL, markdown-link, and path handling policy explicitly instead of relying only on built-in defaults.
+- [ ] Codex hook payloads can be normalized into concise speech-safe text without reading out low-value metadata.
+- [ ] The mode and configuration model are documented and covered by focused Swift Testing cases.
