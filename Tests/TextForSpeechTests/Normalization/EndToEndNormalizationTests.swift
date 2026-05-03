@@ -40,6 +40,39 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
+@Test func `normalize text can exercise summary path with test provider`() async throws {
+    let normalized = try await TextForSpeech.Normalize.text(
+        "Read https://example.com and stderr.",
+        customProfile: TextForSpeech.Profile(
+            replacements: [
+                TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
+            ],
+        ),
+        summarizationProvider: .test,
+        summarize: true,
+    )
+
+    #expect(normalized.contains("example dot com"))
+    #expect(normalized.contains("standard error"))
+}
+
+@Test func `normalize source can exercise summary path with test provider`() async throws {
+    let normalized = try await TextForSpeech.Normalize.source(
+        "let sampleRate = 48_000",
+        as: .swift,
+        customProfile: TextForSpeech.Profile(
+            replacements: [
+                TextForSpeech.Replacement("sampleRate", with: "sample rate override", id: "sample-rate-rule"),
+            ],
+        ),
+        summarizationProvider: .test,
+        summarize: true,
+    )
+
+    #expect(normalized.contains("sample rate override"))
+    #expect(normalized.contains("48 000"))
+}
+
 @Test func `normalize preserves markdown links code blocks and spiral words`() async throws {
     let original = """
     Read [the docs](https://example.com/docs) first.

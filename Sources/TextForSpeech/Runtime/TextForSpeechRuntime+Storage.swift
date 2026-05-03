@@ -9,7 +9,9 @@ extension TextForSpeech.Runtime {
             ?? "TextForSpeech"
         let namespacedDirectory = URL.applicationSupportDirectory
             .appending(path: namespace, directoryHint: .isDirectory)
-        let packageDirectory = bundleIdentifier == nil
+        let usesFallbackProductionNamespace = bundleIdentifier == nil
+            && packageDirectoryName == "TextForSpeech"
+        let packageDirectory = usesFallbackProductionNamespace
             ? namespacedDirectory
             : namespacedDirectory.appending(path: packageDirectoryName, directoryHint: .isDirectory)
 

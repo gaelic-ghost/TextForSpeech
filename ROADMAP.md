@@ -22,6 +22,7 @@
 - [ ] M7 Release and maintainability polish
 - [ ] M8 Summary-aware normalization requests
 - [ ] M9 Public API model cleanup
+- [ ] M10 Configurable normalization policy and Codex hook mode
 
 ## M1 Core normalization package
 
@@ -53,11 +54,15 @@
 - [x] Keep `TextForSpeech.Runtime` as the owner of the active custom profile and stored profile state.
 - [x] Support profile creation, storage, replacement updates, and removal through the runtime API.
 - [x] Keep persistence errors descriptive and tied to concrete file operations.
+- [x] Add focused tests that assert persistence and runtime error descriptions stay concrete and operator-readable.
+- [x] Keep default debug persistence separate from the production package store for bundled hosts and fallback package runs.
+- [x] Cover real file-backed persistence failures for invalid JSON, directory-backed reads, blocked parent directories, and directory-backed writes.
 
 ### Exit criteria
 
 - [x] A caller can create or edit stored profiles, read the active and effective profile views, and persist state to disk.
 - [x] Runtime behavior is covered by the current Swift Testing suite.
+- [x] Debug builds do not write into the production package store when callers use default persistence.
 
 ## M3 Text and source lane API split
 
@@ -73,6 +78,7 @@
 - [x] Split the public format model into `TextFormat` and `SourceFormat`.
 - [x] Remove the old `normalize(... as:)` and `detectFormat(in:)` compatibility surface.
 - [x] Update package docs and tests to reflect the new API shape.
+- [x] Cover `runtime.normalize.source(...)` active-profile and named-profile flows so the runtime source lane stays aligned with the public source API.
 
 ### Exit criteria
 
@@ -133,6 +139,7 @@
 - [x] Remove the old public `TextForSpeech.Forensics` namespace once SpeakSwiftly no longer depends on it.
 - [x] Delete leftover helper code that only existed to support that surface when no internal production caller still uses it.
 - [x] Refresh roadmap and maintainer-facing docs so they no longer describe a separate forensic area or public forensic capability.
+- [x] Audit low-coverage parsing helpers and either cover the production callers or remove helpers that no longer materially support normalization.
 
 ### Exit criteria
 
@@ -154,6 +161,7 @@
 - [x] Split normalization helpers by markdown passes, token passes, replacement engine, and format detection.
 - [x] Refresh README and maintainer docs to reflect the current runtime and normalization model.
 - [x] Prepare the next minor release notes and tag plan.
+- [x] Add a small coverage-audit checklist for format detection, parsing helpers, runtime wrappers, and operator-facing error strings.
 
 ### Exit criteria
 
@@ -172,9 +180,10 @@
 
 ### Tickets
 
-- [x] Add `TextForSpeech.SummarizationProvider` with `.codexExec`, `.openAIResponses`, and `.foundationModels` backend options.
+- [x] Add `TextForSpeech.SummarizationProvider` with `.codexExec`, `.openAIResponses`, `.foundationModels`, and `.test` backend options.
 - [x] Add `runtime.summarizationProvider.get()`, `list()`, and `set(_:)`.
 - [x] Add async `summarize:` normalization arguments for text and source requests.
+- [x] Add a deterministic summary-execution test seam so `summarize: true` branches can be covered without live Codex, OpenAI, or Foundation Models calls.
 - [ ] Add provider-specific integration tests or examples that can be run when credentials and platform support are available.
 - [ ] Decide whether summary model selection needs a first-class package setting beyond provider selection.
 
@@ -203,3 +212,25 @@
 - [ ] Ordinary callers can save, load, back up, or restore runtime state without depending on accidental storage details.
 - [ ] Ordinary callers can add common custom pronunciation rules without constructing the full low-level `Replacement` rule shape by hand.
 - [ ] Advanced callers still have access to the full rule model when they need format scoping, phases, token transforms, or priorities.
+
+## M10 Configurable normalization policy and Codex hook mode
+
+### Scope
+
+- [ ] Add caller-owned configuration for URL, markdown-link, and path normalization behavior.
+- [ ] Add a Codex hook-oriented text normalization mode for hook payloads that contain useful text mixed with unwanted metadata.
+- [ ] Keep hook cleanup configurable so callers can tune filtering rules without hard-coding one Codex payload shape forever.
+
+### Tickets
+
+- [ ] Design a normalization configuration model that can choose how aggressively URLs, markdown links, and file paths are spoken, shortened, preserved, or omitted.
+- [ ] Thread normalization configuration through `InputContext`, runtime normalization calls, and the public `TextForSpeech.Normalize` entrypoints without adding duplicate codepaths.
+- [ ] Define a Codex hook text mode that filters non-speech metadata while preserving the actionable hook message, paths, commands, and failure context.
+- [ ] Add tests with representative Codex hook payloads, including noisy metadata, useful path references, command output, and user-facing hook messages.
+- [ ] Document which parts of Codex hook filtering are stable defaults and which parts are caller-configurable policy.
+
+### Exit criteria
+
+- [ ] Callers can select URL, markdown-link, and path handling policy explicitly instead of relying only on built-in defaults.
+- [ ] Codex hook payloads can be normalized into concise speech-safe text without reading out low-value metadata.
+- [ ] The mode and configuration model are documented and covered by focused Swift Testing cases.

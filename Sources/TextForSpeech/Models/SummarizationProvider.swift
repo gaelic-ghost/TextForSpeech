@@ -5,6 +5,7 @@ public extension TextForSpeech {
         case codexExec
         case openAIResponses
         case foundationModels
+        case test
 
         public var id: String { rawValue }
     }

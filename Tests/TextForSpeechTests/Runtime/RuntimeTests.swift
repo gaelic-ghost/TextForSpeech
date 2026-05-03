@@ -39,7 +39,7 @@ import Testing
     let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
     let options = runtime.summarizationProvider.list()
 
-    #expect(options.map(\.provider) == [.codexExec, .openAIResponses, .foundationModels])
+    #expect(options.map(\.provider) == [.codexExec, .openAIResponses, .foundationModels, .test])
     #expect(options.allSatisfy { !$0.summary.isEmpty })
 }
 
@@ -83,6 +83,47 @@ import Testing
     #expect(normalized.contains("standard error"))
 }
 
+@Test func `runtime normalize text can use active test summarization provider`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    try runtime.summarizationProvider.set(.test)
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("stderr", with: "standard error", id: "stderr-rule"),
+    )
+
+    let normalized = try await runtime.normalize.text(
+        "Read https://example.com and stderr.",
+        summarize: true,
+    )
+
+    #expect(normalized.contains("example dot com"))
+    #expect(normalized.contains("standard error"))
+}
+
+@Test func `runtime normalize source can use active test summarization provider`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    try runtime.summarizationProvider.set(.test)
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("sampleRate", with: "sample rate override", id: "sample-rate-rule"),
+    )
+
+    let normalized = try await runtime.normalize.source(
+        "let sampleRate = 48_000",
+        as: .swift,
+        summarize: true,
+    )
+
+    #expect(normalized.contains("sample rate override"))
+    #expect(normalized.contains("48 000"))
+}
+
 @Test func `runtime getEffective merges active style with active custom profile`() throws {
     let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
     let fileURL = directoryURL.appending(path: "profiles.json")
@@ -119,6 +160,45 @@ import Testing
     let normalized = try await runtime.normalize.text("stderr", usingProfileID: logs.id)
 
     #expect(normalized == "standard error")
+    #expect(runtime.profiles.getActive().id == "default")
+}
+
+@Test func `runtime normalize source uses active custom profile`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("sampleRate", with: "sample rate override", id: "sample-rate-rule"),
+    )
+
+    let normalized = try await runtime.normalize.source("let sampleRate = 48_000", as: .swift)
+
+    #expect(normalized.contains("sample rate override"))
+    #expect(normalized.contains("48 000"))
+}
+
+@Test func `runtime normalize source can preview stored named profiles without activating them`() async throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    let sourceProfile = try runtime.profiles.create(name: "Source")
+    _ = try runtime.profiles.addReplacement(
+        TextForSpeech.Replacement("sampleRate", with: "sample rate override", id: "sample-rate-rule"),
+        toProfile: sourceProfile.id,
+    )
+
+    let normalized = try await runtime.normalize.source(
+        "let sampleRate = 48_000",
+        as: .swift,
+        usingProfileID: sourceProfile.id,
+    )
+
+    #expect(normalized.contains("sample rate override"))
+    #expect(normalized.contains("48 000"))
     #expect(runtime.profiles.getActive().id == "default")
 }
 
@@ -462,7 +542,11 @@ import Testing
 @Test func `default persistence URL uses text for speech fallback when bundle identifier is missing`() {
     let url = TextForSpeech.Runtime.defaultPersistenceURL(bundle: .init())
 
+#if DEBUG
+    #expect(url.path.removingPercentEncoding?.contains("Application Support/TextForSpeech/TextForSpeech-Debug/profiles.json") == true)
+#else
     #expect(url.path.removingPercentEncoding?.contains("Application Support/TextForSpeech/profiles.json") == true)
+#endif
 }
 
 @Test func `default persistence URL uses debug directory name for bundled targets in debug builds`() {
@@ -475,6 +559,161 @@ import Testing
 #endif
 }
 
+@Test func `runtime reports decode failures from real persisted state files`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    try FileManager.default.createDirectory(
+        at: directoryURL,
+        withIntermediateDirectories: true,
+    )
+    try Data("{ not valid JSON".utf8).write(to: fileURL, options: .atomic)
+
+    let error = try #require(persistenceError {
+        _ = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    })
+
+    guard case let .couldNotDecode(url, details) = error else {
+        #expect(Bool(false), "Expected couldNotDecode, got \(error)")
+        return
+    }
+    #expect(url == fileURL.standardizedFileURL)
+    #expect(!details.isEmpty)
+}
+
+@Test func `runtime reports read failures from real directory backed persistence paths`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let fileURL = directoryURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    try FileManager.default.createDirectory(
+        at: fileURL,
+        withIntermediateDirectories: true,
+    )
+
+    let runtime = try TextForSpeech.Runtime(
+        persistence: .file(directoryURL.appending(path: "working-profiles.json")),
+    )
+
+    let error = try #require(persistenceError {
+        try runtime.persistence.load(from: fileURL)
+    })
+
+    guard case let .couldNotRead(url, details) = error else {
+        #expect(Bool(false), "Expected couldNotRead, got \(error)")
+        return
+    }
+    #expect(url == fileURL.standardizedFileURL)
+    #expect(!details.isEmpty)
+}
+
+@Test func `runtime reports directory creation failures from real blocked parent paths`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let blockingFileURL = directoryURL.appending(path: "blocked-parent")
+    let nestedFileURL = blockingFileURL.appending(path: "profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    try FileManager.default.createDirectory(
+        at: directoryURL,
+        withIntermediateDirectories: true,
+    )
+    try Data("not a directory".utf8).write(to: blockingFileURL, options: .atomic)
+
+    let error = try #require(persistenceError {
+        _ = try TextForSpeech.Runtime(persistence: .file(nestedFileURL))
+    })
+
+    guard case let .couldNotCreateDirectory(url, details) = error else {
+        #expect(Bool(false), "Expected couldNotCreateDirectory, got \(error)")
+        return
+    }
+    #expect(url.path == nestedFileURL.deletingLastPathComponent().standardizedFileURL.path)
+    #expect(!details.isEmpty)
+}
+
+@Test func `runtime reports write failures from real directory backed output paths`() throws {
+    let directoryURL = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let writableFileURL = directoryURL.appending(path: "profiles.json")
+    let directoryBackedFileURL = directoryURL.appending(path: "directory-backed-profiles.json")
+    defer { try? FileManager.default.removeItem(at: directoryURL) }
+
+    try FileManager.default.createDirectory(
+        at: directoryBackedFileURL,
+        withIntermediateDirectories: true,
+    )
+
+    let runtime = try TextForSpeech.Runtime(persistence: .file(writableFileURL))
+
+    let error = try #require(persistenceError {
+        try runtime.persistence.save(to: directoryBackedFileURL)
+    })
+
+    guard case let .couldNotWrite(url, details) = error else {
+        #expect(Bool(false), "Expected couldNotWrite, got \(error)")
+        return
+    }
+    #expect(url == directoryBackedFileURL.standardizedFileURL)
+    #expect(!details.isEmpty)
+}
+
+@Test func `runtime errors describe profile failures with concrete ids`() {
+    #expect(
+        TextForSpeech.RuntimeError.profileAlreadyExists("logs").errorDescription?
+            .contains("profile 'logs'") == true,
+    )
+    #expect(
+        TextForSpeech.RuntimeError.profileNotFound("missing-profile").errorDescription?
+            .contains("missing-profile") == true,
+    )
+    #expect(
+        TextForSpeech.RuntimeError.replacementNotFound("stderr-rule", profileID: "logs").errorDescription?
+            .contains("replacement 'stderr-rule' in profile 'logs'") == true,
+    )
+}
+
+@Test func `persistence errors describe the failed file operation`() {
+    let url = URL(fileURLWithPath: "/tmp/TextForSpeech/profiles.json")
+
+    #expect(
+        TextForSpeech.PersistenceError.missingPersistenceURL.errorDescription?
+            .contains("no persistence URL was configured") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.unsupportedPersistedStateVersion(99).errorDescription?
+            .contains("archive version 99") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.couldNotRead(url, "permission denied").errorDescription?
+            .contains("read persisted profiles") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.couldNotDecode(url, "invalid JSON").errorDescription?
+            .contains("decode persisted profiles") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.couldNotCreateDirectory(url.deletingLastPathComponent(), "permission denied")
+            .errorDescription?
+            .contains("create the directory") == true,
+    )
+    #expect(
+        TextForSpeech.PersistenceError.couldNotWrite(url, "disk full").errorDescription?
+            .contains("write persisted profiles") == true,
+    )
+}
+
+@Test func `summary errors surface provider messages directly`() {
+    #expect(
+        TextForSpeech.SummaryError.missingCredential("missing key").errorDescription == "missing key",
+    )
+    #expect(
+        TextForSpeech.SummaryError.providerUnavailable("provider unavailable").errorDescription == "provider unavailable",
+    )
+    #expect(
+        TextForSpeech.SummaryError.providerFailed("provider failed").errorDescription == "provider failed",
+    )
+}
+
 private func write(state: TextForSpeech.PersistedState, to url: URL) throws {
     try FileManager.default.createDirectory(
         at: url.deletingLastPathComponent(),
@@ -485,6 +724,17 @@ private func write(state: TextForSpeech.PersistedState, to url: URL) throws {
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     let data = try encoder.encode(state)
     try data.write(to: url, options: .atomic)
+}
+
+private func persistenceError(thrownBy operation: () throws -> Void) -> TextForSpeech.PersistenceError? {
+    do {
+        try operation()
+        return nil
+    } catch let error as TextForSpeech.PersistenceError {
+        return error
+    } catch {
+        return nil
+    }
 }
 
 private extension TextForSpeech.Runtime {

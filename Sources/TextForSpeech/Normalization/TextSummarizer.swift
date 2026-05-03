@@ -18,6 +18,8 @@ enum TextSummarizer {
                 try await summarizeWithOpenAIResponses(prompt: prompt)
             case .foundationModels:
                 try await summarizeWithFoundationModels(prompt: prompt)
+            case .test:
+                text
         }
     }
 

@@ -105,6 +105,8 @@ The semantic core also ships extension aliases for especially speech-hostile fil
 
 For repeated file paths in the same utterance, the text path compacts repeated anchors before the built-in path-speaking pass. File-path separators collapse to spacing rather than spoken words, and later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
 
+Configurable URL, markdown-link, and path handling is planned. The current defaults are deterministic and always on; future work will let callers choose how aggressively those surfaces are spoken, shortened, preserved, or filtered. A Codex hook-oriented text mode is also planned for hook payloads that mix useful text with metadata that should not be read aloud.
+
 When the outer document is mixed text but the embedded code language is known, pass `InputContext.nestedSourceFormat` so fenced or inline code can route through the source path:
 
 ```swift
@@ -162,6 +164,7 @@ The summarization provider is explicit because each backend option has a differe
 - `.openAIResponses` calls the OpenAI Responses API and reads `OPENAI_API_KEY` from the process environment.
 - `.codexExec` runs the local Codex CLI through `codex exec`.
 - `.foundationModels` uses Apple's on-device Foundation Models framework when the framework and operating system support it.
+- `.test` returns the input unchanged so tests can exercise summary-aware normalization without calling a live provider.
 
 The `summarize` argument defaults to `false`, so deterministic callers do not need a separate convenience method. `TextForSpeech.SummarizationProvider` selects the backend used when `summarize` is `true`.
 
@@ -213,7 +216,7 @@ The runtime model is intentionally explicit:
 - `runtime.normalize.text(...)` and `runtime.normalize.source(...)` apply `builtInBase(style: style.getActive()) + active custom` without exposing the merged profile value. `summarize` defaults to `false`.
 - `try await runtime.normalize.text(..., summarize: true)` and `try await runtime.normalize.source(..., summarize: true)` use the active summarization provider before returning normalized speech-safe text.
 
-Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. In debug builds for bundled targets, the default store uses `TextForSpeech-Debug` instead so local debug runs do not touch the production namespace. Callers that need an explicit location can pass `.file(url)`. The selected built-in style and selected summarization provider are persisted alongside the active custom profile id and stored custom profiles.
+Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. Debug builds place the package store under `TextForSpeech-Debug`, including the fallback namespace, so local debug runs do not touch the production package store. Callers that need an explicit location can pass `.file(url)`. The selected built-in style and selected summarization provider are persisted alongside the active custom profile id and stored custom profiles.
 
 ## Development
 
