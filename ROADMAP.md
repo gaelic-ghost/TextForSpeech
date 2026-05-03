@@ -218,13 +218,13 @@
 ### Scope
 
 - [ ] Review URL, markdown-link, and path behavior through the existing built-in style model instead of adding a separate normalization policy type.
-- [ ] Remove caller-provided text-format hints and rely on text-format detection for mixed-text normalization.
+- [x] Remove caller-provided text-format hints and rely on text-format detection for mixed-text normalization.
 - [ ] Review Codex hook payload cleanup with real examples before deciding whether cleanup belongs in style presets, replacements, request context, or downstream callers.
 
 ### Tickets
 
 - [x] Design the style/context direction for URL, markdown-link, path, hook, and format-detection cleanup without adding a new normalization policy type.
-- [ ] Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` so path shortening and request metadata share one context value.
+- [x] Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` so path shortening and request metadata share one context value.
 - [x] Remove the previous `InputContext.textFormat` hint entirely and keep outer text-format routing detection-owned.
 - [ ] Add a token-first detection pass using `NSDataDetector` for platform-supported semantic tokens such as links, addresses, dates, and phone numbers.
 - [ ] Review developer-specific token detectors for paths, file-line references, identifiers, CLI flags, issue references, measured values, and scalar shorthands so they run independently from surrounding document format.

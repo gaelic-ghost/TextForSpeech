@@ -47,18 +47,18 @@ It does not carry request-local path context, detected formats, or runtime-owned
 
 That keeps responsibilities clean. In the current public API:
 
-- `TextForSpeech.InputContext` carries request-local environment such as `cwd`, `repoRoot`, and optional format hints.
-- `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, and freeform string attributes.
+- `TextForSpeech.InputContext` temporarily carries `nestedSourceFormat` until per-fence source detection replaces it.
+- `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, request-local path context such as `cwd` and `repoRoot`, and freeform string attributes.
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
 - `TextForSpeech.Runtime` owns persistence, active-profile selection, and summarization provider selection.
 - the normalizer owns structural document parsing and pipeline routing.
 
-The M10 design direction is to move `cwd` and `repoRoot` into
-`RequestContext`, replace format hints with detection, and review URL, link,
-path, and hook behavior through the existing built-in style, profile, and
-replacement model instead of adding a separate normalization policy type.
+The M10 design direction has moved `cwd` and `repoRoot` into `RequestContext`.
+Remaining cleanup should replace `nestedSourceFormat` with detection and review
+URL, link, path, and hook behavior through the existing built-in style, profile,
+and replacement model instead of adding a separate normalization policy type.
 
 ## Replacement type
 

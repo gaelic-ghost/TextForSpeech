@@ -32,8 +32,8 @@ The package already has the right behavior surfaces:
 - `BuiltInProfileStyle` chooses shipped verbosity and presentation behavior.
 - `Profile` and `Replacement` express reusable pronunciation and token rewrite
   behavior.
-- `RequestContext` carries facts about the request, including the planned
-  `cwd` and `repoRoot` move.
+- `RequestContext` carries facts about the request, including `cwd` and
+  `repoRoot`.
 - parser-backed and platform-backed detectors should identify reusable token
   ranges before surrounding document format is considered.
 
@@ -58,9 +58,9 @@ speaking, and repeated-path compaction.
 
 `InputContext` should not become a behavior container. The previous
 `InputContext.textFormat` hint has been removed entirely; callers should not
-provide a text-format hint. After `cwd` and `repoRoot` move to
-`RequestContext`, the remaining `nestedSourceFormat` field should be replaced
-by per-fence detection or removed before the public surface grows around it.
+provide a text-format hint. `cwd` and `repoRoot` now live on `RequestContext`;
+the remaining `InputContext.nestedSourceFormat` field should be replaced by
+per-fence detection or removed before the public surface grows around it.
 
 ## Style and Replacement Review
 
@@ -195,10 +195,10 @@ examples prove that style/profile/replacement behavior cannot cover the need.
 
 ## Implementation Order
 
-1. Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` and
-   update path-speaking and path-compaction call sites.
-2. Remove the previous `InputContext.textFormat` hint entirely and keep outer
+1. Remove the previous `InputContext.textFormat` hint entirely and keep outer
    text-format routing detection-owned.
+2. Keep path-speaking and path-compaction call sites reading `cwd` and
+   `repoRoot` from `RequestContext`.
 3. Replace `InputContext.nestedSourceFormat` with per-fence nested source
    detection and generic inline-code fallback.
 4. Remove `InputContext` if no input-local facts remain.

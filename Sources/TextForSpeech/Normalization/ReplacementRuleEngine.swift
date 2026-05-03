@@ -308,7 +308,7 @@ extension TextNormalizer {
         rule: TextForSpeech.Replacement,
         profile: TextForSpeech.Profile,
         context: TextForSpeech.InputContext?,
-        requestContext _: TextForSpeech.RequestContext?,
+        requestContext: TextForSpeech.RequestContext?,
         format: NormalizationFormat,
         nestedFormat: TextForSpeech.SourceFormat?,
     ) -> String {
@@ -317,7 +317,7 @@ extension TextNormalizer {
                 replacement
 
             case .spokenPath:
-                spokenPath(text, context: context)
+                spokenPath(text, requestContext: requestContext)
 
             case .spokenURL:
                 spokenURL(text)
@@ -361,7 +361,7 @@ extension TextNormalizer {
                 spokenIssueReference(text, style: style)
 
             case let .spokenFileReference(style):
-                spokenFileReference(text, style: style)
+                spokenFileReference(text, style: style, requestContext: requestContext)
 
             case let .spokenCLIFlag(style):
                 spokenCLIFlag(text, style: style)

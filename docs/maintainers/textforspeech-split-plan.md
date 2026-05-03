@@ -22,7 +22,7 @@ The main architectural pivots from the original split plan are now in place:
 - `TextForSpeech` is the source of truth for normalization, profile state, and persistence.
 - `TextForSpeech.Normalize.text(...)` and `TextForSpeech.Normalize.source(...)` are the public async lane split.
 - `TextFormat` and `SourceFormat` replaced the old umbrella format model.
-- `InputContext` carries input-local path and format hints separately from `RequestContext` request metadata.
+- `RequestContext` carries request metadata and path context; `InputContext` temporarily carries nested source format until per-fence detection replaces it.
 - runtime persistence defaults to Application Support.
 - the built-in normalization policy moved into composable built-in profile layers with a selectable style preset.
 

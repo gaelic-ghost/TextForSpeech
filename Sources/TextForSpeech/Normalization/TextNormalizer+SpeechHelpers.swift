@@ -201,7 +201,7 @@ extension TextNormalizer {
         }
 
         if isLikelyFileLineReference(body) {
-            return spokenFileReference(body, style: .balanced, context: context)
+            return spokenFileReference(body, style: .balanced, requestContext: requestContext)
         }
 
         if isLikelyURL(body) {
@@ -209,7 +209,7 @@ extension TextNormalizer {
         }
 
         if isLikelyEmbeddedFilePath(body) {
-            return spokenPath(body, context: context)
+            return spokenPath(body, requestContext: requestContext)
         }
 
         return spokenCode(

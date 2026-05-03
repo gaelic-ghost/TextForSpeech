@@ -162,6 +162,16 @@ import Testing
     #expect(decoded.attributes.isEmpty)
 }
 
+@Test func `request context normalizes path context`() {
+    let context = TextForSpeech.RequestContext(
+        cwd: "/Users/galew/Workspace/SpeakSwiftly/../SpeakSwiftly",
+        repoRoot: "  /Users/galew/Workspace/SpeakSwiftly  ",
+    )
+
+    #expect(context.cwd == "/Users/galew/Workspace/SpeakSwiftly")
+    #expect(context.repoRoot == "/Users/galew/Workspace/SpeakSwiftly")
+}
+
 @Test func `compact style drops balanced code line rules but keeps semantic core`() {
     let compact = TextForSpeech.Profile.builtInBase(style: .compact)
 

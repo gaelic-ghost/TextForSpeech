@@ -128,7 +128,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(
+        requestContext: TextForSpeech.RequestContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -145,7 +145,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(
+        requestContext: TextForSpeech.RequestContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -430,7 +430,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `inline code file paths keep context aware shortening`() async throws {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift` now.",
-        withContext: TextForSpeech.InputContext(
+        requestContext: TextForSpeech.RequestContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -443,7 +443,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `inline code file references keep context aware shortening`() async throws {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift:12` now.",
-        withContext: TextForSpeech.InputContext(
+        requestContext: TextForSpeech.RequestContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),

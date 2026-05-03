@@ -42,7 +42,7 @@ extension TextNormalizer {
 
     static func normalizeFilePaths(
         _ text: String,
-        context: TextForSpeech.InputContext? = nil,
+        requestContext: TextForSpeech.RequestContext? = nil,
         profile _: TextForSpeech.Profile = .default,
         format _: NormalizationFormat = .text(.plain),
         nestedFormat _: TextForSpeech.SourceFormat? = nil,
@@ -51,7 +51,7 @@ extension TextNormalizer {
             id: "base-file-path",
             to: text,
             format: .text(.plain),
-            context: context,
+            requestContext: requestContext,
         )
     }
 

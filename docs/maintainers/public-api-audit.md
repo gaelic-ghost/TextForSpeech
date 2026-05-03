@@ -174,11 +174,11 @@ The package needs a hook-oriented text mode that filters low-value metadata
 while preserving useful failure context, paths, commands, and operator-facing
 messages.
 
-The design direction is to move request facts such as `cwd` and `repoRoot` into
-`TextForSpeech.RequestContext`, add token-first detection for reusable spans
-such as links, addresses, dates, phone numbers, paths, and file references, and
-replace `InputContext.nestedSourceFormat` with per-fence nested source
-detection. Do not add
+Request facts such as `cwd` and `repoRoot` now live on
+`TextForSpeech.RequestContext`. The remaining design direction is to add
+token-first detection for reusable spans such as links, addresses, dates, phone
+numbers, paths, and file references, and replace
+`InputContext.nestedSourceFormat` with per-fence nested source detection. Do not add
 `TextForSpeech.NormalizationPolicy`; review `BuiltInProfileStyle`, `Profile`,
 and `Replacement` so URL, link, path, and hook behavior fit the existing
 style/profile model or are left downstream. See
