@@ -9,10 +9,6 @@ enum TextSummarizer {
         _ text: String,
         provider: TextForSpeech.SummarizationProvider,
     ) async throws -> String {
-        guard provider != .test else {
-            return summarizeForTests(text)
-        }
-
         let prompt = summaryPrompt(for: text)
 
         return switch provider {
@@ -23,12 +19,8 @@ enum TextSummarizer {
             case .foundationModels:
                 try await summarizeWithFoundationModels(prompt: prompt)
             case .test:
-                summarizeForTests(text)
+                text
         }
-    }
-
-    private static func summarizeForTests(_ text: String) -> String {
-        text
     }
 
     private static func summaryPrompt(for text: String) -> String {

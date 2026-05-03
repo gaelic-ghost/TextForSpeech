@@ -570,9 +570,16 @@ import Testing
     )
     try Data("{ not valid JSON".utf8).write(to: fileURL, options: .atomic)
 
-    #expect(throws: TextForSpeech.PersistenceError.self) {
+    let error = try #require(persistenceError {
         _ = try TextForSpeech.Runtime(persistence: .file(fileURL))
+    })
+
+    guard case let .couldNotDecode(url, details) = error else {
+        #expect(Bool(false), "Expected couldNotDecode, got \(error)")
+        return
     }
+    #expect(url == fileURL.standardizedFileURL)
+    #expect(!details.isEmpty)
 }
 
 @Test func `runtime reports read failures from real directory backed persistence paths`() throws {
@@ -589,9 +596,16 @@ import Testing
         persistence: .file(directoryURL.appending(path: "working-profiles.json")),
     )
 
-    #expect(throws: TextForSpeech.PersistenceError.self) {
+    let error = try #require(persistenceError {
         try runtime.persistence.load(from: fileURL)
+    })
+
+    guard case let .couldNotRead(url, details) = error else {
+        #expect(Bool(false), "Expected couldNotRead, got \(error)")
+        return
     }
+    #expect(url == fileURL.standardizedFileURL)
+    #expect(!details.isEmpty)
 }
 
 @Test func `runtime reports directory creation failures from real blocked parent paths`() throws {
@@ -606,9 +620,16 @@ import Testing
     )
     try Data("not a directory".utf8).write(to: blockingFileURL, options: .atomic)
 
-    #expect(throws: TextForSpeech.PersistenceError.self) {
+    let error = try #require(persistenceError {
         _ = try TextForSpeech.Runtime(persistence: .file(nestedFileURL))
+    })
+
+    guard case let .couldNotCreateDirectory(url, details) = error else {
+        #expect(Bool(false), "Expected couldNotCreateDirectory, got \(error)")
+        return
     }
+    #expect(url.path == nestedFileURL.deletingLastPathComponent().standardizedFileURL.path)
+    #expect(!details.isEmpty)
 }
 
 @Test func `runtime reports write failures from real directory backed output paths`() throws {
@@ -624,9 +645,16 @@ import Testing
 
     let runtime = try TextForSpeech.Runtime(persistence: .file(writableFileURL))
 
-    #expect(throws: TextForSpeech.PersistenceError.self) {
+    let error = try #require(persistenceError {
         try runtime.persistence.save(to: directoryBackedFileURL)
+    })
+
+    guard case let .couldNotWrite(url, details) = error else {
+        #expect(Bool(false), "Expected couldNotWrite, got \(error)")
+        return
     }
+    #expect(url == directoryBackedFileURL.standardizedFileURL)
+    #expect(!details.isEmpty)
 }
 
 @Test func `runtime errors describe profile failures with concrete ids`() {
@@ -696,6 +724,17 @@ private func write(state: TextForSpeech.PersistedState, to url: URL) throws {
     encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
     let data = try encoder.encode(state)
     try data.write(to: url, options: .atomic)
+}
+
+private func persistenceError(thrownBy operation: () throws -> Void) -> TextForSpeech.PersistenceError? {
+    do {
+        try operation()
+        return nil
+    } catch let error as TextForSpeech.PersistenceError {
+        return error
+    } catch {
+        return nil
+    }
 }
 
 private extension TextForSpeech.Runtime {
