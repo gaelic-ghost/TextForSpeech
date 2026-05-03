@@ -106,14 +106,14 @@ The semantic core also ships extension aliases for especially speech-hostile fil
 For repeated file paths in the same utterance, the text path compacts repeated anchors before the built-in path-speaking pass. File-path separators collapse to spacing rather than spoken words, and later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
 
 Configurable URL, markdown-link, and path handling is planned. The current
-defaults are deterministic and always on; future work will add one normalization
-policy value so callers can choose how aggressively those surfaces are spoken,
-shortened, preserved, or filtered. That same cleanup is expected to move `cwd`
-and `repoRoot` into `RequestContext`, replace `InputContext.textFormat` with
-text-format detection, and replace `InputContext.nestedSourceFormat` with
-per-fence source detection plus generic inline-code fallback. A Codex
-hook-oriented request mode is also planned for hook payloads that mix useful
-text with metadata that should not be read aloud.
+defaults are deterministic and always on; future work will review those
+behaviors through the existing built-in styles rather than adding a separate
+normalization policy type. That same cleanup is expected to move `cwd` and
+`repoRoot` into `RequestContext`, determine whether `InputContext.textFormat`
+can be removed in favor of text-format detection, and replace
+`InputContext.nestedSourceFormat` with per-fence source detection plus generic
+inline-code fallback. Codex hook payload cleanup will be reviewed with real
+examples before deciding whether it belongs in this package or downstream.
 
 When the outer document is mixed text but the embedded code language is known, pass `InputContext.nestedSourceFormat` so fenced or inline code can route through the source path:
 

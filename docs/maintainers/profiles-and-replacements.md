@@ -56,8 +56,9 @@ That keeps responsibilities clean. In the current public API:
 - the normalizer owns structural document parsing and pipeline routing.
 
 The M10 design direction is to move `cwd` and `repoRoot` into
-`RequestContext`, replace format hints with detection, and keep caller-owned
-URL, link, path, and hook behavior in a separate `NormalizationPolicy`.
+`RequestContext`, replace format hints with detection, and review URL, link,
+path, and hook behavior through the existing built-in style, profile, and
+replacement model instead of adding a separate normalization policy type.
 
 ## Replacement type
 
@@ -286,7 +287,8 @@ When touching profile behavior:
 - put always-on semantic shipped behavior into `Profile.semanticCore`
 - put built-in presentation differences into shipped style presets
 - put request facts such as path context into `RequestContext`
-- put caller-owned URL, link, path, and hook cleanup behavior into `NormalizationPolicy`
+- review URL, link, path, and hook cleanup behavior through shipped styles and
+  replacement transforms before adding new public surface
 - keep structural parsing and routing logic in the normalizer
 - keep persistence and active-profile selection in `Runtime`
 

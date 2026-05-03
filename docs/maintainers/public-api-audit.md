@@ -161,7 +161,7 @@ The practical design question is whether to add convenience factories or a
 small authoring facade for the common custom-profile cases while keeping the
 advanced replacement model available.
 
-### 7. Callers should configure URL, link, path, and hook cleanup policy through one value
+### 7. URL, link, path, and hook cleanup should be reviewed through built-in styles
 
 The current normalization defaults are built into the text pipeline. That keeps
 ordinary calls simple, but it does not give callers a first-class way to choose
@@ -177,9 +177,9 @@ messages.
 The design direction is to move request facts such as `cwd` and `repoRoot` into
 `TextForSpeech.RequestContext`, while `InputContext.textFormat` and
 `InputContext.nestedSourceFormat` should be replaced by outer text-format
-detection and per-fence nested source detection. Before adding a separate
-`TextForSpeech.NormalizationPolicy`, review `BuiltInProfileStyle`, `Profile`,
-and `Replacement` to decide whether URL, link, path, and hook behavior should
-fit the existing style/profile model instead. See
+detection and per-fence nested source detection. Do not add
+`TextForSpeech.NormalizationPolicy`; review `BuiltInProfileStyle`, `Profile`,
+and `Replacement` so URL, link, path, and hook behavior fit the existing
+style/profile model or are left downstream. See
 [`normalization-configuration-design.md`](normalization-configuration-design.md)
 for the proposed shape and implementation order.

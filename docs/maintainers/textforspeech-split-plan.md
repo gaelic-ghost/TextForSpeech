@@ -111,8 +111,8 @@ The next real package work is no longer “finish the split.” It is:
 
 - tightening profile ergonomics and documentation
 - improving structured source normalization, starting with Swift
-- adding configurable URL, markdown-link, and path normalization policy
-- adding a Codex hook text mode that filters unwanted metadata while preserving useful speech content
+- reviewing URL, markdown-link, and path behavior through the built-in style model
+- deciding whether Codex hook metadata cleanup belongs in this package or downstream
 - keeping the normalization boundaries honest as the package grows
 - preserving a clean file layout as features land so oversized files do not quietly grow back
 

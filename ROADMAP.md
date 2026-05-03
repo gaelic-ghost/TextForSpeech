@@ -22,7 +22,7 @@
 - [ ] M7 Release and maintainability polish
 - [ ] M8 Summary-aware normalization requests
 - [ ] M9 Public API model cleanup
-- [ ] M10 Configurable normalization policy and Codex hook mode
+- [ ] M10 Style-based normalization behavior and Codex hook review
 
 ## M1 Core normalization package
 
@@ -213,29 +213,29 @@
 - [ ] Ordinary callers can add common custom pronunciation rules without constructing the full low-level `Replacement` rule shape by hand.
 - [ ] Advanced callers still have access to the full rule model when they need format scoping, phases, token transforms, or priorities.
 
-## M10 Configurable normalization policy and Codex hook mode
+## M10 Style-based normalization behavior and Codex hook review
 
 ### Scope
 
-- [ ] Add caller-owned configuration for URL, markdown-link, and path normalization behavior.
-- [ ] Add a Codex hook-oriented text normalization mode for hook payloads that contain useful text mixed with unwanted metadata.
-- [ ] Keep hook cleanup configurable so callers can tune filtering rules without hard-coding one Codex payload shape forever.
+- [ ] Review URL, markdown-link, and path behavior through the existing built-in style model instead of adding a separate normalization policy type.
+- [ ] Determine whether text-format detection is sufficient, and remove or narrow explicit format hints accordingly.
+- [ ] Review Codex hook payload cleanup with real examples before deciding whether cleanup belongs in style presets, replacements, request context, or downstream callers.
 
 ### Tickets
 
-- [x] Design a normalization policy model that can choose how aggressively URLs, markdown links, and file paths are spoken, shortened, preserved, or omitted.
+- [x] Design the style/context direction for URL, markdown-link, path, hook, and format-detection cleanup without adding a new normalization policy type.
 - [ ] Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` so path shortening and request metadata share one context value.
-- [ ] Replace `InputContext.textFormat` with outer text-format detection, keeping an explicit override only if a real caller proves detection is not enough.
+- [ ] Review current outer text-format detection and decide whether `InputContext.textFormat` can be removed entirely or replaced by an explicit override argument.
 - [ ] Replace `InputContext.nestedSourceFormat` with per-fence nested source detection and generic inline-code fallback.
 - [ ] Remove `InputContext` if no durable input-local facts remain after the context and format cleanup.
-- [ ] Review `BuiltInProfileStyle`, `Profile`, and `Replacement` before adding `NormalizationPolicy`, and decide whether URL, link, path, and hook behavior can fit the existing style/profile model.
-- [ ] Thread `NormalizationPolicy` through runtime normalization calls and the public `TextForSpeech.Normalize` entrypoints only if the style/profile/replacement review proves a new policy value is warranted.
-- [ ] Define a Codex hook text mode that filters non-speech metadata while preserving the actionable hook message, paths, commands, and failure context.
-- [ ] Add tests with representative Codex hook payloads, including noisy metadata, useful path references, command output, and user-facing hook messages.
-- [ ] Document which parts of Codex hook filtering are stable defaults and which parts are caller-configurable policy.
+- [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, path, and hook cleanup behavior.
+- [ ] Adjust built-in style presets, replacement transforms, and tests according to the style review.
+- [ ] Decide whether Codex hook cleanup should be selected explicitly, inferred from `RequestContext`, or left to downstream callers before text enters this package.
+- [ ] Add tests with representative Codex hook payloads if hook cleanup remains package-owned.
+- [ ] Document which parts of Codex hook filtering are package-owned defaults and which parts belong downstream.
 
 ### Exit criteria
 
-- [ ] Callers can select URL, markdown-link, and path handling policy explicitly instead of relying only on built-in defaults.
-- [ ] Codex hook payloads can be normalized into concise speech-safe text without reading out low-value metadata.
-- [ ] The mode and policy model are documented and covered by focused Swift Testing cases.
+- [ ] Built-in styles have documented URL, markdown-link, and path behavior.
+- [ ] Text-format and nested-source-format routing are documented, tested, and no longer depend on broad context fields.
+- [ ] Codex hook ownership is settled and covered by focused Swift Testing cases if package-owned behavior remains.
