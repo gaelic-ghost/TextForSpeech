@@ -2,7 +2,7 @@
 
 ## Current status
 
-The first coverage, parsing utility, and persistence passes raised the default Swift Testing suite from 108 tests to 127 tests and moved measured line coverage from 84.24% to 88.79%.
+The first coverage, parsing utility, persistence, and format-detection passes raised the default Swift Testing suite from 108 tests to 133 tests and moved measured line coverage from 84.24% to 90.55%.
 
 The strongest current coverage is the deterministic normalization path:
 
@@ -41,15 +41,13 @@ Remaining useful coverage targets:
 
 ### Format detection
 
-`FormatDetection.swift` has broad happy-path coverage but needs more ambiguity and false-positive tests.
+`FormatDetection.swift` now has happy-path coverage plus a first false-positive pass for prose that happens to contain source-language words, unmatched markdown punctuation, incomplete HTML tags, one-item markdown-like lists, log severity words in lowercase prose, and `>` block quote prose that should not be mistaken for CLI output.
 
-Useful coverage targets:
+Remaining useful coverage targets:
 
-- Swift, Python, and Rust snippets that share common words like `import`, `let`, and `use`
-- shell prompts that should and should not count as CLI output
-- log-like prose that should not be detected as logs
-- markdown-like text that contains brackets or backticks without being real markdown
-- HTML snippets with opening tags but no closing tag
+- additional shell prompt shapes, especially Windows prompts and multi-line terminal transcripts
+- log-like prose with uppercase words that are not structured log levels
+- markdown block quote handling if the package later adds dedicated block quote normalization
 
 ### Persistence I/O failure behavior
 

@@ -26,39 +26,13 @@ extension TextNormalizer {
             || !inlineCodeBodies(in: text).isEmpty
     }
 
-    static func looksLikeSwiftSource(_ text: String) -> Bool {
-        text.contains("import Foundation")
-            || text.contains("import SwiftUI")
-            || text.contains("func ")
-            || text.contains("struct ")
-            || text.contains("enum ")
-            || text.contains("actor ")
-            || text.contains("let ")
-    }
-
-    static func looksLikePythonSource(_ text: String) -> Bool {
-        text.contains("def ")
-            || text.contains("import ")
-            || text.contains("from ")
-            || text.contains("self.")
-            || text.contains("print(")
-    }
-
-    static func looksLikeRustSource(_ text: String) -> Bool {
-        text.contains("fn ")
-            || text.contains("let mut ")
-            || text.contains("impl ")
-            || text.contains("use ")
-            || text.contains("pub struct ")
-    }
-
     static func looksLikeCLIOutput(_ text: String) -> Bool {
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
         let promptLikeLines = lines.count { line in
             let trimmed = line.trimmingCharacters(in: .whitespaces)
             return trimmed.hasPrefix("$ ")
-                || trimmed.hasPrefix("> ")
                 || trimmed.hasPrefix("% ")
+                || looksLikeAnglePrompt(trimmed)
                 || trimmed.firstMatch(of: /^[A-Za-z0-9_.-]+@\S+[:~]/) != nil
         }
 
@@ -79,5 +53,20 @@ extension TextNormalizer {
         }
 
         return logLineCount >= 1
+    }
+
+    private static func looksLikeAnglePrompt(_ line: String) -> Bool {
+        guard line.hasPrefix("> ") else { return false }
+
+        let command = line.dropFirst(2)
+        guard let first = command.first else { return false }
+
+        return first == "."
+            || first == "/"
+            || first == "~"
+            || first == "-"
+            || first == "_"
+            || first.isNumber
+            || first.isLowercase
     }
 }
