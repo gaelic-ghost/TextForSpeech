@@ -34,6 +34,8 @@ The package already has the right behavior surfaces:
   behavior.
 - `RequestContext` carries facts about the request, including the planned
   `cwd` and `repoRoot` move.
+- parser-backed and platform-backed detectors should identify reusable token
+  ranges before surrounding document format is considered.
 
 The Swift API rule being applied is clarity at the use site. The
 [Swift API Design Guidelines](https://www.swift.org/documentation/api-design-guidelines/)
@@ -89,35 +91,41 @@ Text format and `nestedSourceFormat` are not request facts. Text-format routing
 is detection-owned; `nestedSourceFormat` remains a temporary migration target
 until per-fence detection replaces it.
 
-Outer text format already has a detection path through
-`TextForSpeech.Normalize.detectTextFormat(in:)`. The normalizer should rely on
-detection for ordinary text input. Do not add an explicit text-format override
-unless a future real caller proves that detection-owned routing cannot cover a
-necessary use case.
+Format detection must not be the main way reusable tokens are found. URLs,
+addresses, links, dates, phone numbers, paths, and similar spans need the same
+speech treatment no matter whether the surrounding document is prose, markdown,
+HTML, CLI output, logs, or a Codex hook payload. Detect those token ranges first,
+then let document-structure detection decide how to traverse larger containers.
 
-The intended input text-format detector is a conservative ordered classifier,
-not a full document parser. It should trim surrounding whitespace and then apply
-format checks in this precedence order:
+The intended detection model is:
 
-1. `html`: the text contains an opening HTML-like tag and also contains a
-   closing tag. Incomplete tag examples in prose stay `.plain`.
-2. `list`: at least two lines are markdown-style bullet or numbered list items.
-   A single bullet-like sentence stays `.plain`.
-3. `markdown`: the text contains a fenced code marker, a markdown header,
-   a valid markdown link, or a closed inline-code span.
-4. `cli`: the text contains a prompt-like line such as `$ command`,
-   `% command`, an angle prompt that looks command-shaped, or a user/host prompt.
-   Quoted prose like `> This sentence...` stays `.plain`.
-5. `log`: the text contains an ISO-date-prefixed line, uppercase severity tokens
-   such as `ERROR`, `WARN`, or `INFO`, or bracketed lower-case severity markers.
-6. `plain`: the fallback for empty text, ordinary prose, incomplete syntax, or
-   ambiguous single-signal input.
+1. Use `NSDataDetector` for platform-supported semantic token ranges such as
+   links, addresses, dates, and phone numbers. These detections should feed the
+   same token transforms regardless of surrounding text format.
+2. Use path and code-token detectors for developer-specific spans that
+   `NSDataDetector` does not own, such as file paths, file-line references, CLI
+   flags, identifiers, issue references, measured values, and scalar shorthands.
+3. Use parser-backed markdown structure for markdown containers. Prefer
+   `swift-markdown` when the package needs headings, lists, links, inline code,
+   fenced code blocks, and fence info as source-aware nodes.
+4. Use parser-backed HTML structure for HTML containers. Prefer an HTML parser
+   such as SwiftSoup when the package needs DOM-aware extraction or link/text
+   behavior instead of regex-like tag checks.
+5. Use lightweight CLI and log line classifiers for line-oriented formats that
+   are not covered by platform token detection or document parsers.
+6. Treat plain prose as the fallback. Ambiguous input should stay plain, while
+   detected token ranges inside that prose still get token-level normalization.
 
-That ordering is deliberate. More structured container formats win before
-general markdown, command prompts win before logs, and ambiguous prose falls
-back to `.plain` instead of being over-classified. The detector only decides
-which replacement scopes can run; the normalizer still runs the same mixed-text
-pipeline.
+`TextForSpeech.Normalize.detectTextFormat(in:)` can remain as a public
+diagnostics/preflight helper, but it should not be the source of truth for
+whether URL-like, address-like, link-like, or path-like tokens are normalized.
+Those token ranges should be normalized because they were detected as tokens,
+not because the whole input was classified as a particular text format.
+
+The current implementation still uses a conservative ordered heuristic for the
+outer `TextFormat` value. That is acceptable only as a transition state. The
+next implementation pass should introduce the token-first detection surface and
+then decide how much of `TextFormat` remains useful for replacement scoping.
 
 Nested source format should be detected per embedded code span instead of stored
 as one context-wide value. Markdown fenced code has the strongest signal: the
