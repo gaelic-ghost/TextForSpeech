@@ -128,24 +128,24 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
 // MARK: - Identifier and Code Speech
 
-@Test func `dotted identifiers become spoken identifiers`() {
+@Test func `dotted identifiers become spoken identifiers`() async throws {
     let text = "Read NSApplication.didFinishLaunchingNotification once."
 
-    let normalized = TextNormalizer.normalizeDottedIdentifiers(text)
+    let normalized = try await TextForSpeech.Normalize.text(text)
 
     #expect(normalized.contains("NSApplication dot did Finish Launching Notification"))
 }
 
-@Test func `dotted identifiers accept hyphenated alias segments`() {
-    let normalized = TextNormalizer.normalizeDottedIdentifiers("guide.markdown-jsx")
+@Test func `dotted identifiers accept hyphenated alias segments`() async throws {
+    let normalized = try await TextForSpeech.Normalize.text("guide.markdown-jsx")
 
     #expect(normalized.contains("guide dot markdown jsx"))
 }
 
-@Test func `snake case identifiers become spoken identifiers`() {
+@Test func `snake case identifiers become spoken identifiers`() async throws {
     let text = "Read snake_case_stuff once."
 
-    let normalized = TextNormalizer.normalizeSnakeCaseIdentifiers(text)
+    let normalized = try await TextForSpeech.Normalize.text(text)
 
     #expect(normalized.contains("snake case stuff"))
     #expect(!normalized.contains("underscore"))
@@ -158,10 +158,10 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("dash"))
 }
 
-@Test func `camel case identifiers become spoken identifiers`() {
+@Test func `camel case identifiers become spoken identifiers`() async throws {
     let text = "Read camelCaseStuff once."
 
-    let normalized = TextNormalizer.normalizeCamelCaseIdentifiers(text)
+    let normalized = try await TextForSpeech.Normalize.text(text)
 
     #expect(normalized.contains("camel Case Stuff"))
 }

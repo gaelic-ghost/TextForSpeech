@@ -54,6 +54,10 @@ enum TextNormalizer {
         .functionCall,
         .issueReference,
         .cliFlag,
+        .dottedIdentifier,
+        .snakeCaseIdentifier,
+        .dashedIdentifier,
+        .camelCaseIdentifier,
     ]
 
     static var normalizationPasses: [ContextualNormalizationPass] {

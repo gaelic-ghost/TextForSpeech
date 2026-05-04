@@ -50,38 +50,6 @@ extension TextNormalizer {
         )
     }
 
-    static func normalizeDottedIdentifiers(_ text: String) -> String {
-        applySingleBaseRule(
-            id: "base-dotted-identifier",
-            to: text,
-            format: .text(.plain),
-        )
-    }
-
-    static func normalizeSnakeCaseIdentifiers(_ text: String) -> String {
-        applySingleBaseRule(
-            id: "base-snake-identifier",
-            to: text,
-            format: .text(.plain),
-        )
-    }
-
-    static func normalizeDashedIdentifiers(_ text: String) -> String {
-        applySingleBaseRule(
-            id: "base-dashed-identifier",
-            to: text,
-            format: .text(.plain),
-        )
-    }
-
-    static func normalizeCamelCaseIdentifiers(_ text: String) -> String {
-        applySingleBaseRule(
-            id: "base-camel-identifier",
-            to: text,
-            format: .text(.plain),
-        )
-    }
-
     // MARK: Code-Like Line Passes
 
     static func normalizeCodeHeavyLines(
