@@ -20,22 +20,6 @@ extension TextNormalizer {
         normalizeSemanticLinkRuns(text)
     }
 
-    static func normalizeStandaloneGaleAliases(_ text: String) -> String {
-        applyReplacementRules(
-            text,
-            profile: TextForSpeech.Profile(
-                id: "base-aliases-only",
-                name: "Base Aliases Only",
-                replacements: [
-                    TextForSpeech.Profile.base.replacement(id: "base-galew"),
-                    TextForSpeech.Profile.base.replacement(id: "base-galem"),
-                ].compactMap { $0 },
-            ),
-            format: .text(.plain),
-            phase: .beforeBuiltIns,
-        )
-    }
-
     static func normalizeFilePaths(
         _ text: String,
         requestContext: TextForSpeech.RequestContext? = nil,

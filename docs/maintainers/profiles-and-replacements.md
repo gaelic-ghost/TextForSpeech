@@ -106,7 +106,6 @@ The built-in layers now carry the durable lexical policy that used to be spread 
 
 The semantic core currently includes:
 
-- Gale alias replacements such as `galew` and `galem`
 - currency amount speaking such as `$9.39` -> `nine dollars and thirty-nine cents`
 - measured-value speaking such as `42 km` -> `forty-two kilometers` and `64Gbps` -> `sixty four gigabits per second`
 - extension aliases for hard-to-speak file types such as `.xcodeproj`, `.pbxproj`, `.xcworkspace`, `.xcconfig`, `.xcscheme`, `.xctestplan`, `.xcresult`, `.xcassets`, `.xcstrings`, `.xcprivacy`, `.dSYM`, `.mdx`, `.tsx`, `.jsx`, `.jsonc`, `.ipynb`, `.wasm`, `.sqlite`, and `.db`
@@ -117,8 +116,6 @@ The semantic core currently includes:
 
 The semantic core is now split by semantic role under `Sources/TextForSpeech/Models/BuiltInProfiles/`:
 
-- `BuiltInSemanticAliases.swift`
-  Stable lexical aliases for names that should be rewritten before broader token transforms.
 - `BuiltInScalarPronunciations.swift`
   Whole-token scalar-width pronunciations such as `f32` and `usize`.
 - `BuiltInExtensionAliases.swift`
@@ -294,7 +291,6 @@ When touching profile behavior:
 
 When deciding where a new built-in rule belongs:
 
-- use `BuiltInSemanticAliases.swift` when the text should always collapse to one stable spoken name before any other semantic pass
 - use `BuiltInScalarPronunciations.swift` when the rule is a durable whole-token pronunciation for terse typed-width or numeric forms
 - use `BuiltInExtensionAliases.swift` when the main problem is a raw file suffix that sounds bad before path or file-reference narration
 - use `BuiltInTokenTransforms.swift` when the rule is broad token-shape behavior rather than one literal vocabulary entry
