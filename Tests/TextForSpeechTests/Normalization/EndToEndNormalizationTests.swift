@@ -30,8 +30,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
         original,
         requestContext: TextForSpeech.RequestContext(
             source: "codex",
-            app: "SpeakSwiftly",
-            project: "TextForSpeech",
+            topic: "normalization",
             attributes: ["surface": "tests"],
         ),
     )
@@ -523,7 +522,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
         as: .swift,
         requestContext: TextForSpeech.RequestContext(
             source: "codex",
-            app: "SpeakSwiftly",
             topic: "normalization",
         ),
     )

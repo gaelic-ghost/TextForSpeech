@@ -69,8 +69,7 @@ let normalized = try await TextForSpeech.Normalize.text(
     "stderr: /workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
     requestContext: TextForSpeech.RequestContext(
         source: "codex",
-        app: "SpeakSwiftly",
-        project: "TextForSpeech",
+        topic: "normalization",
         cwd: "/workspace/SpeakSwiftly",
         repoRoot: "/workspace/SpeakSwiftly"
     )
@@ -110,7 +109,8 @@ normalization policy type. Path context now lives on `RequestContext`; the
 previous `InputContext` type has been removed. Caller-provided text-format and
 nested-source hints have been removed in favor of detection and generic
 embedded-code fallback. Codex hook payload cleanup will be reviewed with real
-examples before deciding whether it belongs in this package or downstream.
+examples only if downstream hook-script cleanup proves insufficient. Current
+Codex-specific hook parsing is intentionally downstream-owned.
 
 Use the source path when the whole input is a source file or editor buffer and the caller already knows the language:
 

@@ -147,8 +147,7 @@ import Testing
     let json = """
     {
       "source": "codex",
-      "app": "SpeakSwiftly",
-      "project": "TextForSpeech"
+      "topic": "normalization"
     }
     """
     let data = Data(json.utf8)
@@ -156,8 +155,7 @@ import Testing
     let decoded = try JSONDecoder().decode(TextForSpeech.RequestContext.self, from: data)
 
     #expect(decoded.source == "codex")
-    #expect(decoded.app == "SpeakSwiftly")
-    #expect(decoded.project == "TextForSpeech")
+    #expect(decoded.topic == "normalization")
     #expect(decoded.attributes.isEmpty)
 }
 

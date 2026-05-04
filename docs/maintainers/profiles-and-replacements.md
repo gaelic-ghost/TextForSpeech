@@ -47,7 +47,7 @@ It does not carry request-local path context, detected formats, or runtime-owned
 
 That keeps responsibilities clean. In the current public API:
 
-- `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, request-local path context such as `cwd` and `repoRoot`, and freeform string attributes.
+- `TextForSpeech.RequestContext` carries slim request-origin metadata such as `source` and `topic`, request-local path context such as `cwd` and `repoRoot`, and freeform string attributes.
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
@@ -284,7 +284,7 @@ When touching profile behavior:
 - put always-on semantic shipped behavior into `Profile.semanticCore`
 - put built-in presentation differences into shipped style presets
 - put request facts such as path context into `RequestContext`
-- review URL, link, path, and hook cleanup behavior through shipped styles and
+- review URL, link, and path behavior through shipped styles and
   replacement transforms before adding new public surface
 - keep structural parsing and routing logic in the normalizer
 - keep persistence and active-profile selection in `Runtime`

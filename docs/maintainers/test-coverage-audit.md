@@ -62,4 +62,4 @@ Remaining useful coverage targets:
 
 The next normalization design work is configurable policy for URL, markdown-link, and path handling. That should let callers choose whether these surfaces are spoken verbosely, shortened, preserved, or filtered.
 
-The next request-shape design work is a Codex hook text mode. Hook payloads can include actionable text mixed with metadata that is poor speech content. The mode should filter low-value metadata while preserving useful failure context, paths, commands, and user-facing hook messages. The filtering policy should be configurable rather than tied to one assumed hook payload shape.
+Codex-specific hook cleanup is downstream-owned for now. Hook scripts should pre-clean payload metadata before text enters this package; package-owned cleanup should be reopened only if real examples prove downstream cleanup is the wrong boundary.

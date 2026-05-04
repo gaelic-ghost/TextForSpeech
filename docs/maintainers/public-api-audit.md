@@ -167,11 +167,10 @@ ordinary calls simple, but it does not give callers a first-class way to choose
 how aggressively URLs, markdown links, and file paths should be spoken,
 shortened, preserved, or omitted.
 
-Codex hook payloads make that configuration more important. Hook requests can
-contain useful user-facing text alongside metadata that is bad speech content.
-The package needs a hook-oriented text mode that filters low-value metadata
-while preserving useful failure context, paths, commands, and operator-facing
-messages.
+Codex hook payloads can contain useful user-facing text alongside metadata that
+is bad speech content. That cleanup is downstream-owned for now: hook scripts
+should remove or reshape Codex-only payload metadata before text enters this
+package.
 
 Request facts such as `cwd` and `repoRoot` now live on
 `TextForSpeech.RequestContext`. `InputContext` has been removed instead of
@@ -179,6 +178,6 @@ becoming another behavior container. The remaining design direction is to add
 token-first detection for reusable spans such as links, addresses, dates, phone
 numbers, paths, and file references. Do not add `TextForSpeech.NormalizationPolicy`;
 review `BuiltInProfileStyle`, `Profile`, and `Replacement` so URL, link, path,
-and hook behavior fit the existing style/profile model or are left downstream. See
+and any future generic hook behavior fit the existing style/profile model or are left downstream. See
 [`normalization-configuration-design.md`](normalization-configuration-design.md)
 for the proposed shape and implementation order.

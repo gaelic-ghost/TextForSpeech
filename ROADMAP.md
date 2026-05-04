@@ -284,7 +284,7 @@ In Progress
 
 - [ ] Review URL, markdown-link, and path behavior through the existing built-in style model instead of adding a separate normalization policy type.
 - [x] Remove caller-provided text-format and nested-source hints from mixed-text normalization.
-- [ ] Review Codex hook payload cleanup with real examples before deciding whether cleanup belongs in style presets, replacements, request context, or downstream callers.
+- [x] Leave Codex-specific hook payload cleanup downstream for now instead of adding package-owned hook parsing.
 - [ ] Move repeated token classification onto the internal semantic-run surface only after the desired behavior is documented in this roadmap and tests.
 
 ### Tickets
@@ -306,24 +306,22 @@ In Progress
 - [ ] Review developer-specific token detectors for paths, file-line references, identifiers, CLI flags, issue references, measured values, and scalar shorthands so they run independently from surrounding document format.
 - [x] Move identifier normalization passes onto the `AttributedString` semantic-run surface so token detection happens once.
 - [ ] Add focused tests before moving each existing token family onto semantic runs, starting with URLs and paths.
-- [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, path, and hook cleanup behavior.
+- [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, and path behavior.
 - [ ] Adjust built-in style presets, replacement transforms, and tests according to the style review.
-- [ ] Gather representative Codex hook payload examples before implementing hook cleanup.
-- [ ] Decide whether Codex hook cleanup should be selected explicitly, inferred from `RequestContext`, or left to downstream callers before text enters this package.
-- [ ] Add tests with representative Codex hook payloads if hook cleanup remains package-owned.
-- [ ] Document which parts of Codex hook filtering are package-owned defaults and which parts belong downstream.
+- [x] Decide Codex-specific hook cleanup is downstream-owned for now; hook scripts can pre-clean payloads before text enters this package.
+- [ ] Revisit package-owned hook cleanup only if real downstream payloads prove hook-script cleanup is the wrong ownership boundary.
 
 ### Exit Criteria
 
 - [ ] Built-in styles have documented URL, markdown-link, and path behavior.
 - [x] Text-format routing and embedded-code fallback are documented, tested, and no longer depend on broad context fields.
-- [ ] Codex hook ownership is settled and covered by focused Swift Testing cases if package-owned behavior remains.
+- [x] Codex hook ownership is settled for now as downstream hook-script cleanup, with no package-owned parsing behavior.
 - [ ] Semantic-run migration has per-token-family tests and does not change public API shape.
 
 ## Backlog Candidates
 
 - [ ] Add language-specific source lanes beyond Swift only after the Swift lane proves the shape.
-- [ ] Add package-owned Codex hook cleanup only if real payload examples prove downstream cleanup is the wrong ownership boundary.
+- [ ] Reopen package-owned Codex hook cleanup only if real examples prove downstream hook-script cleanup is the wrong ownership boundary.
 - [ ] Add public nested source-format inspection only if a concrete caller needs that signal separately from normalization.
 
 ## History
