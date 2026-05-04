@@ -17,11 +17,7 @@ extension TextNormalizer {
     // MARK: Token-Level Passes
 
     static func normalizeURLs(_ text: String) -> String {
-        applySingleBaseRule(
-            id: "base-url",
-            to: text,
-            format: .text(.plain),
-        )
+        normalizeSemanticLinkRuns(text)
     }
 
     static func normalizeStandaloneGaleAliases(_ text: String) -> String {

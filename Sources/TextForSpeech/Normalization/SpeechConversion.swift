@@ -228,6 +228,10 @@ extension TextNormalizer {
 
     static func spokenURL(_ text: String) -> String {
         guard let schemeSeparator = text.range(of: "://") else {
+            if text.lowercased().hasPrefix("www.") {
+                return spokenSlashSeparatedPath(String(text.dropFirst(4)))
+            }
+
             return spokenPath(text)
         }
 

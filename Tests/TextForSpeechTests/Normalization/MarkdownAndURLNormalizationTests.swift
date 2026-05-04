@@ -166,6 +166,15 @@ import Testing
     #expect(!normalized.contains("WWW"))
 }
 
+@Test func `urls detected without schemes become spoken urls`() {
+    let text = "Open www.example.com/docs now."
+
+    let normalized = TextNormalizer.normalizeURLs(text)
+
+    #expect(normalized.contains("example dot com slash docs"))
+    #expect(!normalized.contains("www"))
+}
+
 @Test func `non HTTPUR ls keep their scheme`() {
     let text = "Open file://tmp/Thing now."
 

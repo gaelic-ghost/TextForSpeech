@@ -1,13 +1,10 @@
 extension TextForSpeech.Profile {
-    /// Always-on token transforms for URLs, file paths, identifiers, and
+    /// Always-on token transforms for file paths, identifiers, and
     /// repeated-letter runs after literal semantic aliases have been applied.
+    ///
+    /// URL detection is handled by the semantic-run normalization pass so it can
+    /// use Foundation data detectors instead of package-owned URL heuristics.
     static let semanticTokenTransformReplacements: [TextForSpeech.Replacement] = [
-        TextForSpeech.Replacement(
-            id: "base-url",
-            matching: .token(.url),
-            using: .spokenURL,
-            priority: -20,
-        ),
         TextForSpeech.Replacement(
             id: "base-file-path",
             matching: .token(.filePath),

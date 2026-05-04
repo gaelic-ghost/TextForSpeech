@@ -142,7 +142,7 @@ import Testing
     #expect(effective.id == logs.id)
     #expect(effective.summary.id == logs.id)
     #expect(effective.replacements.contains(where: { $0.id == "logs-rule" }))
-    #expect(effective.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(!effective.replacements.contains(where: { $0.id == "base-url" }))
 }
 
 @Test func `runtime normalize can preview stored named profiles without activating them`() async throws {
