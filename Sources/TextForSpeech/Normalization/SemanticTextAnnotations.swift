@@ -93,6 +93,48 @@ extension TextNormalizer {
             .joined()
     }
 
+    static func applySemanticAwareReplacementRules(
+        _ text: String,
+        requestContext: TextForSpeech.RequestContext?,
+        profile: TextForSpeech.Profile,
+        format: NormalizationFormat,
+        phase: TextForSpeech.Replacement.Phase,
+        kinds: Set<SemanticTextKind>,
+    ) -> String {
+        guard !kinds.isEmpty else {
+            return applyReplacementRules(
+                text,
+                profile: profile,
+                format: format,
+                phase: phase,
+                requestContext: requestContext,
+            )
+        }
+
+        return applicableReplacementRules(in: profile, format: format, phase: phase).reduce(text) { partial, rule in
+            guard case let .token(tokenKind) = rule.match,
+                  let kind = semanticKind(for: tokenKind),
+                  kinds.contains(kind) else {
+                return applyReplacementRule(
+                    rule,
+                    to: partial,
+                    profile: profile,
+                    requestContext: requestContext,
+                    format: format,
+                )
+            }
+
+            return applySemanticTokenRule(
+                rule,
+                kind: kind,
+                to: partial,
+                requestContext: requestContext,
+                profile: profile,
+                format: format,
+            )
+        }
+    }
+
     private static func annotateDataDetectorTokens(
         in attributed: inout AttributedString,
         source text: String,
@@ -166,7 +208,7 @@ extension TextNormalizer {
         format: NormalizationFormat,
         kinds: Set<SemanticTextKind>,
     ) -> [SemanticTokenTransform] {
-        applicableReplacementRules(in: profile, format: format).compactMap { rule in
+        applicableReplacementRules(in: profile, format: format, phase: .beforeBuiltIns).compactMap { rule in
             guard case let .token(tokenKind) = rule.match,
                   let kind = semanticKind(for: tokenKind),
                   kinds.contains(kind) else {
@@ -180,13 +222,37 @@ extension TextNormalizer {
     private static func applicableReplacementRules(
         in profile: TextForSpeech.Profile,
         format: NormalizationFormat,
+        phase: TextForSpeech.Replacement.Phase,
     ) -> [TextForSpeech.Replacement] {
         switch format {
             case let .text(textFormat):
-                profile.replacements(for: .beforeBuiltIns, in: textFormat)
+                profile.replacements(for: phase, in: textFormat)
             case let .source(sourceFormat):
-                profile.replacements(for: .beforeBuiltIns, in: sourceFormat)
+                profile.replacements(for: phase, in: sourceFormat)
         }
+    }
+
+    private static func applySemanticTokenRule(
+        _ rule: TextForSpeech.Replacement,
+        kind: SemanticTextKind,
+        to text: String,
+        requestContext: TextForSpeech.RequestContext?,
+        profile: TextForSpeech.Profile,
+        format: NormalizationFormat,
+    ) -> String {
+        semanticRuns(in: text)
+            .map { run in
+                guard run.kind == kind else { return run.text }
+
+                return resolvedReplacement(
+                    for: run.text,
+                    rule: rule,
+                    profile: profile,
+                    requestContext: requestContext,
+                    format: format,
+                )
+            }
+            .joined()
     }
 
     private static func semanticKind(
