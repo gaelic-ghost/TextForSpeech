@@ -53,3 +53,43 @@ import Testing
     #expect(!normalized.contains("www"))
     #expect(normalized.contains("mail@example.com"))
 }
+
+@Test func `semantic token helper routes path and file reference runs through profile rules`() {
+    let normalized = TextNormalizer.normalizeSemanticTokenRuns(
+        "Read /Users/galew/Workspace/TextForSpeech/Sources/App.swift and WorkerRuntime.swift:42.",
+        requestContext: TextForSpeech.RequestContext(
+            cwd: "/Users/galew/Workspace/TextForSpeech",
+            repoRoot: "/Users/galew/Workspace/TextForSpeech",
+        ),
+        profile: TextForSpeech.Profile.builtInBase(style: .balanced),
+        format: .text(.plain),
+        kinds: [.filePath, .fileLineReference],
+    )
+
+    #expect(normalized.contains("current directory Sources App dot swift"))
+    #expect(normalized.contains("Worker Runtime dot swift at line 42"))
+}
+
+@Test func `semantic token helper lets custom token rules override built in path speech`() {
+    let profile = TextForSpeech.Profile.builtInBase(style: .balanced).merged(
+        with: TextForSpeech.Profile(
+            replacements: [
+                TextForSpeech.Replacement(
+                    id: "custom-path-token",
+                    matching: .token(.filePath),
+                    using: .literal("custom path"),
+                    priority: 100,
+                ),
+            ],
+        ),
+    )
+
+    let normalized = TextNormalizer.normalizeSemanticTokenRuns(
+        "Read /tmp/App.swift.",
+        profile: profile,
+        format: .text(.plain),
+        kinds: [.filePath],
+    )
+
+    #expect(normalized == "Read custom path.")
+}
