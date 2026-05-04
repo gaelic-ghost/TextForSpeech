@@ -48,6 +48,14 @@ enum TextNormalizer {
 
     // MARK: Pass Pipelines
 
+    static let semanticRunTokenKinds: Set<SemanticTextKind> = [
+        .filePath,
+        .fileLineReference,
+        .functionCall,
+        .issueReference,
+        .cliFlag,
+    ]
+
     static var normalizationPasses: [ContextualNormalizationPass] {
         [
             { text, requestContext, profile, _ in
@@ -72,33 +80,13 @@ enum TextNormalizer {
             },
             { text, _, _, _ in normalizeSpacedMeasuredValues(text) },
             { text, requestContext, profile, format in
-                applyReplacementRules(
+                applySemanticAwareReplacementRules(
                     text,
+                    requestContext: requestContext,
                     profile: profile,
                     format: format,
                     phase: .beforeBuiltIns,
-                    requestContext: requestContext,
-                    excludingTokenKinds: [.filePath, .fileLineReference],
-                    ruleFilter: nonTokenOrLineRule,
-                )
-            },
-            { text, requestContext, profile, format in
-                normalizeSemanticTokenRuns(
-                    text,
-                    requestContext: requestContext,
-                    profile: profile,
-                    format: format,
-                    kinds: [.filePath, .fileLineReference],
-                )
-            },
-            { text, requestContext, profile, format in
-                applyReplacementRules(
-                    text,
-                    profile: profile,
-                    format: format,
-                    phase: .beforeBuiltIns,
-                    requestContext: requestContext,
-                    excludingTokenKinds: [.filePath, .fileLineReference],
+                    kinds: semanticRunTokenKinds,
                 )
             },
             { text, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
@@ -110,46 +98,17 @@ enum TextNormalizer {
             { text, _, _, _ in normalizeSemanticLinkRuns(text) },
             { text, _, _, _ in normalizeSpacedMeasuredValues(text) },
             { text, requestContext, profile, format in
-                applyReplacementRules(
+                applySemanticAwareReplacementRules(
                     text,
+                    requestContext: requestContext,
                     profile: profile,
                     format: format,
                     phase: .beforeBuiltIns,
-                    requestContext: requestContext,
-                    excludingTokenKinds: [.filePath, .fileLineReference],
-                    ruleFilter: nonTokenOrLineRule,
-                )
-            },
-            { text, requestContext, profile, format in
-                normalizeSemanticTokenRuns(
-                    text,
-                    requestContext: requestContext,
-                    profile: profile,
-                    format: format,
-                    kinds: [.filePath, .fileLineReference],
-                )
-            },
-            { text, requestContext, profile, format in
-                applyReplacementRules(
-                    text,
-                    profile: profile,
-                    format: format,
-                    phase: .beforeBuiltIns,
-                    requestContext: requestContext,
-                    excludingTokenKinds: [.filePath, .fileLineReference],
+                    kinds: semanticRunTokenKinds,
                 )
             },
             { text, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
         ]
-    }
-
-    static func nonTokenOrLineRule(_ rule: TextForSpeech.Replacement) -> Bool {
-        switch rule.match {
-            case .exactPhrase, .wholeToken:
-                true
-            case .token, .line:
-                false
-        }
     }
 
     // MARK: Public Entry Points

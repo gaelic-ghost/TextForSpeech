@@ -93,3 +93,88 @@ import Testing
 
     #expect(normalized == "Read custom path.")
 }
+
+@Test func `semantic token helper routes style sensitive developer tokens`() {
+    let normalized = TextNormalizer.normalizeSemanticTokenRuns(
+        "Run foo() with --help for #123.",
+        profile: TextForSpeech.Profile.builtInBase(style: .explicit),
+        format: .text(.plain),
+        kinds: [.functionCall, .issueReference, .cliFlag],
+    )
+
+    #expect(normalized.contains("foo function call"))
+    #expect(normalized.contains("long flag help"))
+    #expect(normalized.contains("issue number 123"))
+}
+
+@Test func `semantic token helper lets custom style token rules override built ins`() {
+    let profile = TextForSpeech.Profile.builtInBase(style: .balanced).merged(
+        with: TextForSpeech.Profile(
+            replacements: [
+                TextForSpeech.Replacement(
+                    id: "custom-cli-flag",
+                    matching: .token(.cliFlag),
+                    using: .literal("custom flag"),
+                    priority: 100,
+                ),
+            ],
+        ),
+    )
+
+    let normalized = TextNormalizer.normalizeSemanticTokenRuns(
+        "Run --verbose.",
+        profile: profile,
+        format: .text(.plain),
+        kinds: [.cliFlag],
+    )
+
+    #expect(normalized == "Run custom flag.")
+}
+
+@Test func `semantic aware replacement pass preserves rule priority ordering`() {
+    let lowPriorityOverride = TextForSpeech.Profile.builtInBase(style: .balanced).merged(
+        with: TextForSpeech.Profile(
+            replacements: [
+                TextForSpeech.Replacement(
+                    "foo()",
+                    with: "custom foo",
+                    id: "low-priority-function-name",
+                    priority: 0,
+                ),
+            ],
+        ),
+    )
+    let highPriorityOverride = TextForSpeech.Profile.builtInBase(style: .balanced).merged(
+        with: TextForSpeech.Profile(
+            replacements: [
+                TextForSpeech.Replacement(
+                    "foo()",
+                    with: "custom foo",
+                    id: "high-priority-function-name",
+                    priority: 100,
+                ),
+            ],
+        ),
+    )
+
+    let lowPriority = TextNormalizer.applySemanticAwareReplacementRules(
+        "Run foo().",
+        requestContext: nil,
+        profile: lowPriorityOverride,
+        format: .text(.plain),
+        phase: .beforeBuiltIns,
+        kinds: [.functionCall],
+    )
+    let highPriority = TextNormalizer.applySemanticAwareReplacementRules(
+        "Run foo().",
+        requestContext: nil,
+        profile: highPriorityOverride,
+        format: .text(.plain),
+        phase: .beforeBuiltIns,
+        kinds: [.functionCall],
+    )
+
+    #expect(lowPriority.contains("foo function"))
+    #expect(!lowPriority.contains("custom foo"))
+    #expect(highPriority.contains("custom foo"))
+}
