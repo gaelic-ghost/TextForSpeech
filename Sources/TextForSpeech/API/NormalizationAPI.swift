@@ -19,12 +19,14 @@ public extension TextForSpeech.Normalize {
             text
         }
 
-        return TextNormalizer.normalizeText(
+        let normalized = TextNormalizer.normalizeText(
             textToNormalize,
             requestContext: requestContext,
             profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: customProfile),
             format: nil,
         )
+
+        return requestContext?.prefacing(normalized) ?? normalized
     }
 
     static func source(
@@ -50,14 +52,16 @@ public extension TextForSpeech.Normalize {
                 provider: summarizationProvider,
             )
 
-            return TextNormalizer.normalizeText(
+            let normalized = TextNormalizer.normalizeText(
                 summarizedSource,
                 requestContext: requestContext,
                 profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: customProfile),
                 format: .plain,
             )
+
+            return requestContext?.prefacing(normalized) ?? normalized
         } else {
-            return normalizedSource
+            return requestContext?.prefacing(normalizedSource) ?? normalizedSource
         }
     }
 

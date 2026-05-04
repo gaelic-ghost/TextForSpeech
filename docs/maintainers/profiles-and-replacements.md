@@ -54,11 +54,17 @@ That keeps responsibilities clean. In the current public API:
 - `TextForSpeech.Runtime` owns persistence, active-profile selection, and summarization provider selection.
 - the normalizer owns structural document parsing and pipeline routing.
 
+Public normalization entrypoints may add a short utterance preface from
+`RequestContext.source` and `RequestContext.topic` after deterministic text or
+source normalization finishes. Path context remains input metadata for path
+shortening and should not be treated as a spoken source label.
+
 The M10 design direction has moved `cwd` and `repoRoot` into `RequestContext`.
 `InputContext` has been removed instead of becoming another behavior container.
-Remaining cleanup should review URL, link, path, and hook behavior through the
+Remaining cleanup should review URL, link, and path behavior through the
 existing built-in style, profile, and replacement model instead of adding a
-separate normalization policy type.
+separate normalization policy type. Codex-specific hook cleanup is currently
+downstream-owned.
 
 ## Replacement type
 

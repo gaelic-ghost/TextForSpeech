@@ -51,3 +51,35 @@ public extension TextForSpeech {
         }
     }
 }
+
+extension TextForSpeech.RequestContext {
+    var speechPreface: String? {
+        let normalizedSource = normalizedMetadata(source)
+        let normalizedTopic = normalizedMetadata(topic)
+
+        return switch (normalizedSource, normalizedTopic) {
+            case let (source?, topic?):
+                "From \(source), \(topic)."
+            case let (source?, nil):
+                "From \(source)."
+            case let (nil, topic?):
+                "About \(topic)."
+            case (nil, nil):
+                nil
+        }
+    }
+
+    func prefacing(_ text: String) -> String {
+        guard let speechPreface else { return text }
+        guard !text.isEmpty else { return speechPreface }
+        return "\(speechPreface)\n\n\(text)"
+    }
+
+    private func normalizedMetadata(_ value: String?) -> String? {
+        guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
+            return nil
+        }
+
+        return trimmed
+    }
+}

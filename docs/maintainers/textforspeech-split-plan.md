@@ -111,7 +111,7 @@ The next real package work is no longer “finish the split.” It is:
 - tightening profile ergonomics and documentation
 - improving structured source normalization, starting with Swift
 - reviewing URL, markdown-link, and path behavior through the built-in style model
-- deciding whether Codex hook metadata cleanup belongs in this package or downstream
+- keeping Codex hook metadata cleanup downstream unless real examples prove this package should own a generic cleanup surface
 - keeping the normalization boundaries honest as the package grows
 - preserving a clean file layout as features land so oversized files do not quietly grow back
 
@@ -122,6 +122,6 @@ When adding new work:
 - prefer extending the current role-based source layout instead of growing a new oversized catch-all file
 - keep `semanticCore` focused on always-on shipped semantics and keep built-in style presets focused on presentation policy
 - keep normalization-entry routing and structural parsing in normalization code
-- keep URL, markdown-link, path, and Codex hook filtering policy explicit instead of burying it in one-off text rewrites
+- keep URL, markdown-link, and path policy explicit instead of burying it in one-off text rewrites
 - keep persistence-path and active-profile decisions in runtime code
 - update README, roadmap, and maintainer notes together when the public API or ownership model changes

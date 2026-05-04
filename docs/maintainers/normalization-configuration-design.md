@@ -52,6 +52,11 @@ behavior.
 - request environment: `cwd` and `repoRoot`, normalized the same way paths are
   normalized today
 
+The normalization API may use `source` and `topic` to add a short speech preface
+at the returned utterance boundary. `cwd`, `repoRoot`, and `attributes` should
+not create visible preface text by themselves; they provide path context and
+caller metadata.
+
 Path-aware normalization should read path context from `RequestContext`. This
 includes standalone path speaking, file-reference speaking, inline-code path
 speaking, and repeated-path compaction.

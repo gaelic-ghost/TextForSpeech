@@ -15,6 +15,10 @@ The strongest current coverage is the deterministic normalization path:
 
 The `.test` summarization provider now covers the summary-aware public path without live network, process, or Apple framework dependencies. It returns input unchanged, then lets the normal text or source normalization path continue.
 
+Request-context preface behavior is covered through public text and source
+normalization entrypoints. Path-only context is covered separately so `cwd` and
+`repoRoot` keep serving path shortening without adding spoken metadata.
+
 ## Remaining significant gaps
 
 ### Live summary providers
