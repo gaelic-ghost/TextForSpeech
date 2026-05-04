@@ -66,6 +66,7 @@ enum TextNormalizer {
             },
             { text, _, _, _ in normalizeMarkdownLinks(text) },
             { text, _, _, _ in normalizePriorityListItems(text) },
+            { text, _, _, _ in normalizeSemanticLinkRuns(text) },
             { text, requestContext, _, _ in
                 compactRepeatedFilePathPrefixes(text, requestContext: requestContext)
             },
@@ -85,6 +86,7 @@ enum TextNormalizer {
 
     static var sourceNormalizationPasses: [ContextualNormalizationPass] {
         [
+            { text, _, _, _ in normalizeSemanticLinkRuns(text) },
             { text, _, _, _ in normalizeSpacedMeasuredValues(text) },
             { text, requestContext, profile, format in
                 applyReplacementRules(

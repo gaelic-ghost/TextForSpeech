@@ -123,7 +123,7 @@ import Testing
     let balanced = TextForSpeech.Profile.builtInBase(style: .balanced)
 
     #expect(TextForSpeech.Profile.base == balanced)
-    #expect(balanced.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(!balanced.replacements.contains(where: { $0.id == "base-url" }))
     #expect(balanced.replacements.contains(where: { $0.id == "base-text-code-line" }))
 }
 
@@ -133,7 +133,7 @@ import Testing
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-galew" }))
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-f32" }))
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-xcodeproj-extension" }))
-    #expect(semanticCore.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(!semanticCore.replacements.contains(where: { $0.id == "base-url" }))
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-currency-amount" }))
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-measured-value" }))
 }
@@ -175,7 +175,7 @@ import Testing
 @Test func `compact style drops balanced code line rules but keeps semantic core`() {
     let compact = TextForSpeech.Profile.builtInBase(style: .compact)
 
-    #expect(compact.replacements.contains(where: { $0.id == "base-url" }))
+    #expect(!compact.replacements.contains(where: { $0.id == "base-url" }))
     #expect(compact.replacements.contains(where: { $0.id == "compact-function-call" }))
     #expect(!compact.replacements.contains(where: { $0.id == "base-text-code-line" }))
     #expect(!compact.replacements.contains(where: { $0.id == "base-source-line" }))

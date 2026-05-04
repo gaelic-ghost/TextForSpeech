@@ -3,6 +3,7 @@ import Foundation
 extension TextNormalizer {
     enum SemanticTextKind: String, Codable, Equatable, Sendable {
         case link
+        case emailAddress
         case address
         case date
         case phoneNumber
@@ -45,6 +46,14 @@ extension TextNormalizer {
         semanticRuns(in: text).filter { $0.kind != nil }
     }
 
+    static func normalizeSemanticLinkRuns(_ text: String) -> String {
+        semanticRuns(in: text)
+            .map { run in
+                run.kind == .link ? spokenURL(run.text) : run.text
+            }
+            .joined()
+    }
+
     private static func annotateDataDetectorTokens(
         in attributed: inout AttributedString,
         source text: String,
@@ -60,7 +69,7 @@ extension TextNormalizer {
             .matches(in: text, range: NSRange(text.startIndex..., in: text))
             .forEach { match in
                 guard let sourceRange = Range(match.range, in: text),
-                      let kind = semanticKind(for: match.resultType) else {
+                      let kind = semanticKind(for: match) else {
                     return
                 }
 
@@ -98,12 +107,10 @@ extension TextNormalizer {
         }
     }
 
-    private static func semanticKind(
-        for checkingType: NSTextCheckingResult.CheckingType,
-    ) -> SemanticTextKind? {
-        switch checkingType {
+    private static func semanticKind(for match: NSTextCheckingResult) -> SemanticTextKind? {
+        switch match.resultType {
             case .link:
-                .link
+                match.url?.scheme == "mailto" ? .emailAddress : .link
             case .address:
                 .address
             case .date:
@@ -118,7 +125,6 @@ extension TextNormalizer {
     private static func developerSemanticKind(for token: String) -> SemanticTextKind? {
         if tokenMatches(.fileLineReference, token: token) { return .fileLineReference }
         if tokenMatches(.filePath, token: token) { return .filePath }
-        if tokenMatches(.url, token: token) { return .link }
         if tokenMatches(.functionCall, token: token) { return .functionCall }
         if tokenMatches(.issueReference, token: token) { return .issueReference }
         if tokenMatches(.cliFlag, token: token) { return .cliFlag }

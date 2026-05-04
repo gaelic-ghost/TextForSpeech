@@ -73,6 +73,16 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("48 000"))
 }
 
+@Test func `normalize source speaks detected links before source token rules`() async throws {
+    let normalized = try await TextForSpeech.Normalize.source(
+        #"let docsURL = "https://example.com/docs""#,
+        as: .swift,
+    )
+
+    #expect(normalized.contains("example dot com slash docs"))
+    #expect(!normalized.contains("https"))
+}
+
 @Test func `normalize preserves markdown links code blocks and spiral words`() async throws {
     let original = """
     Read [the docs](https://example.com/docs) first.
