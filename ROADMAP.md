@@ -298,11 +298,12 @@ In Progress
 - [x] Replace remaining markdown normalization helpers with `swift-markdown` traversal where structured extraction is needed; HTML has no custom normalization helper beyond SwiftSoup-backed structure detection.
 - [x] Add an internal `AttributedString` semantic-run surface that annotates platform tokens and developer token kinds before normalization passes consume them.
 - [x] Move URL normalization onto semantic runs backed by `NSDataDetector` link detection.
+- [x] Add a semantic-run replacement helper and move file path and file-reference routing onto it.
 - [ ] Review the existing semantic-run surface before changing normalization behavior so the next pass has a concrete file and call-site plan.
 - [ ] Add a token-first detection pass using `NSDataDetector` for platform-supported semantic tokens such as links, addresses, dates, and phone numbers.
 - [ ] Decide which `NSDataDetector` result types the package should actually speak by default versus merely mark for future use.
 - [ ] Review developer-specific token detectors for paths, file-line references, identifiers, CLI flags, issue references, measured values, and scalar shorthands so they run independently from surrounding document format.
-- [ ] Move path, identifier, file-reference, and CLI-flag normalization passes onto the `AttributedString` semantic-run surface so token detection happens once.
+- [ ] Move identifier and CLI-flag normalization passes onto the `AttributedString` semantic-run surface so token detection happens once.
 - [ ] Add focused tests before moving each existing token family onto semantic runs, starting with URLs and paths.
 - [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, path, and hook cleanup behavior.
 - [ ] Adjust built-in style presets, replacement transforms, and tests according to the style review.

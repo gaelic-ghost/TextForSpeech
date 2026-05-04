@@ -18,6 +18,8 @@ extension TextNormalizer {
         format: NormalizationFormat,
         phase: TextForSpeech.Replacement.Phase,
         requestContext: TextForSpeech.RequestContext? = nil,
+        excludingTokenKinds excludedTokenKinds: Set<TextForSpeech.Replacement.TokenKind> = [],
+        ruleFilter: ((TextForSpeech.Replacement) -> Bool)? = nil,
     ) -> String {
         let replacements: [TextForSpeech.Replacement] = switch format {
             case let .text(textFormat):
@@ -26,7 +28,14 @@ extension TextNormalizer {
                 profile.replacements(for: phase, in: sourceFormat)
         }
 
-        return replacements.reduce(text) { partial, rule in
+        let filteredReplacements = replacements.filter { rule in
+            if let ruleFilter, !ruleFilter(rule) { return false }
+            guard case let .token(tokenKind) = rule.match else { return true }
+
+            return !excludedTokenKinds.contains(tokenKind)
+        }
+
+        return filteredReplacements.reduce(text) { partial, rule in
             applyReplacementRule(
                 rule,
                 to: partial,
@@ -289,7 +298,7 @@ extension TextNormalizer {
         line
     }
 
-    private static func resolvedReplacement(
+    static func resolvedReplacement(
         for text: String,
         rule: TextForSpeech.Replacement,
         profile: TextForSpeech.Profile,

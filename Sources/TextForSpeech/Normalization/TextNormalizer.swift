@@ -78,6 +78,27 @@ enum TextNormalizer {
                     format: format,
                     phase: .beforeBuiltIns,
                     requestContext: requestContext,
+                    excludingTokenKinds: [.filePath, .fileLineReference],
+                    ruleFilter: nonTokenOrLineRule,
+                )
+            },
+            { text, requestContext, profile, format in
+                normalizeSemanticTokenRuns(
+                    text,
+                    requestContext: requestContext,
+                    profile: profile,
+                    format: format,
+                    kinds: [.filePath, .fileLineReference],
+                )
+            },
+            { text, requestContext, profile, format in
+                applyReplacementRules(
+                    text,
+                    profile: profile,
+                    format: format,
+                    phase: .beforeBuiltIns,
+                    requestContext: requestContext,
+                    excludingTokenKinds: [.filePath, .fileLineReference],
                 )
             },
             { text, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
@@ -95,10 +116,40 @@ enum TextNormalizer {
                     format: format,
                     phase: .beforeBuiltIns,
                     requestContext: requestContext,
+                    excludingTokenKinds: [.filePath, .fileLineReference],
+                    ruleFilter: nonTokenOrLineRule,
+                )
+            },
+            { text, requestContext, profile, format in
+                normalizeSemanticTokenRuns(
+                    text,
+                    requestContext: requestContext,
+                    profile: profile,
+                    format: format,
+                    kinds: [.filePath, .fileLineReference],
+                )
+            },
+            { text, requestContext, profile, format in
+                applyReplacementRules(
+                    text,
+                    profile: profile,
+                    format: format,
+                    phase: .beforeBuiltIns,
+                    requestContext: requestContext,
+                    excludingTokenKinds: [.filePath, .fileLineReference],
                 )
             },
             { text, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
         ]
+    }
+
+    static func nonTokenOrLineRule(_ rule: TextForSpeech.Replacement) -> Bool {
+        switch rule.match {
+            case .exactPhrase, .wholeToken:
+                true
+            case .token, .line:
+                false
+        }
     }
 
     // MARK: Public Entry Points

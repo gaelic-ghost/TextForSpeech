@@ -23,6 +23,11 @@ extension TextNormalizer {
         let kind: SemanticTextKind?
     }
 
+    private struct SemanticTokenTransform {
+        let kind: SemanticTextKind
+        let rule: TextForSpeech.Replacement
+    }
+
     static func semanticAttributedString(from text: String) -> AttributedString {
         var attributed = AttributedString(text)
 
@@ -50,6 +55,40 @@ extension TextNormalizer {
         semanticRuns(in: text)
             .map { run in
                 run.kind == .link ? spokenURL(run.text) : run.text
+            }
+            .joined()
+    }
+
+    static func normalizeSemanticTokenRuns(
+        _ text: String,
+        requestContext: TextForSpeech.RequestContext? = nil,
+        profile: TextForSpeech.Profile,
+        format: NormalizationFormat,
+        kinds: Set<SemanticTextKind>,
+    ) -> String {
+        guard !kinds.isEmpty else { return text }
+
+        let transforms = semanticTokenTransforms(
+            profile: profile,
+            format: format,
+            kinds: kinds,
+        )
+        guard !transforms.isEmpty else { return text }
+
+        return semanticRuns(in: text)
+            .map { run in
+                guard let kind = run.kind,
+                      let transform = transforms.first(where: { $0.kind == kind }) else {
+                    return run.text
+                }
+
+                return resolvedReplacement(
+                    for: run.text,
+                    rule: transform.rule,
+                    profile: profile,
+                    requestContext: requestContext,
+                    format: format,
+                )
             }
             .joined()
     }
@@ -117,6 +156,61 @@ extension TextNormalizer {
                 .date
             case .phoneNumber:
                 .phoneNumber
+            default:
+                nil
+        }
+    }
+
+    private static func semanticTokenTransforms(
+        profile: TextForSpeech.Profile,
+        format: NormalizationFormat,
+        kinds: Set<SemanticTextKind>,
+    ) -> [SemanticTokenTransform] {
+        applicableReplacementRules(in: profile, format: format).compactMap { rule in
+            guard case let .token(tokenKind) = rule.match,
+                  let kind = semanticKind(for: tokenKind),
+                  kinds.contains(kind) else {
+                return nil
+            }
+
+            return SemanticTokenTransform(kind: kind, rule: rule)
+        }
+    }
+
+    private static func applicableReplacementRules(
+        in profile: TextForSpeech.Profile,
+        format: NormalizationFormat,
+    ) -> [TextForSpeech.Replacement] {
+        switch format {
+            case let .text(textFormat):
+                profile.replacements(for: .beforeBuiltIns, in: textFormat)
+            case let .source(sourceFormat):
+                profile.replacements(for: .beforeBuiltIns, in: sourceFormat)
+        }
+    }
+
+    private static func semanticKind(
+        for tokenKind: TextForSpeech.Replacement.TokenKind,
+    ) -> SemanticTextKind? {
+        switch tokenKind {
+            case .filePath:
+                .filePath
+            case .fileLineReference:
+                .fileLineReference
+            case .dottedIdentifier:
+                .dottedIdentifier
+            case .snakeCaseIdentifier:
+                .snakeCaseIdentifier
+            case .dashedIdentifier:
+                .dashedIdentifier
+            case .camelCaseIdentifier:
+                .camelCaseIdentifier
+            case .functionCall:
+                .functionCall
+            case .issueReference:
+                .issueReference
+            case .cliFlag:
+                .cliFlag
             default:
                 nil
         }
