@@ -131,6 +131,31 @@ import Testing
     #expect(normalized == "Run custom flag.")
 }
 
+@Test func `semantic token helper routes identifier token rules`() {
+    let profile = TextForSpeech.Profile.builtInBase(style: .balanced).merged(
+        with: TextForSpeech.Profile(
+            replacements: [
+                TextForSpeech.Replacement(
+                    id: "custom-dotted-identifier",
+                    matching: .token(.dottedIdentifier),
+                    using: .literal("custom dotted"),
+                    priority: 100,
+                ),
+            ],
+        ),
+    )
+
+    let normalized = TextNormalizer.normalizeSemanticTokenRuns(
+        "Read NSApplication.didFinishLaunchingNotification and snake_case_stuff.",
+        profile: profile,
+        format: .text(.plain),
+        kinds: [.dottedIdentifier, .snakeCaseIdentifier],
+    )
+
+    #expect(normalized.contains("custom dotted"))
+    #expect(normalized.contains("snake case stuff"))
+}
+
 @Test func `semantic aware replacement pass preserves rule priority ordering`() {
     let lowPriorityOverride = TextForSpeech.Profile.builtInBase(style: .balanced).merged(
         with: TextForSpeech.Profile(
