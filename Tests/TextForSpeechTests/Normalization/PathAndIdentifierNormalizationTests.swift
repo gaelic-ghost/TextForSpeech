@@ -76,16 +76,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("dot dot slash README"))
 }
 
-@Test func `standalone gale aliases become spoken names`() {
-    let text = "Please ask galew, galem, and Galew again."
-
-    let normalized = TextNormalizer.normalizeStandaloneGaleAliases(text)
-
-    #expect(normalized.contains("gale wumbo"))
-    #expect(normalized.contains("gale mini"))
-    #expect(normalized.contains("gale wumbo"))
-}
-
 @Test func `file paths speak known extension aliases naturally`() async throws {
     let text = """
     Read /tmp/App.xcodeproj, project.pbxproj, Workspace.xcworkspace, Build.xcconfig, App.xcscheme, App.xctestplan, Run.xcresult, Assets.xcassets, Localizable.xcstrings, PrivacyInfo.xcprivacy, App.entitlements, App.dSYM, guide.mdx, page.tsx, widget.jsx, settings.jsonc, config.toml, workflow.yaml, workflow.yml, notebook.ipynb, module.wasm, cache.sqlite, and state.db.

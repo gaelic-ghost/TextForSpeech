@@ -130,7 +130,6 @@ import Testing
 @Test func `semantic core composes semantic role fragments`() {
     let semanticCore = TextForSpeech.Profile.semanticCore
 
-    #expect(semanticCore.replacements.contains(where: { $0.id == "base-galew" }))
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-f32" }))
     #expect(semanticCore.replacements.contains(where: { $0.id == "base-xcodeproj-extension" }))
     #expect(!semanticCore.replacements.contains(where: { $0.id == "base-url" }))

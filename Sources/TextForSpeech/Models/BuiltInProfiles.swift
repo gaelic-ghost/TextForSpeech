@@ -5,8 +5,7 @@ public extension TextForSpeech.Profile {
         id: "semantic-core",
         name: "Semantic Core",
         replacements:
-        semanticAliasReplacements
-            + scalarPronunciationReplacements
+        scalarPronunciationReplacements
             + extensionAliasReplacements
             + semanticTokenTransformReplacements,
     )

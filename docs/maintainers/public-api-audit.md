@@ -55,7 +55,6 @@ The public surface that callers should see is:
 
 The internal fragment arrays and preset values stay module-internal:
 
-- `semanticAliasReplacements`
 - `scalarPronunciationReplacements`
 - `extensionAliasReplacements`
 - `semanticTokenTransformReplacements`
