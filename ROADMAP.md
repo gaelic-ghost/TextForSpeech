@@ -1,30 +1,53 @@
 # ROADMAP
 
+## Table of Contents
+
+- [Vision](#vision)
+- [Product Principles](#product-principles)
+- [Milestone Progress](#milestone-progress)
+- [Milestone 1: Core Normalization Package](#milestone-1-core-normalization-package)
+- [Milestone 2: Runtime Profiles and Persistence](#milestone-2-runtime-profiles-and-persistence)
+- [Milestone 3: Text and Source Lane API Split](#milestone-3-text-and-source-lane-api-split)
+- [Milestone 4: Runtime Lookup and Profile Ergonomics](#milestone-4-runtime-lookup-and-profile-ergonomics)
+- [Milestone 5: Structured Source Normalization](#milestone-5-structured-source-normalization)
+- [Milestone 6: Forensic Surface Cleanup](#milestone-6-forensic-surface-cleanup)
+- [Milestone 7: Release and Maintainability Polish](#milestone-7-release-and-maintainability-polish)
+- [Milestone 8: Summary-Aware Normalization Requests](#milestone-8-summary-aware-normalization-requests)
+- [Milestone 9: Public API Model Cleanup](#milestone-9-public-api-model-cleanup)
+- [Milestone 10: Style-Based Normalization Behavior and Codex Hook Review](#milestone-10-style-based-normalization-behavior-and-codex-hook-review)
+- [Backlog Candidates](#backlog-candidates)
+- [History](#history)
+
 ## Vision
 
-- [ ] Keep `TextForSpeech` as the shared source of truth for speech-safe normalization of code-heavy text and profile-driven pronunciation overrides.
+- [ ] Keep `TextForSpeech` as the shared Swift source of truth for speech-safe normalization of code-heavy text, profile-driven pronunciation overrides, and reusable runtime profile state.
 
-## Product principles
+## Product Principles
 
 - [ ] Keep normalization deterministic and reusable across callers instead of duplicating speech-cleanup rules in app code.
-- [x] Keep the built-in normalization layer explicit as `Profile.base` and consistently merged so callers get one reliable normalization pipeline.
+- [x] Keep the built-in normalization layer explicit as `Profile.base` and consistently merged so callers get one reliable normalization path.
 - [x] Keep production normalization ownership explicit and avoid carrying a separate forensic API surface without a concrete package-level use case.
 - [ ] Keep the public Swift surface grouped by capability, with namespace-first entrypoints and runtime handles that stay easy to discover in SourceKit.
+- [ ] Prefer detection and documented style behavior over broad caller-provided behavior context objects.
 
 ## Milestone Progress
 
-- [x] M1 Core normalization package
-- [x] M2 Runtime profiles and persistence
-- [x] M3 Text and source lane API split
-- [x] M4 Runtime lookup and profile ergonomics
-- [ ] M5 Structured source normalization
-- [x] M6 Forensic surface cleanup
-- [ ] M7 Release and maintainability polish
-- [ ] M8 Summary-aware normalization requests
-- [ ] M9 Public API model cleanup
-- [ ] M10 Style-based normalization behavior and Codex hook review
+- Milestone 1: Core Normalization Package - Completed
+- Milestone 2: Runtime Profiles and Persistence - Completed
+- Milestone 3: Text and Source Lane API Split - Completed
+- Milestone 4: Runtime Lookup and Profile Ergonomics - Completed
+- Milestone 5: Structured Source Normalization - Planned
+- Milestone 6: Forensic Surface Cleanup - Completed
+- Milestone 7: Release and Maintainability Polish - In Progress
+- Milestone 8: Summary-Aware Normalization Requests - In Progress
+- Milestone 9: Public API Model Cleanup - Planned
+- Milestone 10: Style-Based Normalization Behavior and Codex Hook Review - In Progress
 
-## M1 Core normalization package
+## Milestone 1: Core Normalization Package
+
+### Status
+
+Completed
 
 ### Scope
 
@@ -37,17 +60,22 @@
 - [x] Preserve normalization through focused capability entrypoints instead of a broad flat API.
 - [x] Cover mixed-input normalization behavior with Swift Testing.
 
-### Exit criteria
+### Exit Criteria
 
 - [x] A caller can import the package and normalize code-heavy text without pulling in app-specific runtime code.
 - [x] The baseline package build and test commands pass from the repository root.
 
-## M2 Runtime profiles and persistence
+## Milestone 2: Runtime Profiles and Persistence
+
+### Status
+
+Completed
 
 ### Scope
 
 - [x] Support an observable runtime owner for active custom profiles and stored named profiles.
 - [x] Support JSON-backed save, load, and restore flows for persisted profile state.
+- [x] Keep default debug persistence separate from the production package store.
 
 ### Tickets
 
@@ -58,13 +86,17 @@
 - [x] Keep default debug persistence separate from the production package store for bundled hosts and fallback package runs.
 - [x] Cover real file-backed persistence failures for invalid JSON, directory-backed reads, blocked parent directories, and directory-backed writes.
 
-### Exit criteria
+### Exit Criteria
 
 - [x] A caller can create or edit stored profiles, read the active and effective profile views, and persist state to disk.
 - [x] Runtime behavior is covered by the current Swift Testing suite.
 - [x] Debug builds do not write into the production package store when callers use default persistence.
 
-## M3 Text and source lane API split
+## Milestone 3: Text and Source Lane API Split
+
+### Status
+
+Completed
 
 ### Scope
 
@@ -77,16 +109,21 @@
 - [x] Add `TextForSpeech.Normalize.text(...)`, `source(...)`, and `detectTextFormat(in:)`.
 - [x] Split the public format model into `TextFormat` and `SourceFormat`.
 - [x] Remove the old `normalize(... as:)` and `detectFormat(in:)` compatibility surface.
+- [x] Remove `InputContext.textFormat`, `InputContext.nestedSourceFormat`, `InputContext`, and public `withContext` arguments.
 - [x] Update package docs and tests to reflect the new API shape.
 - [x] Cover `runtime.normalize.source(...)` active-profile and named-profile flows so the runtime source lane stays aligned with the public source API.
 
-### Exit criteria
+### Exit Criteria
 
 - [x] Callers can choose a text lane or a source lane explicitly.
 - [x] Mixed markdown-like inputs normalize embedded snippets without a request-wide source hint.
 - [x] The package validates cleanly without compatibility shims or duplicate codepaths.
 
-## M4 Runtime lookup and profile ergonomics
+## Milestone 4: Runtime Lookup and Profile Ergonomics
+
+### Status
+
+Completed
 
 ### Scope
 
@@ -100,17 +137,21 @@
 - [x] Keep the active custom layer explicit through `activeID`, `active()`, and `activate(id:)`.
 - [x] Add focused docs and tests around the raw custom-layer view versus the built-in merged effective view.
 
-### Exit criteria
+### Exit Criteria
 
 - [x] The runtime profile lookup story reads naturally at the call site without redundant concepts.
 - [x] Docs and tests explain the distinction between raw custom profiles and effective merged profiles clearly.
 - [x] `SpeakSwiftly` integration can choose a profile view without adapter glue or naming confusion.
 
-## M5 Structured source normalization
+## Milestone 5: Structured Source Normalization
+
+### Status
+
+Planned
 
 ### Scope
 
-- [ ] Add a language-aware Swift source lane backed by SwiftSyntax.
+- [ ] Add real Swift-aware source normalization for whole-source requests only.
 - [ ] Keep the explicit source lane extensible for future Python and other language-specific parsers.
 - [ ] Preserve a generic source fallback when no structured parser exists yet.
 
@@ -119,14 +160,19 @@
 - [ ] Add the `swiftlang/swift-syntax` package at a toolchain-compatible release and wire a Swift-specific normalizer.
 - [ ] Normalize Swift declarations, symbols, labels, and member access with syntax-aware traversal instead of token heuristics alone.
 - [ ] Add coverage that proves the Swift source lane is materially more accurate than the generic source fallback on representative Swift code.
+- [ ] Decide whether `SourceFormat.python` and `SourceFormat.rust` should remain as source-scoped replacement categories until real parser-backed lanes exist.
 
-### Exit criteria
+### Exit Criteria
 
-- [ ] `normalizeSource(... as: .swift ...)` uses a structured Swift implementation rather than the generic source fallback.
+- [ ] `TextForSpeech.Normalize.source(... as: .swift ...)` uses a structured Swift implementation rather than the generic source fallback.
 - [ ] The package documents the current structured-source coverage honestly.
 - [ ] Future language-specific source lanes can be added without reshaping the public API again.
 
-## M6 Forensic surface cleanup
+## Milestone 6: Forensic Surface Cleanup
+
+### Status
+
+Completed
 
 ### Scope
 
@@ -141,13 +187,17 @@
 - [x] Refresh roadmap and maintainer-facing docs so they no longer describe a separate forensic area or public forensic capability.
 - [x] Audit low-coverage parsing helpers and either cover the production callers or remove helpers that no longer materially support normalization.
 
-### Exit criteria
+### Exit Criteria
 
 - [x] The package no longer ships a separate forensic API surface.
 - [x] Shared parsing utilities live in normalization only when they materially support production normalization behavior.
 - [x] File and type naming make it obvious that the remaining code is production normalization logic or runtime support rather than forensic analysis support.
 
-## M7 Release and maintainability polish
+## Milestone 7: Release and Maintainability Polish
+
+### Status
+
+In Progress
 
 ### Scope
 
@@ -162,14 +212,20 @@
 - [x] Refresh README and maintainer docs to reflect the current runtime and normalization model.
 - [x] Prepare the next minor release notes and tag plan.
 - [x] Add a small coverage-audit checklist for format detection, parsing helpers, runtime wrappers, and operator-facing error strings.
+- [ ] Audit current source-file responsibilities after the parser-backed and context-cleanup work.
+- [ ] Add release notes for the parser-backed normalization and `InputContext` removal changes.
 
-### Exit criteria
+### Exit Criteria
 
 - [ ] The package source layout is easy to scan without oversized catch-all files.
 - [ ] Maintainer docs describe the current package architecture instead of the old migration state.
 - [ ] The next minor release can be tagged and published from a clean, verified commit.
 
-## M8 Summary-aware normalization requests
+## Milestone 8: Summary-Aware Normalization Requests
+
+### Status
+
+In Progress
 
 ### Scope
 
@@ -183,17 +239,22 @@
 - [x] Add `TextForSpeech.SummarizationProvider` with `.codexExec`, `.openAIResponses`, `.foundationModels`, and `.test` backend options.
 - [x] Add `runtime.summarizationProvider.get()`, `list()`, and `set(_:)`.
 - [x] Add async `summarize:` normalization arguments for text and source requests.
-- [x] Add a deterministic summary-execution test seam so `summarize: true` branches can be covered without live Codex, OpenAI, or Foundation Models calls.
+- [x] Add a deterministic summary-execution test provider so `summarize: true` branches can be covered without live Codex, OpenAI, or Foundation Models calls.
 - [ ] Add provider-specific integration tests or examples that can be run when credentials and platform support are available.
 - [ ] Decide whether summary model selection needs a first-class package setting beyond provider selection.
 
-### Exit criteria
+### Exit Criteria
 
 - [x] Callers can choose deterministic normalization or async summary-aware normalization explicitly at the call site.
 - [x] Provider failures return descriptive errors that name the selected provider and the missing credential, platform support, or response failure.
 - [x] README, maintainer docs, tests, and release notes describe the provider setting and request flag consistently.
+- [ ] Provider-specific live checks or documented examples exist for supported non-test providers.
 
-## M9 Public API model cleanup
+## Milestone 9: Public API Model Cleanup
+
+### Status
+
+Planned
 
 ### Scope
 
@@ -207,41 +268,63 @@
 - [ ] Add convenience replacement authoring APIs for common phrase and whole-token pronunciation overrides.
 - [ ] Update README, maintainer docs, tests, and release notes so persistence-state and replacement-authoring responsibilities are explicit.
 
-### Exit criteria
+### Exit Criteria
 
 - [ ] Ordinary callers can save, load, back up, or restore runtime state without depending on accidental storage details.
 - [ ] Ordinary callers can add common custom pronunciation rules without constructing the full low-level `Replacement` rule shape by hand.
 - [ ] Advanced callers still have access to the full rule model when they need format scoping, phases, token transforms, or priorities.
 
-## M10 Style-based normalization behavior and Codex hook review
+## Milestone 10: Style-Based Normalization Behavior and Codex Hook Review
+
+### Status
+
+In Progress
 
 ### Scope
 
 - [ ] Review URL, markdown-link, and path behavior through the existing built-in style model instead of adding a separate normalization policy type.
-- [x] Remove caller-provided text-format hints and rely on text-format detection for mixed-text normalization.
+- [x] Remove caller-provided text-format and nested-source hints from mixed-text normalization.
 - [ ] Review Codex hook payload cleanup with real examples before deciding whether cleanup belongs in style presets, replacements, request context, or downstream callers.
+- [ ] Move repeated token classification onto the internal semantic-run surface only after the desired behavior is documented in this roadmap and tests.
 
 ### Tickets
 
 - [x] Design the style/context direction for URL, markdown-link, path, hook, and format-detection cleanup without adding a new normalization policy type.
 - [x] Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` so path shortening and request metadata share one context value.
 - [x] Remove the previous `InputContext.textFormat` hint entirely and keep outer text-format routing detection-owned.
-- [ ] Add a token-first detection pass using `NSDataDetector` for platform-supported semantic tokens such as links, addresses, dates, and phone numbers.
-- [ ] Review developer-specific token detectors for paths, file-line references, identifiers, CLI flags, issue references, measured values, and scalar shorthands so they run independently from surrounding document format.
-- [x] Add `swift-markdown` and SwiftSoup dependencies, parser-backed structure helpers, and smoke tests for markdown and HTML detection.
-- [x] Add an internal `AttributedString` semantic-run surface that annotates platform tokens and developer tokens before normalization passes consume them.
-- [ ] Move URL, path, identifier, file-reference, and CLI-flag normalization passes onto the `AttributedString` semantic-run surface so token detection happens once.
-- [x] Replace remaining markdown normalization helpers with `swift-markdown` traversal where structured extraction is needed; HTML has no custom normalization helper beyond SwiftSoup-backed structure detection.
 - [x] Remove `InputContext.nestedSourceFormat`; text normalization now uses generic embedded-code fallback instead of request-wide source hints.
 - [x] Remove `InputContext` after moving durable request-local facts onto `RequestContext`.
+- [x] Add `swift-markdown` and SwiftSoup dependencies, parser-backed structure helpers, and smoke tests for markdown and HTML detection.
+- [x] Replace remaining markdown normalization helpers with `swift-markdown` traversal where structured extraction is needed; HTML has no custom normalization helper beyond SwiftSoup-backed structure detection.
+- [x] Add an internal `AttributedString` semantic-run surface that annotates platform tokens and developer token kinds before normalization passes consume them.
+- [ ] Review the existing semantic-run surface before changing normalization behavior so the next pass has a concrete file and call-site plan.
+- [ ] Add a token-first detection pass using `NSDataDetector` for platform-supported semantic tokens such as links, addresses, dates, and phone numbers.
+- [ ] Decide which `NSDataDetector` result types the package should actually speak by default versus merely mark for future use.
+- [ ] Review developer-specific token detectors for paths, file-line references, identifiers, CLI flags, issue references, measured values, and scalar shorthands so they run independently from surrounding document format.
+- [ ] Move URL, path, identifier, file-reference, and CLI-flag normalization passes onto the `AttributedString` semantic-run surface so token detection happens once.
+- [ ] Add focused tests before moving each existing token family onto semantic runs, starting with URLs and paths.
 - [ ] Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link, path, and hook cleanup behavior.
 - [ ] Adjust built-in style presets, replacement transforms, and tests according to the style review.
+- [ ] Gather representative Codex hook payload examples before implementing hook cleanup.
 - [ ] Decide whether Codex hook cleanup should be selected explicitly, inferred from `RequestContext`, or left to downstream callers before text enters this package.
 - [ ] Add tests with representative Codex hook payloads if hook cleanup remains package-owned.
 - [ ] Document which parts of Codex hook filtering are package-owned defaults and which parts belong downstream.
 
-### Exit criteria
+### Exit Criteria
 
 - [ ] Built-in styles have documented URL, markdown-link, and path behavior.
 - [x] Text-format routing and embedded-code fallback are documented, tested, and no longer depend on broad context fields.
 - [ ] Codex hook ownership is settled and covered by focused Swift Testing cases if package-owned behavior remains.
+- [ ] Semantic-run migration has per-token-family tests and does not change public API shape.
+
+## Backlog Candidates
+
+- [ ] Add language-specific source lanes beyond Swift only after the Swift lane proves the shape.
+- [ ] Add package-owned Codex hook cleanup only if real payload examples prove downstream cleanup is the wrong ownership boundary.
+- [ ] Add public nested source-format inspection only if a concrete caller needs that signal separately from normalization.
+
+## History
+
+- Parser-backed normalization work added `swift-markdown`, SwiftSoup, and internal semantic token runs.
+- Context cleanup moved path context onto `RequestContext` and removed `InputContext`, caller-provided text-format hints, and mixed-text nested-source hints.
+- Roadmap normalized to the canonical checklist schema with explicit remaining work for semantic-run migration, `NSDataDetector`, style review, Codex hook review, and structured source normalization.
