@@ -46,7 +46,7 @@ Add the package from its GitHub repository:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.19.0"),
+    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.21.0"),
 ],
 targets: [
     .executableTarget(
@@ -209,49 +209,9 @@ Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Applicat
 
 ## Development
 
-### Setup
-
 `TextForSpeech` is a Swift Package Manager library product targeting iOS 17, macOS 14, and Swift 6 language mode.
 
-No generated project setup is required for ordinary local development. Work from the repository root with SwiftPM.
-
-### Workflow
-
-Use the standard Swift package workflow for code and tests:
-
-```bash
-swift build
-swift test
-```
-
-The repository also uses repo-owned maintainer scripts for validation, shared sync work, and releases:
-
-```bash
-sh scripts/repo-maintenance/validate-all.sh
-sh scripts/repo-maintenance/sync-shared.sh
-sh scripts/repo-maintenance/release.sh --mode standard --version vX.Y.Z
-```
-
-For repository workflow expectations, architecture boundaries, and doc-sync rules, see [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), and the maintainer notes under [docs/maintainers](docs/maintainers).
-
-### Validation
-
-The baseline verification path for this repository is:
-
-```bash
-swift build
-swift test
-sh scripts/repo-maintenance/validate-all.sh
-```
-
-The repository also includes checked-in SwiftFormat and SwiftLint configuration:
-
-```bash
-swiftformat --lint --config .swiftformat .
-swiftlint lint --config .swiftlint.yml
-```
-
-Run those formatter and lint commands when style-tooling changes are in scope or when a change touches enough Swift code that a formatting pass is useful.
+No generated project setup is required for ordinary local development. For setup, validation, formatting, release workflow, and architecture boundaries, see [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), and the maintainer notes under [docs/maintainers](docs/maintainers).
 
 ## Repo Structure
 
@@ -291,11 +251,7 @@ Tests live under `Tests/TextForSpeechTests` and are grouped by role, with focuse
 
 Release notes live under [docs/releases](docs/releases). Each release note should stay factual, scoped to the tagged change, and explicit about behavior or API shifts.
 
-Use the repo-owned release command for standard release work:
-
-```bash
-sh scripts/repo-maintenance/release.sh --mode standard --version vX.Y.Z
-```
+The latest release note is [v0.21.0](docs/releases/v0.21.0.md).
 
 ## License
 

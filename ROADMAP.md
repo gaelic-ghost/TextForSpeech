@@ -5,12 +5,7 @@
 - [Vision](#vision)
 - [Product Principles](#product-principles)
 - [Milestone Progress](#milestone-progress)
-- [Milestone 1: Core Normalization Package](#milestone-1-core-normalization-package)
-- [Milestone 2: Runtime Profiles and Persistence](#milestone-2-runtime-profiles-and-persistence)
-- [Milestone 3: Text and Source Lane API Split](#milestone-3-text-and-source-lane-api-split)
-- [Milestone 4: Runtime Lookup and Profile Ergonomics](#milestone-4-runtime-lookup-and-profile-ergonomics)
 - [Milestone 5: Structured Source Normalization](#milestone-5-structured-source-normalization)
-- [Milestone 6: Forensic Surface Cleanup](#milestone-6-forensic-surface-cleanup)
 - [Milestone 7: Release and Maintainability Polish](#milestone-7-release-and-maintainability-polish)
 - [Milestone 8: Summary-Aware Normalization Requests](#milestone-8-summary-aware-normalization-requests)
 - [Milestone 9: Public API Model Cleanup](#milestone-9-public-api-model-cleanup)
@@ -32,116 +27,11 @@
 
 ## Milestone Progress
 
-- Milestone 1: Core Normalization Package - Completed
-- Milestone 2: Runtime Profiles and Persistence - Completed
-- Milestone 3: Text and Source Lane API Split - Completed
-- Milestone 4: Runtime Lookup and Profile Ergonomics - Completed
 - Milestone 5: Structured Source Normalization - Planned
-- Milestone 6: Forensic Surface Cleanup - Completed
 - Milestone 7: Release and Maintainability Polish - In Progress
 - Milestone 8: Summary-Aware Normalization Requests - In Progress
 - Milestone 9: Public API Model Cleanup - Planned
 - Milestone 10: Style-Based Normalization Behavior and Codex Hook Review - In Progress
-
-## Milestone 1: Core Normalization Package
-
-### Status
-
-Completed
-
-### Scope
-
-- [x] Ship the `TextForSpeech` library product for iOS 17 and macOS 14 through Swift Package Manager.
-- [x] Normalize paths, identifiers, markdown, URLs, repeated separators, and repeated-letter runs through one package API.
-
-### Tickets
-
-- [x] Keep the main library namespace centered on `TextForSpeech`.
-- [x] Preserve normalization through focused capability entrypoints instead of a broad flat API.
-- [x] Cover mixed-input normalization behavior with Swift Testing.
-
-### Exit Criteria
-
-- [x] A caller can import the package and normalize code-heavy text without pulling in app-specific runtime code.
-- [x] The baseline package build and test commands pass from the repository root.
-
-## Milestone 2: Runtime Profiles and Persistence
-
-### Status
-
-Completed
-
-### Scope
-
-- [x] Support an observable runtime owner for active custom profiles and stored named profiles.
-- [x] Support JSON-backed save, load, and restore flows for persisted profile state.
-- [x] Keep default debug persistence separate from the production package store.
-
-### Tickets
-
-- [x] Keep `TextForSpeech.Runtime` as the owner of the active custom profile and stored profile state.
-- [x] Support profile creation, storage, replacement updates, and removal through the runtime API.
-- [x] Keep persistence errors descriptive and tied to concrete file operations.
-- [x] Add focused tests that assert persistence and runtime error descriptions stay concrete and operator-readable.
-- [x] Keep default debug persistence separate from the production package store for bundled hosts and fallback package runs.
-- [x] Cover real file-backed persistence failures for invalid JSON, directory-backed reads, blocked parent directories, and directory-backed writes.
-
-### Exit Criteria
-
-- [x] A caller can create or edit stored profiles, read the active and effective profile views, and persist state to disk.
-- [x] Runtime behavior is covered by the current Swift Testing suite.
-- [x] Debug builds do not write into the production package store when callers use default persistence.
-
-## Milestone 3: Text and Source Lane API Split
-
-### Status
-
-Completed
-
-### Scope
-
-- [x] Split mixed-text normalization from whole-source normalization at the public API level.
-- [x] Finish the split in one pass instead of leaving compatibility shims behind.
-- [x] Remove mixed-text nested source hints and keep embedded code generic unless the whole input uses the source lane.
-
-### Tickets
-
-- [x] Add `TextForSpeech.Normalize.text(...)`, `source(...)`, and `detectTextFormat(in:)`.
-- [x] Split the public format model into `TextFormat` and `SourceFormat`.
-- [x] Remove the old `normalize(... as:)` and `detectFormat(in:)` compatibility surface.
-- [x] Remove `InputContext.textFormat`, `InputContext.nestedSourceFormat`, `InputContext`, and public `withContext` arguments.
-- [x] Update package docs and tests to reflect the new API shape.
-- [x] Cover `runtime.normalize.source(...)` active-profile and named-profile flows so the runtime source lane stays aligned with the public source API.
-
-### Exit Criteria
-
-- [x] Callers can choose a text lane or a source lane explicitly.
-- [x] Mixed markdown-like inputs normalize embedded snippets without a request-wide source hint.
-- [x] The package validates cleanly without compatibility shims or duplicate codepaths.
-
-## Milestone 4: Runtime Lookup and Profile Ergonomics
-
-### Status
-
-Completed
-
-### Scope
-
-- [x] Tighten the profile lookup story so active, stored, and effective views are easy to reason about at the call site.
-- [x] Keep the runtime grouped by capability without making callers bounce between near-duplicate lookup methods.
-- [x] Preserve the current always-on base-profile merge behavior while clarifying raw custom-layer access.
-
-### Tickets
-
-- [x] Make `profiles` and `persistence` the public grouped entry points for external callers.
-- [x] Keep the active custom layer explicit through `activeID`, `active()`, and `activate(id:)`.
-- [x] Add focused docs and tests around the raw custom-layer view versus the built-in merged effective view.
-
-### Exit Criteria
-
-- [x] The runtime profile lookup story reads naturally at the call site without redundant concepts.
-- [x] Docs and tests explain the distinction between raw custom profiles and effective merged profiles clearly.
-- [x] `SpeakSwiftly` integration can choose a profile view without adapter glue or naming confusion.
 
 ## Milestone 5: Structured Source Normalization
 
@@ -168,31 +58,6 @@ Planned
 - [ ] The package documents the current structured-source coverage honestly.
 - [ ] Future language-specific source lanes can be added without reshaping the public API again.
 
-## Milestone 6: Forensic Surface Cleanup
-
-### Status
-
-Completed
-
-### Scope
-
-- [x] Review the leftover forensic-facing APIs and helpers inherited from the earlier split work.
-- [x] Decide which pieces belong to normalization parsing versus a separate analysis surface.
-- [x] Tighten file placement and naming so production ownership is clearer.
-
-### Tickets
-
-- [x] Remove the old public `TextForSpeech.Forensics` namespace once SpeakSwiftly no longer depends on it.
-- [x] Delete leftover helper code that only existed to support that surface when no internal production caller still uses it.
-- [x] Refresh roadmap and maintainer-facing docs so they no longer describe a separate forensic area or public forensic capability.
-- [x] Audit low-coverage parsing helpers and either cover the production callers or remove helpers that no longer materially support normalization.
-
-### Exit Criteria
-
-- [x] The package no longer ships a separate forensic API surface.
-- [x] Shared parsing utilities live in normalization only when they materially support production normalization behavior.
-- [x] File and type naming make it obvious that the remaining code is production normalization logic or runtime support rather than forensic analysis support.
-
 ## Milestone 7: Release and Maintainability Polish
 
 ### Status
@@ -213,7 +78,7 @@ In Progress
 - [x] Prepare the next minor release notes and tag plan.
 - [x] Add a small coverage-audit checklist for format detection, parsing helpers, runtime wrappers, and operator-facing error strings.
 - [ ] Audit current source-file responsibilities after the parser-backed and context-cleanup work.
-- [ ] Add release notes for the parser-backed normalization and `InputContext` removal changes.
+- [x] Add release notes for parser-backed normalization, slim `RequestContext`, request prefaces, and `InputContext` removal changes.
 
 ### Exit Criteria
 
@@ -329,4 +194,5 @@ In Progress
 
 - Parser-backed normalization work added `swift-markdown`, SwiftSoup, and internal semantic token runs.
 - Context cleanup moved path context onto `RequestContext` and removed `InputContext`, caller-provided text-format hints, and mixed-text nested-source hints.
+- Completed early milestones are condensed here: the package now ships the core normalization library, runtime profile persistence, explicit text/source lanes, runtime profile ergonomics, and the forensic-surface cleanup.
 - Roadmap normalized to the canonical checklist schema with explicit remaining work for semantic-run migration, `NSDataDetector`, style review, Codex hook ownership, and structured source normalization.
