@@ -23,21 +23,44 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
 }
 
-@Test func `normalize accepts request context without changing output`() async throws {
+@Test func `normalize adds request context preface before text output`() async throws {
     let original = "Read /tmp/Thing.swift and `profile?.sampleRate ?? 24000`."
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
         requestContext: TextForSpeech.RequestContext(
             source: "codex",
-            app: "SpeakSwiftly",
-            project: "TextForSpeech",
+            topic: "normalization",
             attributes: ["surface": "tests"],
         ),
     )
 
+    #expect(normalized.hasPrefix("From codex, normalization.\n\n"))
     #expect(normalized.contains("tmp Thing dot swift"))
     #expect(normalized.contains("profile optional chaining sample Rate nil coalescing 24000"))
+}
+
+@Test func `normalize skips request context preface for path only context`() async throws {
+    let normalized = try await TextForSpeech.Normalize.text(
+        "Read /Users/galew/Workspace/TextForSpeech/Sources/App.swift.",
+        requestContext: TextForSpeech.RequestContext(
+            cwd: "/Users/galew/Workspace/TextForSpeech",
+            repoRoot: "/Users/galew/Workspace/TextForSpeech",
+        ),
+    )
+
+    #expect(!normalized.hasPrefix("From "))
+    #expect(normalized.contains("current directory Sources App dot swift"))
+}
+
+@Test func `normalize can preface topic only request context`() async throws {
+    let normalized = try await TextForSpeech.Normalize.text(
+        "Build finished.",
+        requestContext: TextForSpeech.RequestContext(topic: "release"),
+    )
+
+    #expect(normalized.hasPrefix("About release.\n\n"))
+    #expect(normalized.contains("Build finished."))
 }
 
 @Test func `normalize text can exercise summary path with test provider`() async throws {
@@ -511,7 +534,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("fallback Value"))
 }
 
-@Test func `normalize source accepts request context without changing output`() async throws {
+@Test func `normalize source adds request context preface`() async throws {
     let source = """
     struct WorkerRuntime {
         let sampleRate: Int
@@ -523,11 +546,11 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
         as: .swift,
         requestContext: TextForSpeech.RequestContext(
             source: "codex",
-            app: "SpeakSwiftly",
             topic: "normalization",
         ),
     )
 
+    #expect(normalized.hasPrefix("From codex, normalization.\n\n"))
     #expect(!normalized.contains("open brace"))
     #expect(normalized.contains("sample Rate"))
 }

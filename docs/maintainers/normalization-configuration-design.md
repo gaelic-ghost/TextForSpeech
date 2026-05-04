@@ -32,8 +32,8 @@ The package already has the right behavior surfaces:
 - `BuiltInProfileStyle` chooses shipped verbosity and presentation behavior.
 - `Profile` and `Replacement` express reusable pronunciation and token rewrite
   behavior.
-- `RequestContext` carries facts about the request, including `cwd` and
-  `repoRoot`.
+- `RequestContext` carries slim facts about the request, including `source`,
+  `topic`, `cwd`, and `repoRoot`.
 - parser-backed and platform-backed detectors should identify reusable token
   ranges before surrounding document format is considered.
 
@@ -47,10 +47,15 @@ behavior.
 
 `RequestContext` should own:
 
-- request origin: `source`, `app`, `agent`, `project`, and `topic`
+- request origin: broad `source` plus human-facing `topic`
 - request attributes: freeform string metadata that does not earn a stable field
 - request environment: `cwd` and `repoRoot`, normalized the same way paths are
   normalized today
+
+The normalization API may use `source` and `topic` to add a short speech preface
+at the returned utterance boundary. `cwd`, `repoRoot`, and `attributes` should
+not create visible preface text by themselves; they provide path context and
+caller metadata.
 
 Path-aware normalization should read path context from `RequestContext`. This
 includes standalone path speaking, file-reference speaking, inline-code path
@@ -73,9 +78,8 @@ The review pass should answer:
 - whether those behaviors should be modeled as existing `Replacement` rules,
   new `Replacement.Transform` cases, or small normalizer decisions keyed from
   the active built-in style
-- whether Codex hook cleanup should be a style-aware text mode, a request-origin
-  behavior keyed from `RequestContext.source`, or a small explicit normalize
-  option
+- whether any future non-Codex-specific cleanup belongs in shipped styles or
+  should stay downstream
 - whether downstream apps should persist only the active built-in style through
   `Runtime`, or persist app-specific request preferences outside this package
 
@@ -175,21 +179,20 @@ top-level behavior model.
 
 ## Codex Hook Cleanup
 
-Codex hook cleanup should start as a focused review item, not a separate
-pipeline.
+Codex-specific hook cleanup is downstream-owned for now. Hook scripts should
+remove or reshape Codex-only payload metadata before text enters this package.
+Do not add package-owned Codex hook parsing while that downstream boundary is
+working.
 
-The review should identify real hook payload examples and decide:
+If custom hook filtering becomes necessary later, reopen the package boundary
+only after real examples prove downstream hook-script cleanup is the wrong
+ownership model. That review should identify:
 
 - which metadata fields are never useful speech content
 - which fields preserve operator-facing messages, commands, paths, exit codes,
   check names, and failure context
-- whether hook cleanup should be selected explicitly, inferred from
-  `RequestContext.source == "codex-hook"`, or left to a downstream caller before
-  text enters this package
+- whether any cleanup is generic enough to belong in shipped style presets
 - which parts, if any, belong in shipped style presets
-
-If custom hook filtering becomes necessary later, add it only after real hook
-examples prove that style/profile/replacement behavior cannot cover the need.
 
 ## Implementation Order
 
@@ -201,11 +204,11 @@ examples prove that style/profile/replacement behavior cannot cover the need.
    fallback for mixed-text code spans.
 4. Remove `InputContext` if no input-local facts remain.
 5. Review `.compact`, `.balanced`, and `.explicit` against URL, markdown-link,
-   path, and hook cleanup behavior.
+   and path behavior.
 6. Adjust style presets, replacement transforms, and tests according to that
    review.
-7. Add representative hook payload fixtures and tests only after hook ownership
-   is settled.
+7. Keep Codex-specific hook parsing downstream unless real examples prove a
+   package-owned generic cleanup belongs here.
 8. Update README, roadmap, maintainer docs, and release notes together.
 
 ## Non-Goals

@@ -46,7 +46,7 @@ Add the package from its GitHub repository:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.19.0"),
+    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.21.0"),
 ],
 targets: [
     .executableTarget(
@@ -69,13 +69,17 @@ let normalized = try await TextForSpeech.Normalize.text(
     "stderr: /workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
     requestContext: TextForSpeech.RequestContext(
         source: "codex",
-        app: "SpeakSwiftly",
-        project: "TextForSpeech",
+        topic: "normalization",
         cwd: "/workspace/SpeakSwiftly",
         repoRoot: "/workspace/SpeakSwiftly"
     )
 )
 ```
+
+When `RequestContext.source` or `RequestContext.topic` is present, returned
+speech text starts with a short preface line such as
+`From codex, normalization.`. Path fields such as `cwd` and `repoRoot` still
+only provide path-shortening context and do not create a preface by themselves.
 
 The mixed-text path detects the likely outer text format before running normalization. Callers do not provide a text-format hint.
 
@@ -110,7 +114,8 @@ normalization policy type. Path context now lives on `RequestContext`; the
 previous `InputContext` type has been removed. Caller-provided text-format and
 nested-source hints have been removed in favor of detection and generic
 embedded-code fallback. Codex hook payload cleanup will be reviewed with real
-examples before deciding whether it belongs in this package or downstream.
+examples only if downstream hook-script cleanup proves insufficient. Current
+Codex-specific hook parsing is intentionally downstream-owned.
 
 Use the source path when the whole input is a source file or editor buffer and the caller already knows the language:
 
@@ -197,56 +202,16 @@ The runtime model is intentionally explicit:
 - `runtime.profiles.getEffective()` returns the active custom profile as merged with the currently selected built-in style.
 - `runtime.profiles.get(id:)` reads one stored custom profile summary and its replacements by id.
 - `runtime.profiles.create(name:)` creates one stored custom profile and returns its generated id to the caller.
-- `runtime.normalize.text(...)` and `runtime.normalize.source(...)` apply `builtInBase(style: style.getActive()) + active custom` without exposing the merged profile value. `summarize` defaults to `false`.
+- `runtime.normalize.text(...)` and `runtime.normalize.source(...)` apply `builtInBase(style: style.getActive()) + active custom` without exposing the merged profile value. Request contexts with `source` or `topic` add the same short preface as the public normalization API. `summarize` defaults to `false`.
 - `try await runtime.normalize.text(..., summarize: true)` and `try await runtime.normalize.source(..., summarize: true)` use the active summarization provider before returning normalized speech-safe text.
 
 Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. Debug builds place the package store under `TextForSpeech-Debug`, including the fallback namespace, so local debug runs do not touch the production package store. Callers that need an explicit location can pass `.file(url)`. The selected built-in style and selected summarization provider are persisted alongside the active custom profile id and stored custom profiles.
 
 ## Development
 
-### Setup
-
 `TextForSpeech` is a Swift Package Manager library product targeting iOS 17, macOS 14, and Swift 6 language mode.
 
-No generated project setup is required for ordinary local development. Work from the repository root with SwiftPM.
-
-### Workflow
-
-Use the standard Swift package workflow for code and tests:
-
-```bash
-swift build
-swift test
-```
-
-The repository also uses repo-owned maintainer scripts for validation, shared sync work, and releases:
-
-```bash
-sh scripts/repo-maintenance/validate-all.sh
-sh scripts/repo-maintenance/sync-shared.sh
-sh scripts/repo-maintenance/release.sh --mode standard --version vX.Y.Z
-```
-
-For repository workflow expectations, architecture boundaries, and doc-sync rules, see [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), and the maintainer notes under [docs/maintainers](docs/maintainers).
-
-### Validation
-
-The baseline verification path for this repository is:
-
-```bash
-swift build
-swift test
-sh scripts/repo-maintenance/validate-all.sh
-```
-
-The repository also includes checked-in SwiftFormat and SwiftLint configuration:
-
-```bash
-swiftformat --lint --config .swiftformat .
-swiftlint lint --config .swiftlint.yml
-```
-
-Run those formatter and lint commands when style-tooling changes are in scope or when a change touches enough Swift code that a formatting pass is useful.
+No generated project setup is required for ordinary local development. For setup, validation, formatting, release workflow, and architecture boundaries, see [CONTRIBUTING.md](CONTRIBUTING.md), [ROADMAP.md](ROADMAP.md), and the maintainer notes under [docs/maintainers](docs/maintainers).
 
 ## Repo Structure
 
@@ -286,11 +251,7 @@ Tests live under `Tests/TextForSpeechTests` and are grouped by role, with focuse
 
 Release notes live under [docs/releases](docs/releases). Each release note should stay factual, scoped to the tagged change, and explicit about behavior or API shifts.
 
-Use the repo-owned release command for standard release work:
-
-```bash
-sh scripts/repo-maintenance/release.sh --mode standard --version vX.Y.Z
-```
+The latest release note is [v0.21.0](docs/releases/v0.21.0.md).
 
 ## License
 

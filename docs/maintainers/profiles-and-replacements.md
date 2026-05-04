@@ -47,18 +47,24 @@ It does not carry request-local path context, detected formats, or runtime-owned
 
 That keeps responsibilities clean. In the current public API:
 
-- `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, request-local path context such as `cwd` and `repoRoot`, and freeform string attributes.
+- `TextForSpeech.RequestContext` carries slim request-origin metadata such as `source` and `topic`, request-local path context such as `cwd` and `repoRoot`, and freeform string attributes.
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
 - `TextForSpeech.Runtime` owns persistence, active-profile selection, and summarization provider selection.
 - the normalizer owns structural document parsing and pipeline routing.
 
+Public normalization entrypoints may add a short utterance preface from
+`RequestContext.source` and `RequestContext.topic` after deterministic text or
+source normalization finishes. Path context remains input metadata for path
+shortening and should not be treated as a spoken source label.
+
 The M10 design direction has moved `cwd` and `repoRoot` into `RequestContext`.
 `InputContext` has been removed instead of becoming another behavior container.
-Remaining cleanup should review URL, link, path, and hook behavior through the
+Remaining cleanup should review URL, link, and path behavior through the
 existing built-in style, profile, and replacement model instead of adding a
-separate normalization policy type.
+separate normalization policy type. Codex-specific hook cleanup is currently
+downstream-owned.
 
 ## Replacement type
 
@@ -284,7 +290,7 @@ When touching profile behavior:
 - put always-on semantic shipped behavior into `Profile.semanticCore`
 - put built-in presentation differences into shipped style presets
 - put request facts such as path context into `RequestContext`
-- review URL, link, path, and hook cleanup behavior through shipped styles and
+- review URL, link, and path behavior through shipped styles and
   replacement transforms before adding new public surface
 - keep structural parsing and routing logic in the normalizer
 - keep persistence and active-profile selection in `Runtime`
