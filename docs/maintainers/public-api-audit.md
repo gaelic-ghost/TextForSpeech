@@ -161,7 +161,7 @@ The practical design question is whether to add convenience factories or a
 small authoring facade for the common custom-profile cases while keeping the
 advanced replacement model available.
 
-### 7. How should callers configure URL, link, path, and hook cleanup policy?
+### 7. URL, link, path, and hook cleanup should be reviewed through built-in styles
 
 The current normalization defaults are built into the text pipeline. That keeps
 ordinary calls simple, but it does not give callers a first-class way to choose
@@ -174,7 +174,12 @@ The package needs a hook-oriented text mode that filters low-value metadata
 while preserving useful failure context, paths, commands, and operator-facing
 messages.
 
-The practical design question is where this policy should live. The likely
-shape is a normalization configuration value that can travel through
-`InputContext`, the public `TextForSpeech.Normalize` entrypoints, and runtime
-normalization calls without creating a second normalization pipeline.
+Request facts such as `cwd` and `repoRoot` now live on
+`TextForSpeech.RequestContext`. `InputContext` has been removed instead of
+becoming another behavior container. The remaining design direction is to add
+token-first detection for reusable spans such as links, addresses, dates, phone
+numbers, paths, and file references. Do not add `TextForSpeech.NormalizationPolicy`;
+review `BuiltInProfileStyle`, `Profile`, and `Replacement` so URL, link, path,
+and hook behavior fit the existing style/profile model or are left downstream. See
+[`normalization-configuration-design.md`](normalization-configuration-design.md)
+for the proposed shape and implementation order.

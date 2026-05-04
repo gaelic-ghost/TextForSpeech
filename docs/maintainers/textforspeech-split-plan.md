@@ -22,7 +22,7 @@ The main architectural pivots from the original split plan are now in place:
 - `TextForSpeech` is the source of truth for normalization, profile state, and persistence.
 - `TextForSpeech.Normalize.text(...)` and `TextForSpeech.Normalize.source(...)` are the public async lane split.
 - `TextFormat` and `SourceFormat` replaced the old umbrella format model.
-- `InputContext` carries input-local path and format hints separately from `RequestContext` request metadata.
+- `RequestContext` carries request metadata and path context; `InputContext` has been removed.
 - runtime persistence defaults to Application Support.
 - the built-in normalization policy moved into composable built-in profile layers with a selectable style preset.
 
@@ -45,7 +45,6 @@ Shared value types and built-in profile definitions:
 - `Profile.swift`
 - `BuiltInProfiles.swift`
 - `Replacement.swift`
-- `InputContext.swift`
 - `Format.swift`
 - `SummarizationProvider.swift`
 
@@ -111,8 +110,8 @@ The next real package work is no longer “finish the split.” It is:
 
 - tightening profile ergonomics and documentation
 - improving structured source normalization, starting with Swift
-- adding configurable URL, markdown-link, and path normalization policy
-- adding a Codex hook text mode that filters unwanted metadata while preserving useful speech content
+- reviewing URL, markdown-link, and path behavior through the built-in style model
+- deciding whether Codex hook metadata cleanup belongs in this package or downstream
 - keeping the normalization boundaries honest as the package grows
 - preserving a clean file layout as features land so oversized files do not quietly grow back
 

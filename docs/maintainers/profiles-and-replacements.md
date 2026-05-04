@@ -45,15 +45,20 @@ It does not carry request-local path context, detected formats, or runtime-owned
 
 > "What reusable rewrite policy should apply around the structural normalizer?"
 
-That keeps responsibilities clean:
+That keeps responsibilities clean. In the current public API:
 
-- `TextForSpeech.InputContext` carries request-local environment such as `cwd`, `repoRoot`, and optional format hints.
-- `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, and freeform string attributes.
+- `TextForSpeech.RequestContext` carries optional request-origin metadata such as `source`, `app`, `agent`, `project`, `topic`, request-local path context such as `cwd` and `repoRoot`, and freeform string attributes.
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
 - `TextForSpeech.Runtime` owns persistence, active-profile selection, and summarization provider selection.
 - the normalizer owns structural document parsing and pipeline routing.
+
+The M10 design direction has moved `cwd` and `repoRoot` into `RequestContext`.
+`InputContext` has been removed instead of becoming another behavior container.
+Remaining cleanup should review URL, link, path, and hook behavior through the
+existing built-in style, profile, and replacement model instead of adding a
+separate normalization policy type.
 
 ## Replacement type
 
@@ -241,10 +246,10 @@ The runtime summary API now centers on:
 
 The runtime normalization API now centers on:
 
-- `normalize.text(_:withContext:requestContext:summarize:)`
-- `normalize.text(_:usingProfileID:withContext:requestContext:summarize:)`
-- `normalize.source(_:as:withContext:requestContext:summarize:)`
-- `normalize.source(_:as:usingProfileID:withContext:requestContext:summarize:)`
+- `normalize.text(_:requestContext:summarize:)`
+- `normalize.text(_:usingProfileID:requestContext:summarize:)`
+- `normalize.source(_:as:requestContext:summarize:)`
+- `normalize.source(_:as:usingProfileID:requestContext:summarize:)`
 
 `summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape. `TextForSpeech.SummarizationProvider` is the caller-facing backend selector, and the runtime persists the selected provider through `summarizationProvider.get/list/set`. The `.test` provider is intentionally deterministic and returns the input unchanged so package tests can cover the summary-aware path without invoking Codex, OpenAI, or Foundation Models.
 
@@ -281,7 +286,9 @@ When touching profile behavior:
 
 - put always-on semantic shipped behavior into `Profile.semanticCore`
 - put built-in presentation differences into shipped style presets
-- put request-local behavior into `InputContext`
+- put request facts such as path context into `RequestContext`
+- review URL, link, path, and hook cleanup behavior through shipped styles and
+  replacement transforms before adding new public surface
 - keep structural parsing and routing logic in the normalizer
 - keep persistence and active-profile selection in `Runtime`
 

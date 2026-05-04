@@ -46,7 +46,7 @@ Add the package from its GitHub repository:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.18.9"),
+    .package(url: "https://github.com/gaelic-ghost/TextForSpeech.git", from: "0.19.0"),
 ],
 targets: [
     .executableTarget(
@@ -67,19 +67,17 @@ import TextForSpeech
 
 let normalized = try await TextForSpeech.Normalize.text(
     "stderr: /workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
-    withContext: TextForSpeech.InputContext(
-        cwd: "/workspace/SpeakSwiftly",
-        repoRoot: "/workspace/SpeakSwiftly"
-    ),
     requestContext: TextForSpeech.RequestContext(
         source: "codex",
         app: "SpeakSwiftly",
-        project: "TextForSpeech"
+        project: "TextForSpeech",
+        cwd: "/workspace/SpeakSwiftly",
+        repoRoot: "/workspace/SpeakSwiftly"
     )
 )
 ```
 
-If `InputContext.textFormat` is omitted, `TextForSpeech` detects a likely outer text format before running the text normalization path.
+The mixed-text path detects the likely outer text format before running normalization. Callers do not provide a text-format hint.
 
 If you want a different shipped listening mode, pass `style:`:
 
@@ -105,27 +103,14 @@ The semantic core also ships extension aliases for especially speech-hostile fil
 
 For repeated file paths in the same utterance, the text path compacts repeated anchors before the built-in path-speaking pass. File-path separators collapse to spacing rather than spoken words, and later repeated mentions can collapse to shorter phrases such as `same directory, Worker Runtime dot swift` or `same path` instead of repeating the full spoken prefix.
 
-Configurable URL, markdown-link, and path handling is planned. The current defaults are deterministic and always on; future work will let callers choose how aggressively those surfaces are spoken, shortened, preserved, or filtered. A Codex hook-oriented text mode is also planned for hook payloads that mix useful text with metadata that should not be read aloud.
-
-When the outer document is mixed text but the embedded code language is known, pass `InputContext.nestedSourceFormat` so fenced or inline code can route through the source path:
-
-```swift
-import TextForSpeech
-
-let normalized = try await TextForSpeech.Normalize.text(
-    """
-    Read this first:
-
-    ```swift
-    let sampleRate = profile?.sampleRate ?? 24000
-    ```
-    """,
-    withContext: TextForSpeech.InputContext(
-        textFormat: .markdown,
-        nestedSourceFormat: .swift
-    )
-)
-```
+Configurable URL, markdown-link, and path handling is planned. The current
+defaults are deterministic and always on; future work will review those
+behaviors through the existing built-in styles rather than adding a separate
+normalization policy type. Path context now lives on `RequestContext`; the
+previous `InputContext` type has been removed. Caller-provided text-format and
+nested-source hints have been removed in favor of detection and generic
+embedded-code fallback. Codex hook payload cleanup will be reviewed with real
+examples before deciding whether it belongs in this package or downstream.
 
 Use the source path when the whole input is a source file or editor buffer and the caller already knows the language:
 
@@ -153,7 +138,6 @@ import TextForSpeech
 
 let normalized = try await TextForSpeech.Normalize.text(
     longDeveloperUpdate,
-    withContext: TextForSpeech.InputContext(textFormat: .markdown),
     summarizationProvider: .openAIResponses,
     summarize: true
 )
@@ -287,7 +271,7 @@ Run those formatter and lint commands when style-tooling changes are in scope or
 `Sources/TextForSpeech` is organized by responsibility:
 
 - `API/` contains public namespace-first entrypoints such as `Normalize`.
-- `Models/` contains core value types such as `Profile`, `Replacement`, `InputContext`, and `SummarizationProvider`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
+- `Models/` contains core value types such as `Profile`, `Replacement`, `RequestContext`, and `SummarizationProvider`, plus the built-in profile composition surface and semantic-role fragments under `Models/BuiltInProfiles/`.
 - `Normalization/` contains the text path, source path, structural markdown parsing, replacement-rule engine, speech helpers, format detection, and summary execution support.
 - `Runtime/` contains runtime ownership, grouped profile, style, summary, and persistence handles, persisted state, and runtime-facing errors.
 

@@ -9,11 +9,9 @@ enum TextNormalizer {
     typealias ContextualNormalizationPass =
         (
             String,
-            TextForSpeech.InputContext?,
             TextForSpeech.RequestContext?,
             TextForSpeech.Profile,
             NormalizationFormat,
-            TextForSpeech.SourceFormat?,
         ) -> String
 
     // MARK: Detection Markers
@@ -52,60 +50,52 @@ enum TextNormalizer {
 
     static var normalizationPasses: [ContextualNormalizationPass] {
         [
-            { text, context, requestContext, profile, _, nestedFormat in
+            { text, requestContext, profile, _ in
                 normalizeFencedCodeBlocks(
                     text,
-                    context: context,
                     requestContext: requestContext,
-                    nestedFormat: nestedFormat,
                     profile: profile,
                 )
             },
-            { text, context, requestContext, profile, _, nestedFormat in
+            { text, requestContext, profile, _ in
                 normalizeInlineCodeSpans(
                     text,
-                    context: context,
                     requestContext: requestContext,
-                    nestedFormat: nestedFormat,
                     profile: profile,
                 )
             },
-            { text, _, _, _, _, _ in normalizeMarkdownLinks(text) },
-            { text, _, _, _, _, _ in normalizePriorityListItems(text) },
-            { text, context, _, _, _, _ in
-                compactRepeatedFilePathPrefixes(text, context: context)
+            { text, _, _, _ in normalizeMarkdownLinks(text) },
+            { text, _, _, _ in normalizePriorityListItems(text) },
+            { text, requestContext, _, _ in
+                compactRepeatedFilePathPrefixes(text, requestContext: requestContext)
             },
-            { text, _, _, _, _, _ in normalizeSpacedMeasuredValues(text) },
-            { text, context, requestContext, profile, format, nestedFormat in
+            { text, _, _, _ in normalizeSpacedMeasuredValues(text) },
+            { text, requestContext, profile, format in
                 applyReplacementRules(
                     text,
                     profile: profile,
                     format: format,
                     phase: .beforeBuiltIns,
-                    context: context,
                     requestContext: requestContext,
-                    nestedFormat: nestedFormat,
                 )
             },
-            { text, _, _, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
+            { text, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
         ]
     }
 
     static var sourceNormalizationPasses: [ContextualNormalizationPass] {
         [
-            { text, _, _, _, _, _ in normalizeSpacedMeasuredValues(text) },
-            { text, context, requestContext, profile, format, nestedFormat in
+            { text, _, _, _ in normalizeSpacedMeasuredValues(text) },
+            { text, requestContext, profile, format in
                 applyReplacementRules(
                     text,
                     profile: profile,
                     format: format,
                     phase: .beforeBuiltIns,
-                    context: context,
                     requestContext: requestContext,
-                    nestedFormat: nestedFormat,
                 )
             },
-            { text, _, _, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
+            { text, _, _, _ in normalizeWhitespacePreservingLineBreaks(text) },
         ]
     }
 
@@ -113,34 +103,28 @@ enum TextNormalizer {
 
     static func normalizeText(
         _ text: String,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .default,
         format: TextForSpeech.TextFormat? = nil,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
     ) -> String {
-        let resolvedFormat = format ?? context?.textFormat ?? detectTextFormat(in: text)
+        let resolvedFormat = format ?? detectTextFormat(in: text)
         return normalize(
             canonicalize(text),
-            context: context,
             requestContext: requestContext,
             profile: profile,
             format: .text(resolvedFormat),
-            nestedFormat: nestedFormat ?? context?.nestedSourceFormat,
             passes: normalizationPasses,
         )
     }
 
     static func normalizeSource(
         _ source: String,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .default,
         format: TextForSpeech.SourceFormat,
     ) -> String {
         normalize(
             canonicalize(source),
-            context: context,
             requestContext: requestContext,
             profile: profile,
             format: .source(format),
@@ -152,15 +136,13 @@ enum TextNormalizer {
 
     private static func normalize(
         _ text: String,
-        context: TextForSpeech.InputContext?,
         requestContext: TextForSpeech.RequestContext?,
         profile: TextForSpeech.Profile,
         format: NormalizationFormat,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
         passes: [ContextualNormalizationPass],
     ) -> String {
         let normalized = passes.reduce(text) { partial, pass in
-            pass(partial, context, requestContext, profile, format, nestedFormat)
+            pass(partial, requestContext, profile, format)
         }
         let finalized = normalizeWhitespacePreservingLineBreaks(
             applyReplacementRules(
@@ -168,9 +150,7 @@ enum TextNormalizer {
                 profile: profile,
                 format: format,
                 phase: .afterBuiltIns,
-                context: context,
                 requestContext: requestContext,
-                nestedFormat: nestedFormat,
             ),
         )
         return finalized.isEmpty ? text : finalized

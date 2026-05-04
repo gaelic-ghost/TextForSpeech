@@ -6,14 +6,12 @@ enum SourceNormalizer {
     static func normalize(
         _ source: String,
         as format: TextForSpeech.SourceFormat,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .default,
         style: TextForSpeech.BuiltInProfileStyle = .balanced,
     ) -> String {
         TextNormalizer.normalizeSource(
             source,
-            context: context,
             requestContext: requestContext,
             profile: TextForSpeech.Profile.builtInBase(style: style).merged(with: profile),
             format: format,

@@ -128,7 +128,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(
+        requestContext: TextForSpeech.RequestContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -145,7 +145,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(
+        requestContext: TextForSpeech.RequestContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -174,7 +174,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     Compare ./Sources/WorkerRuntime.swift and ./Sources/ProfileStore.swift.
     """
 
-    let normalized = try await TextForSpeech.Normalize.text(original, withContext: TextForSpeech.InputContext(textFormat: .plain))
+    let normalized = try await TextForSpeech.Normalize.text(original)
 
     #expect(normalized.contains("current directory Sources Worker Runtime dot swift"))
     #expect(normalized.contains("same directory, Profile Store dot swift"))
@@ -202,7 +202,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         "Please say chrommmaticallly and snake_case_stuff once.",
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         customProfile: profile,
     )
 
@@ -227,7 +226,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         "Keep (TODO), TODO, and TODO.",
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         customProfile: profile,
     )
 
@@ -257,7 +255,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
         Close with WorkerRuntime.swift.
         """,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         customProfile: profile,
     )
 
@@ -294,7 +291,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
         Ninth paragraph closes the sample. If the formatter is still flattening prose, this test should catch it.
         """,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
     )
 
     let paragraphs = normalized
@@ -340,7 +336,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(TextForSpeech.Normalize.detectTextFormat(in: log) == .log)
 }
 
-@Test func `context format overrides automatic detection`() async throws {
+@Test func `detected markdown normalizes header content`() async throws {
     let text = """
     # Header
 
@@ -350,7 +346,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         text,
-        withContext: TextForSpeech.InputContext(textFormat: .list),
     )
 
     #expect(normalized.contains("Header"))
@@ -364,7 +359,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(textFormat: .markdown),
     )
 
     #expect(normalized.contains("Priority Level One. Fix the crash"))
@@ -380,7 +374,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
     )
 
     #expect(normalized.contains("Priority Level Four. Triage the next report"))
@@ -388,7 +381,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(!normalized.contains("[P4]"))
 }
 
-@Test func `normalize text uses nested format for embedded swift code`() async throws {
+@Test func `normalize text speaks fenced code generically`() async throws {
     let original = """
     ```swift
     let sampleRate = profile?.sampleRate ?? 24000
@@ -397,10 +390,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(
-            textFormat: .markdown,
-            nestedSourceFormat: .swift,
-        ),
     )
 
     #expect(normalized.contains("Code sample."))
@@ -408,29 +397,30 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized.contains("nil coalescing"))
 }
 
-@Test func `normalize text uses nested source format from context`() async throws {
+@Test func `normalize text handles mixed fenced code without source context`() async throws {
     let original = """
     ```swift
     let sampleRate = profile?.sampleRate ?? 24000
+    ```
+
+    ```python
+    value = config.get("sample_rate")
     ```
     """
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(
-            textFormat: .markdown,
-            nestedSourceFormat: .swift,
-        ),
     )
 
+    #expect(normalized.components(separatedBy: "Code sample.").count == 3)
     #expect(normalized.contains("optional chaining"))
     #expect(normalized.contains("nil coalescing"))
+    #expect(normalized.contains("sample rate"))
 }
 
 @Test func `inline code file paths use path speech instead of generic code speech`() async throws {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `/Users/galew/Workspace/SpeakSwiftly/WorkerRuntime.swift` now.",
-        withContext: TextForSpeech.InputContext(textFormat: .markdown),
     )
 
     #expect(normalized.contains("gale wumbo Workspace Speak Swiftly Worker Runtime dot swift"))
@@ -440,10 +430,9 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `inline code file paths keep context aware shortening`() async throws {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift` now.",
-        withContext: TextForSpeech.InputContext(
+        requestContext: TextForSpeech.RequestContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
-            textFormat: .markdown,
         ),
     )
 
@@ -454,10 +443,9 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `inline code file references keep context aware shortening`() async throws {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift:12` now.",
-        withContext: TextForSpeech.InputContext(
+        requestContext: TextForSpeech.RequestContext(
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
-            textFormat: .markdown,
         ),
     )
 
@@ -468,7 +456,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `inline code relative file references use directory aware path speech`() async throws {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `../Sources/WorkerRuntime.swift:12` now.",
-        withContext: TextForSpeech.InputContext(textFormat: .markdown),
     )
 
     #expect(normalized.contains("parent directory Sources Worker Runtime dot swift at line 12"))
@@ -478,7 +465,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `inline slash operators stay in code speech lane`() async throws {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `a/b` once.",
-        withContext: TextForSpeech.InputContext(textFormat: .markdown),
     )
 
     #expect(normalized.contains("a slash b"))
@@ -570,17 +556,14 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let compact = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         style: .compact,
     )
     let balanced = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         style: .balanced,
     )
     let explicit = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         style: .explicit,
     )
 
@@ -637,12 +620,10 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let balanced = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         style: .balanced,
     )
     let explicit = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         style: .explicit,
     )
 
@@ -655,7 +636,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 
     let normalized = try await TextForSpeech.Normalize.text(
         original,
-        withContext: TextForSpeech.InputContext(textFormat: .plain),
         style: .balanced,
     )
 

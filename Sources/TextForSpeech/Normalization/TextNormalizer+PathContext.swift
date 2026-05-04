@@ -39,7 +39,7 @@ extension TextNormalizer {
 
     static func contextualizedPath(
         _ path: String,
-        context: TextForSpeech.InputContext?,
+        requestContext: TextForSpeech.RequestContext?,
     ) -> ContextualizedPath {
         guard path.hasPrefix("/") else {
             return ContextualizedPath(path: path, spokenContextPrefix: nil)
@@ -47,13 +47,13 @@ extension TextNormalizer {
 
         let standardizedPath = NSString(string: path).standardizingPath
 
-        if let cwd = context?.cwd,
+        if let cwd = requestContext?.cwd,
            let relativePath = relativePath(from: cwd, to: standardizedPath) {
             let spokenContextPrefix = "current directory"
             return ContextualizedPath(path: relativePath, spokenContextPrefix: spokenContextPrefix)
         }
 
-        if let repoRoot = context?.repoRoot,
+        if let repoRoot = requestContext?.repoRoot,
            let relativePath = relativePath(from: repoRoot, to: standardizedPath) {
             let spokenContextPrefix = "repo root"
             return ContextualizedPath(path: relativePath, spokenContextPrefix: spokenContextPrefix)

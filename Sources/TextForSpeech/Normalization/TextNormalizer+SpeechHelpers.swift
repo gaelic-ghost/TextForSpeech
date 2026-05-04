@@ -152,15 +152,11 @@ extension TextNormalizer {
 
     static func spokenCodeBlock(
         _ body: String,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
         let spoken = spokenEmbeddedCode(
             body,
-            nestedFormat: nestedFormat,
-            context: context,
             requestContext: requestContext,
             profile: profile,
         )
@@ -169,15 +165,11 @@ extension TextNormalizer {
 
     static func spokenInlineCode(
         _ body: String,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
         let spoken = spokenEmbeddedCode(
             body,
-            nestedFormat: nestedFormat,
-            context: context,
             requestContext: requestContext,
             profile: profile,
         )
@@ -186,22 +178,11 @@ extension TextNormalizer {
 
     static func spokenEmbeddedCode(
         _ body: String,
-        nestedFormat: TextForSpeech.SourceFormat? = nil,
-        context: TextForSpeech.InputContext? = nil,
         requestContext: TextForSpeech.RequestContext? = nil,
         profile: TextForSpeech.Profile = .base,
     ) -> String {
-        if let nestedFormat {
-            return SourceNormalizer.normalizeEmbedded(
-                body,
-                as: nestedFormat,
-                requestContext: requestContext,
-                profile: profile,
-            )
-        }
-
         if isLikelyFileLineReference(body) {
-            return spokenFileReference(body, style: .balanced, context: context)
+            return spokenFileReference(body, style: .balanced, requestContext: requestContext)
         }
 
         if isLikelyURL(body) {
@@ -209,7 +190,7 @@ extension TextNormalizer {
         }
 
         if isLikelyEmbeddedFilePath(body) {
-            return spokenPath(body, context: context)
+            return spokenPath(body, requestContext: requestContext)
         }
 
         return spokenCode(
