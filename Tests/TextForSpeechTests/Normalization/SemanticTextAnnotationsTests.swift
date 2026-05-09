@@ -58,6 +58,7 @@ import Testing
     let normalized = TextNormalizer.normalizeSemanticTokenRuns(
         "Read /Users/galew/Workspace/TextForSpeech/Sources/App.swift and WorkerRuntime.swift:42.",
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             cwd: "/Users/galew/Workspace/TextForSpeech",
             repoRoot: "/Users/galew/Workspace/TextForSpeech",
         ),

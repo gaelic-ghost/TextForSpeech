@@ -84,7 +84,7 @@ Summarization is optional. When `summarize: true` is passed, the selected `TextF
 
 `Normalize.text` accepts mixed prose, markdown, logs, CLI output, paths, identifiers, and code-heavy text. Optional inputs include:
 
-- `requestContext`, which can carry source, topic, current directory, repository root, and arbitrary string attributes
+- `requestContext`, which carries a request purpose plus optional source, topic, current directory, repository root, arbitrary string attributes, and preface policy
 - `customProfile`, a `TextForSpeech.Profile` merged with the built-in base profile
 - `style`, one of the built-in normalization styles
 - `summarizationProvider`
@@ -96,7 +96,7 @@ Runtime profile mutations accept profile names, profile IDs, and `TextForSpeech.
 
 ### Response Shape
 
-Normalization calls return a `String` ready for speech. If `RequestContext.source` or `RequestContext.topic` is present, the returned speech text includes a short request-context preface.
+Normalization calls return a `String` ready for speech. If `RequestContext.source` or `RequestContext.topic` is present, live speech and audio stream contexts include a short request-context preface by default. Audio-file contexts omit it by default. `RequestContext.prefacePolicy` can force the preface on with `.always`, force it off with `.never`, or follow the purpose default with `.default`.
 
 Runtime profile queries return profile summaries, profile details, style options, summarization-provider options, persisted state, or the selected built-in style depending on the handle used.
 
@@ -106,7 +106,7 @@ Runtime profile mutations return updated profile details when the changed profil
 
 Important data models include:
 
-- `RequestContext`: source, topic, cwd, repoRoot, and attributes for provenance and path compaction
+- `RequestContext`: reqPurpose, source, topic, cwd, repoRoot, attributes, and prefacePolicy for provenance, path compaction, and preface behavior
 - `BuiltInProfileStyle`: `.compact`, `.balanced`, and `.explicit`
 - `Profile`: profile ID, display name, and ordered replacements
 - `Replacement`: match rule, transform, phase, format filters, case-sensitivity, and priority

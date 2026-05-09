@@ -29,6 +29,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = try await TextForSpeech.Normalize.text(
         original,
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             source: "codex",
             topic: "normalization",
             attributes: ["surface": "tests"],
@@ -44,6 +45,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read /Users/galew/Workspace/TextForSpeech/Sources/App.swift.",
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             cwd: "/Users/galew/Workspace/TextForSpeech",
             repoRoot: "/Users/galew/Workspace/TextForSpeech",
         ),
@@ -56,11 +58,64 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
 @Test func `normalize can preface topic only request context`() async throws {
     let normalized = try await TextForSpeech.Normalize.text(
         "Build finished.",
-        requestContext: TextForSpeech.RequestContext(topic: "release"),
+        requestContext: TextForSpeech.RequestContext(reqPurpose: .speech, topic: "release"),
     )
 
     #expect(normalized.hasPrefix("About release.\n\n"))
     #expect(normalized.contains("Build finished."))
+}
+
+@Test func `normalize omits request context preface for audio file purpose by default`() async throws {
+    let normalized = try await TextForSpeech.Normalize.text(
+        "Build finished.",
+        requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .audioFile,
+            source: "codex",
+            topic: "retained-audio-file",
+        ),
+    )
+
+    #expect(!normalized.hasPrefix("From "))
+    #expect(!normalized.hasPrefix("About "))
+    #expect(normalized == "Build finished.")
+}
+
+@Test func `normalize adds request context preface for audio stream purpose by default`() async throws {
+    let normalized = try await TextForSpeech.Normalize.text(
+        "Build finished.",
+        requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .audioStream,
+            source: "codex",
+            topic: "stream",
+        ),
+    )
+
+    #expect(normalized.hasPrefix("From codex, stream.\n\n"))
+    #expect(normalized.contains("Build finished."))
+}
+
+@Test func `normalize request preface policy can override purpose defaults`() async throws {
+    let always = try await TextForSpeech.Normalize.text(
+        "Build finished.",
+        requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .audioFile,
+            source: "codex",
+            topic: "forced",
+            prefacePolicy: .always,
+        ),
+    )
+    let never = try await TextForSpeech.Normalize.text(
+        "Build finished.",
+        requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
+            source: "codex",
+            topic: "muted",
+            prefacePolicy: .never,
+        ),
+    )
+
+    #expect(always.hasPrefix("From codex, forced.\n\n"))
+    #expect(never == "Build finished.")
 }
 
 @Test func `normalize text can exercise summary path with test provider`() async throws {
@@ -162,6 +217,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = try await TextForSpeech.Normalize.text(
         original,
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -179,6 +235,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = try await TextForSpeech.Normalize.text(
         original,
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -464,6 +521,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift` now.",
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -477,6 +535,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = try await TextForSpeech.Normalize.text(
         "Read `/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift:12` now.",
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -545,6 +604,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
         source,
         as: .swift,
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             source: "codex",
             topic: "normalization",
         ),

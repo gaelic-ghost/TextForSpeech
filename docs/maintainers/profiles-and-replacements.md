@@ -47,7 +47,7 @@ It does not carry request-local path context, detected formats, or runtime-owned
 
 That keeps responsibilities clean. In the current public API:
 
-- `TextForSpeech.RequestContext` carries slim request-origin metadata such as `source` and `topic`, request-local path context such as `cwd` and `repoRoot`, and freeform string attributes.
+- `TextForSpeech.RequestContext` carries required request-purpose metadata, request-origin metadata such as `source` and `topic`, request-local path context such as `cwd` and `repoRoot`, freeform string attributes, and an optional preface policy.
 - `TextForSpeech.Profile.semanticCore` carries the always-on semantic built-in policy.
 - `TextForSpeech.Profile.builtInStyle(_:)` carries shipped presentation policy for one listening style.
 - `TextForSpeech.Profile` values also carry reusable custom replacement policy.
@@ -56,7 +56,9 @@ That keeps responsibilities clean. In the current public API:
 
 Public normalization entrypoints may add a short utterance preface from
 `RequestContext.source` and `RequestContext.topic` after deterministic text or
-source normalization finishes. Path context remains input metadata for path
+source normalization finishes. By default, `.speech` and `.audioStream` requests
+include that preface and `.audioFile` requests omit it; `prefacePolicy` can
+override the purpose default. Path context remains input metadata for path
 shortening and should not be treated as a spoken source label.
 
 The M10 design direction has moved `cwd` and `repoRoot` into `RequestContext`.

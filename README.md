@@ -68,6 +68,7 @@ import TextForSpeech
 let normalized = try await TextForSpeech.Normalize.text(
     "stderr: /workspace/SpeakSwiftly/Sources/SpeakSwiftly/WorkerRuntime.swift",
     requestContext: TextForSpeech.RequestContext(
+        reqPurpose: .speech,
         source: "codex",
         topic: "normalization",
         cwd: "/workspace/SpeakSwiftly",
@@ -76,10 +77,14 @@ let normalized = try await TextForSpeech.Normalize.text(
 )
 ```
 
-When `RequestContext.source` or `RequestContext.topic` is present, returned
-speech text starts with a short preface line such as
-`From codex, normalization.`. Path fields such as `cwd` and `repoRoot` still
-only provide path-shortening context and do not create a preface by themselves.
+`RequestContext.reqPurpose` describes whether the request is live speech, a
+retained audio file, or a future audio stream. When `source` or `topic` is
+present, live speech and audio stream requests start with a short preface line
+such as `From codex, normalization.`. Retained audio-file requests omit that
+preface by default. `prefacePolicy` can override the purpose default with
+`.always` or `.never`; omitting it follows `.default`. Path fields such as
+`cwd` and `repoRoot` still only provide path-shortening context and do not create
+a preface by themselves.
 
 The mixed-text path detects the likely outer text format before running normalization. Callers do not provide a text-format hint.
 
@@ -202,7 +207,7 @@ The runtime model is intentionally explicit:
 - `runtime.profiles.getEffective()` returns the active custom profile as merged with the currently selected built-in style.
 - `runtime.profiles.get(id:)` reads one stored custom profile summary and its replacements by id.
 - `runtime.profiles.create(name:)` creates one stored custom profile and returns its generated id to the caller.
-- `runtime.normalize.text(...)` and `runtime.normalize.source(...)` apply `builtInBase(style: style.getActive()) + active custom` without exposing the merged profile value. Request contexts with `source` or `topic` add the same short preface as the public normalization API. `summarize` defaults to `false`.
+- `runtime.normalize.text(...)` and `runtime.normalize.source(...)` apply `builtInBase(style: style.getActive()) + active custom` without exposing the merged profile value. Request contexts add or omit the source/topic preface according to `reqPurpose` and optional `prefacePolicy`, matching the public normalization API. `summarize` defaults to `false`.
 - `try await runtime.normalize.text(..., summarize: true)` and `try await runtime.normalize.source(..., summarize: true)` use the active summarization provider before returning normalized speech-safe text.
 
 Persistence defaults to `.default`. `TextForSpeech.Runtime()` writes to Application Support automatically, namespaced by the host bundle identifier when one is available and falling back to `TextForSpeech` when it is not. Debug builds place the package store under `TextForSpeech-Debug`, including the fallback namespace, so local debug runs do not touch the production package store. Callers that need an explicit location can pass `.file(url)`. The selected built-in style and selected summarization provider are persisted alongside the active custom profile id and stored custom profiles.

@@ -39,6 +39,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = TextNormalizer.normalizeFilePaths(
         text,
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             cwd: "/Users/galew/Workspace/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),
@@ -56,6 +57,7 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     let normalized = TextNormalizer.normalizeFilePaths(
         text,
         requestContext: TextForSpeech.RequestContext(
+            reqPurpose: .speech,
             cwd: "/Users/galew/Workspace/SpeakSwiftly/Sources/SpeakSwiftly",
             repoRoot: "/Users/galew/Workspace/SpeakSwiftly",
         ),

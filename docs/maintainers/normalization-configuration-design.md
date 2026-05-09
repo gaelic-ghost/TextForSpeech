@@ -47,15 +47,20 @@ behavior.
 
 `RequestContext` should own:
 
+- request purpose: required `reqPurpose` with `.speech`, `.audioFile`, and
+  `.audioStream`
 - request origin: broad `source` plus human-facing `topic`
 - request attributes: freeform string metadata that does not earn a stable field
 - request environment: `cwd` and `repoRoot`, normalized the same way paths are
   normalized today
+- preface behavior override: optional `prefacePolicy`
 
 The normalization API may use `source` and `topic` to add a short speech preface
-at the returned utterance boundary. `cwd`, `repoRoot`, and `attributes` should
-not create visible preface text by themselves; they provide path context and
-caller metadata.
+at the returned utterance boundary. By default, `.speech` and `.audioStream`
+contexts include the preface and `.audioFile` contexts omit it. `prefacePolicy`
+can force `.always`, force `.never`, or use `.default` purpose-based behavior.
+`cwd`, `repoRoot`, and `attributes` should not create visible preface text by
+themselves; they provide path context and caller metadata.
 
 Path-aware normalization should read path context from `RequestContext`. This
 includes standalone path speaking, file-reference speaking, inline-code path
