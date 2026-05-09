@@ -146,6 +146,7 @@ import Testing
 @Test func `request context decodes missing attributes as empty dictionary`() throws {
     let json = """
     {
+      "reqPurpose": "speech",
       "source": "codex",
       "topic": "normalization"
     }
@@ -156,11 +157,14 @@ import Testing
 
     #expect(decoded.source == "codex")
     #expect(decoded.topic == "normalization")
+    #expect(decoded.reqPurpose == .speech)
+    #expect(decoded.prefacePolicy == nil)
     #expect(decoded.attributes.isEmpty)
 }
 
 @Test func `request context normalizes path context`() {
     let context = TextForSpeech.RequestContext(
+        reqPurpose: .speech,
         cwd: "/Users/galew/Workspace/SpeakSwiftly/../SpeakSwiftly",
         repoRoot: "  /Users/galew/Workspace/SpeakSwiftly  ",
     )
