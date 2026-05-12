@@ -234,7 +234,8 @@ No generated project setup is required for ordinary local development. For setup
 │   └── Runtime/
 ├── docs/
 │   ├── maintainers/
-│   └── releases/
+│   ├── releases/
+│   └── security/
 └── scripts/repo-maintenance/
 ```
 
@@ -256,7 +257,7 @@ Tests live under `Tests/TextForSpeechTests` and are grouped by role, with focuse
 
 Release notes live under [docs/releases](docs/releases). Each release note should stay factual, scoped to the tagged change, and explicit about behavior or API shifts.
 
-The latest release note is [v0.21.0](docs/releases/v0.21.0.md).
+The latest release note is [v0.22.1](docs/releases/v0.22.1.md).
 
 ## License
 
