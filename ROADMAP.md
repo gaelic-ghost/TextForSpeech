@@ -8,6 +8,7 @@
 - [Milestone 5: Structured Source Normalization](#milestone-5-structured-source-normalization)
 - [Milestone 7: Release and Maintainability Polish](#milestone-7-release-and-maintainability-polish)
 - [Milestone 8: Summary-Aware Normalization Requests](#milestone-8-summary-aware-normalization-requests)
+- [Milestone 8.1: Security Follow-Up for Summary Providers](#milestone-81-security-follow-up-for-summary-providers)
 - [Milestone 9: Public API Model Cleanup](#milestone-9-public-api-model-cleanup)
 - [Milestone 10: Style-Based Normalization Behavior and Codex Hook Review](#milestone-10-style-based-normalization-behavior-and-codex-hook-review)
 - [Backlog Candidates](#backlog-candidates)
@@ -30,6 +31,7 @@
 - Milestone 5: Structured Source Normalization - Planned
 - Milestone 7: Release and Maintainability Polish - In Progress
 - Milestone 8: Summary-Aware Normalization Requests - In Progress
+- Milestone 8.1: Security Follow-Up for Summary Providers - Planned
 - Milestone 9: Public API Model Cleanup - Planned
 - Milestone 10: Style-Based Normalization Behavior and Codex Hook Review - In Progress
 
@@ -115,6 +117,32 @@ In Progress
 - [x] README, maintainer docs, tests, and release notes describe the provider setting and request flag consistently.
 - [ ] Provider-specific live checks or documented examples exist for supported non-test providers.
 
+## Milestone 8.1: Security Follow-Up for Summary Providers
+
+### Status
+
+Planned
+
+### Scope
+
+- [ ] Harden summary-provider execution so opt-in providers fail boundedly instead of hanging, over-collecting output, or leaving child work behind.
+- [ ] Document and test the trust boundary where caller text leaves deterministic normalization and enters a summarizer.
+- [ ] Keep provider behavior explicit instead of adding broad text-rewriting or sanitization layers that would make normalization output less predictable.
+
+### Tickets
+
+- [ ] Fix the `.codexExec` pipe-drain deadlock risk by reading stdout and stderr while the child process runs, adding a timeout, terminating on cancellation, and capping collected output.
+- [ ] Add a regression test with a fake `codex` executable that writes more than the pipe buffer and proves `.codexExec` fails boundedly instead of hanging.
+- [ ] Review summary prompt construction for untrusted caller text and decide whether the package needs provider-specific text-boundary guidance, escaping, size limits, or explicit non-sanitization documentation.
+- [ ] Add docs that explain summary providers may transmit or process raw caller text, and that downstream callers own redaction before enabling live providers.
+- [x] Preserve the May 2026 Codex Security scan report under `docs/security/reports/`.
+
+### Exit Criteria
+
+- [ ] `.codexExec` summary calls cannot deadlock on child stdout or stderr backpressure.
+- [ ] Provider-specific text-boundary behavior is documented clearly enough for downstream services to make safe redaction and provider-selection decisions.
+- [ ] Security follow-up tests pass as part of `swift test`.
+
 ## Milestone 9: Public API Model Cleanup
 
 ### Status
@@ -194,5 +222,6 @@ In Progress
 
 - Parser-backed normalization work added `swift-markdown`, SwiftSoup, and internal semantic token runs.
 - Context cleanup moved path context onto `RequestContext` and removed `InputContext`, caller-provided text-format hints, and mixed-text nested-source hints.
+- Added a security follow-up milestone for summary-provider pipe handling and untrusted-text boundary documentation after the May 2026 Codex Security scan.
 - Completed early milestones are condensed here: the package now ships the core normalization library, runtime profile persistence, explicit text/source lanes, runtime profile ergonomics, and the forensic-surface cleanup.
 - Roadmap normalized to the canonical checklist schema with explicit remaining work for semantic-run migration, `NSDataDetector`, style review, Codex hook ownership, and structured source normalization.
