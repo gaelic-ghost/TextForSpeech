@@ -65,7 +65,7 @@ The issue is still in scope because `.codexExec` is a public summarization provi
 
 Summary-aware normalization is deterministic by default because `summarize` defaults to false. When callers enable summarization, caller-provided text may leave the local deterministic normalization path and enter the selected provider.
 
-For `.openAIResponses`, caller text is sent to the OpenAI Responses API using `OPENAI_API_KEY` from the process environment. For `.codexExec`, caller text is sent to a local Codex CLI process. For `.foundationModels`, caller text is sent to the platform model session when available.
+The `.openAIResponses` provider sends caller text to the OpenAI Responses API using `OPENAI_API_KEY` from the process environment. The `.codexExec` provider hands caller text to a local Codex CLI process, while `.foundationModels` sends it to the platform model session when available.
 
 ### Disposition
 
