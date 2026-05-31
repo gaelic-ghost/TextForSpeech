@@ -31,7 +31,7 @@
 - Milestone 5: Structured Source Normalization - Planned
 - Milestone 7: Release and Maintainability Polish - In Progress
 - Milestone 8: Summary-Aware Normalization Requests - In Progress
-- Milestone 8.1: Security Follow-Up for Summary Providers - Planned
+- Milestone 8.1: Security Follow-Up for Summary Providers - Complete with Follow-Up Deferred
 - Milestone 9: Public API Model Cleanup - Planned
 - Milestone 10: Style-Based Normalization Behavior and Codex Hook Review - In Progress
 
@@ -39,7 +39,7 @@
 
 ### Status
 
-Planned
+In Progress
 
 ### Scope
 
@@ -121,27 +121,35 @@ In Progress
 
 ### Status
 
-Planned
+Complete with Follow-Up Deferred
 
 ### Scope
 
-- [ ] Harden summary-provider execution so opt-in providers fail boundedly instead of hanging, over-collecting output, or leaving child work behind.
-- [ ] Document and test the trust boundary where caller text leaves deterministic normalization and enters a summarizer.
-- [ ] Keep provider behavior explicit instead of adding broad text-rewriting or sanitization layers that would make normalization output less predictable.
+- [x] Harden summary-provider execution so opt-in providers fail boundedly instead of hanging, over-collecting output, or leaving child work behind.
+- [x] Document and test the trust boundary where caller text leaves deterministic normalization and enters a summarizer.
+- [x] Keep provider behavior explicit by preferring prompt boundaries, input/output limits, and provider-specific safety checks over broad text-rewriting or sanitization layers that would make normalization output less predictable.
 
 ### Tickets
 
-- [ ] Fix the `.codexExec` pipe-drain deadlock risk by reading stdout and stderr while the child process runs, adding a timeout, terminating on cancellation, and capping collected output.
-- [ ] Add a regression test with a fake `codex` executable that writes more than the pipe buffer and proves `.codexExec` fails boundedly instead of hanging.
-- [ ] Review summary prompt construction for untrusted caller text and decide whether the package needs provider-specific text-boundary guidance, escaping, size limits, or explicit non-sanitization documentation.
-- [ ] Add docs that explain summary providers may transmit or process raw caller text, and that downstream callers own redaction before enabling live providers.
+- [x] Fix the `.codexExec` pipe-drain deadlock risk by reading stdout and stderr while the child process runs, adding a timeout, terminating on cancellation, and capping collected output.
+- [x] Add a regression test with a fake `codex` executable that writes more than the pipe buffer and proves `.codexExec` fails boundedly instead of hanging.
+- [x] Review summary prompt construction for untrusted caller text and add explicit untrusted-content boundaries, provider input size limits, provider output size limits, and non-sanitization documentation.
+- [x] Decide whether Foundation Models should provide an optional prompt-risk preflight for live providers when available, while treating that check as defense in depth rather than a prompt-injection guarantee.
+- [x] Keep `.foundationModels` on the Foundation Models framework instead of Writing Tools, because Writing Tools are a UIKit/AppKit text-view integration surface rather than a headless package summarization backend.
+- [x] Check `SystemLanguageModel` availability before running the Foundation Models summary request and return provider-specific unavailable reasons.
+- [x] Add docs that explain summary providers may transmit or process raw caller text, and that downstream callers own redaction before enabling live providers.
+- [x] Add a maintainer options note for bounded execution, prompt boundaries, size policy, and optional Foundation Models preflight.
 - [x] Preserve the May 2026 Codex Security scan report under `docs/security/reports/`.
 
 ### Exit Criteria
 
-- [ ] `.codexExec` summary calls cannot deadlock on child stdout or stderr backpressure.
-- [ ] Provider-specific text-boundary behavior is documented clearly enough for downstream services to make safe redaction and provider-selection decisions.
-- [ ] Security follow-up tests pass as part of `swift test`.
+- [x] `.codexExec` summary calls cannot deadlock on child stdout or stderr backpressure.
+- [x] Provider-specific text-boundary behavior is documented clearly enough for downstream services to make safe redaction and provider-selection decisions.
+- [x] Security follow-up tests pass as part of `swift test`.
+
+### Deferred Follow-Up
+
+- [ ] Revisit Foundation Models prompt-risk preflight only if a downstream caller needs stricter local gating for live summary providers.
 
 ## Milestone 9: Public API Model Cleanup
 
@@ -185,6 +193,7 @@ In Progress
 - [x] Design the style/context direction for URL, markdown-link, path, hook, and format-detection cleanup without adding a new normalization policy type.
 - [x] Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` so path shortening and request metadata share one context value.
 - [x] Add a general request-context speech preface for `source` and `topic` without using path context or Codex-specific parsing.
+- [x] Remove `RequestContext.RequestPurpose.audioStream` so spoken output uses `.speech` regardless of playback, response-streaming, or LAN-streaming destination.
 - [x] Remove the previous `InputContext.textFormat` hint entirely and keep outer text-format routing detection-owned.
 - [x] Remove `InputContext.nestedSourceFormat`; text normalization now uses generic embedded-code fallback instead of request-wide source hints.
 - [x] Remove `InputContext` after moving durable request-local facts onto `RequestContext`.
@@ -222,6 +231,7 @@ In Progress
 
 - Parser-backed normalization work added `swift-markdown`, SwiftSoup, and internal semantic token runs.
 - Context cleanup moved path context onto `RequestContext` and removed `InputContext`, caller-provided text-format hints, and mixed-text nested-source hints.
+- Request-purpose cleanup removed `audioStream`; callers should use `speech` for spoken output and model transport outside TextForSpeech request metadata.
 - Added a security follow-up milestone for summary-provider pipe handling and untrusted-text boundary documentation after the May 2026 Codex Security scan.
 - Completed early milestones are condensed here: the package now ships the core normalization library, runtime profile persistence, explicit text/source lanes, runtime profile ergonomics, and the forensic-surface cleanup.
 - Roadmap normalized to the canonical checklist schema with explicit remaining work for semantic-run migration, `NSDataDetector`, style review, Codex hook ownership, and structured source normalization.

@@ -56,10 +56,10 @@ That keeps responsibilities clean. In the current public API:
 
 Public normalization entrypoints may add a short utterance preface from
 `RequestContext.source` and `RequestContext.topic` after deterministic text or
-source normalization finishes. By default, `.speech` and `.audioStream` requests
-include that preface and `.audioFile` requests omit it; `prefacePolicy` can
-override the purpose default. Path context remains input metadata for path
-shortening and should not be treated as a spoken source label.
+source normalization finishes. By default, `.speech` requests include that
+preface and `.audioFile` requests omit it; `prefacePolicy` can override the
+purpose default. Path context remains input metadata for path shortening and
+should not be treated as a spoken source label.
 
 The M10 design direction has moved `cwd` and `repoRoot` into `RequestContext`.
 `InputContext` has been removed instead of becoming another behavior container.
@@ -257,6 +257,10 @@ The runtime normalization API now centers on:
 - `normalize.source(_:as:usingProfileID:requestContext:summarize:)`
 
 `summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape. `TextForSpeech.SummarizationProvider` is the caller-facing backend selector, and the runtime persists the selected provider through `summarizationProvider.get/list/set`. The `.test` provider is intentionally deterministic and returns the input unchanged so package tests can cover the summary-aware path without invoking Codex, OpenAI, or Foundation Models.
+
+Live summary providers are a trust boundary. When callers pass `summarize: true`, caller text may be processed by `.codexExec`, `.openAIResponses`, or `.foundationModels` before deterministic normalization resumes. Provider prompts mark caller text as untrusted content, provider input and output are bounded, and `.codexExec` drains stdout and stderr while enforcing timeout and cancellation cleanup. The package does not redact secrets or promise prompt-injection removal; downstream callers own redaction and provider selection before enabling live providers for untrusted or sensitive text.
+
+The `.foundationModels` provider uses Apple's Foundation Models framework directly through `LanguageModelSession` after checking `SystemLanguageModel` availability. It does not use Writing Tools. Writing Tools belong to UIKit/AppKit text-view integration, where system UI can proofread, rewrite, summarize, or compose user-visible text; that is a different ownership surface from this headless Swift package.
 
 The grouped persistence API centers on:
 
