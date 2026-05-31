@@ -260,6 +260,8 @@ The runtime normalization API now centers on:
 
 Live summary providers are a trust boundary. When callers pass `summarize: true`, caller text may be processed by `.codexExec`, `.openAIResponses`, or `.foundationModels` before deterministic normalization resumes. Provider prompts mark caller text as untrusted content, provider input and output are bounded, and `.codexExec` drains stdout and stderr while enforcing timeout and cancellation cleanup. The package does not redact secrets or promise prompt-injection removal; downstream callers own redaction and provider selection before enabling live providers for untrusted or sensitive text.
 
+The `.foundationModels` provider uses Apple's Foundation Models framework directly through `LanguageModelSession` after checking `SystemLanguageModel` availability. It does not use Writing Tools. Writing Tools belong to UIKit/AppKit text-view integration, where system UI can proofread, rewrite, summarize, or compose user-visible text; that is a different ownership surface from this headless Swift package.
+
 The grouped persistence API centers on:
 
 - `persistence.state`

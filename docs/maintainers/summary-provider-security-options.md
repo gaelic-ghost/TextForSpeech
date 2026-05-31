@@ -28,9 +28,11 @@ The current branch will implement the first two slices as one internal hardening
 4. Terminate the child process on timeout or task cancellation.
 5. Add Swift Testing coverage using fake `codex` executables for pipe backpressure, timeout, input limits, and prompt boundaries.
 
-The Foundation Models preflight remains a follow-up decision after the bounded execution and prompt-boundary baseline lands. That keeps the first implementation pass deterministic and avoids adding a public policy surface before downstream tuning needs are proven.
+The Foundation Models preflight is deferred after the bounded execution and prompt-boundary baseline lands. That keeps the first implementation pass deterministic and avoids adding a public policy surface before downstream tuning needs are proven.
 
 Implementation should keep these changes internal. Do not add public settings for limits or prompt-risk preflight until a caller actually needs to tune those behaviors.
+
+The `.foundationModels` summary provider should continue using the Foundation Models framework directly. Writing Tools are a UIKit/AppKit text-view integration surface for user-facing proofreading, rewriting, summarization, and composition; they are not the right backend for this package's headless normalization API.
 
 ## Recommended Implementation Slices
 
@@ -61,7 +63,7 @@ This is a local implementation detail, not a new public architecture layer, unle
 
 ### Slice 3: Optional Provider Safety Preflight
 
-Foundation Models may be useful as an additional local preflight layer when available, but it should be advisory or provider-specific rather than a required global gate.
+Foundation Models may be useful as an additional local preflight layer when available, but it should be advisory or provider-specific rather than a required global gate. This is deferred until a downstream caller needs stricter local gating.
 
 Possible shape:
 

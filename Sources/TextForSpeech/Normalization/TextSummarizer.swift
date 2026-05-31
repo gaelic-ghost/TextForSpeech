@@ -228,11 +228,25 @@ extension TextSummarizer {
     private static func summarizeWithFoundationModels(prompt: String) async throws -> String {
 #if canImport(FoundationModels)
         if #available(macOS 26.0, iOS 26.0, *) {
+            let model = SystemLanguageModel.default
+            guard model.isAvailable else {
+                throw TextForSpeech.SummaryError.providerUnavailable(
+                    "TextForSpeech could not summarize with Foundation Models because the system language model is unavailable. \(model.availability.textForSpeechSummaryDescription)",
+                )
+            }
+
             let session = LanguageModelSession(
+                model: model,
                 instructions: "Summarize text for text-to-speech playback. Return only concise, speakable prose.",
             )
-            let response = try await session.respond(to: prompt)
-            return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            do {
+                let response = try await session.respond(to: prompt)
+                return response.content.trimmingCharacters(in: .whitespacesAndNewlines)
+            } catch {
+                throw TextForSpeech.SummaryError.providerFailed(
+                    "TextForSpeech could not summarize with Foundation Models because the system language model request failed. \(error.localizedDescription)",
+                )
+            }
         }
 #endif
 
@@ -241,3 +255,26 @@ extension TextSummarizer {
         )
     }
 }
+
+#if canImport(FoundationModels)
+@available(macOS 26.0, iOS 26.0, *)
+private extension SystemLanguageModel.Availability {
+    var textForSpeechSummaryDescription: String {
+        switch self {
+            case .available:
+                "The system language model is available."
+            case let .unavailable(reason):
+                switch reason {
+                    case .deviceNotEligible:
+                        "This device is not eligible for Apple Intelligence language model requests."
+                    case .appleIntelligenceNotEnabled:
+                        "Apple Intelligence is not enabled for this user or device."
+                    case .modelNotReady:
+                        "The on-device language model is not ready yet; it may still be downloading or preparing."
+                    @unknown default:
+                        "Foundation Models reported an unknown unavailable reason."
+                }
+        }
+    }
+}
+#endif

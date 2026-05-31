@@ -31,7 +31,7 @@
 - Milestone 5: Structured Source Normalization - Planned
 - Milestone 7: Release and Maintainability Polish - In Progress
 - Milestone 8: Summary-Aware Normalization Requests - In Progress
-- Milestone 8.1: Security Follow-Up for Summary Providers - Planned
+- Milestone 8.1: Security Follow-Up for Summary Providers - Complete with Follow-Up Deferred
 - Milestone 9: Public API Model Cleanup - Planned
 - Milestone 10: Style-Based Normalization Behavior and Codex Hook Review - In Progress
 
@@ -121,7 +121,7 @@ In Progress
 
 ### Status
 
-Planned
+Complete with Follow-Up Deferred
 
 ### Scope
 
@@ -134,7 +134,9 @@ Planned
 - [x] Fix the `.codexExec` pipe-drain deadlock risk by reading stdout and stderr while the child process runs, adding a timeout, terminating on cancellation, and capping collected output.
 - [x] Add a regression test with a fake `codex` executable that writes more than the pipe buffer and proves `.codexExec` fails boundedly instead of hanging.
 - [x] Review summary prompt construction for untrusted caller text and add explicit untrusted-content boundaries, provider input size limits, provider output size limits, and non-sanitization documentation.
-- [ ] Decide whether Foundation Models should provide an optional prompt-risk preflight for live providers when available, while treating that check as defense in depth rather than a prompt-injection guarantee.
+- [x] Decide whether Foundation Models should provide an optional prompt-risk preflight for live providers when available, while treating that check as defense in depth rather than a prompt-injection guarantee.
+- [x] Keep `.foundationModels` on the Foundation Models framework instead of Writing Tools, because Writing Tools are a UIKit/AppKit text-view integration surface rather than a headless package summarization backend.
+- [x] Check `SystemLanguageModel` availability before running the Foundation Models summary request and return provider-specific unavailable reasons.
 - [x] Add docs that explain summary providers may transmit or process raw caller text, and that downstream callers own redaction before enabling live providers.
 - [x] Add a maintainer options note for bounded execution, prompt boundaries, size policy, and optional Foundation Models preflight.
 - [x] Preserve the May 2026 Codex Security scan report under `docs/security/reports/`.
@@ -144,6 +146,10 @@ Planned
 - [x] `.codexExec` summary calls cannot deadlock on child stdout or stderr backpressure.
 - [x] Provider-specific text-boundary behavior is documented clearly enough for downstream services to make safe redaction and provider-selection decisions.
 - [x] Security follow-up tests pass as part of `swift test`.
+
+### Deferred Follow-Up
+
+- [ ] Revisit Foundation Models prompt-risk preflight only if a downstream caller needs stricter local gating for live summary providers.
 
 ## Milestone 9: Public API Model Cleanup
 
