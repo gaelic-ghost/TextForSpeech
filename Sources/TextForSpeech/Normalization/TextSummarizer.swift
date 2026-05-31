@@ -47,10 +47,22 @@ enum TextSummarizer {
 
         Begin untrusted content.
         <<<TEXT_FOR_SPEECH_UNTRUSTED_CONTENT>>>
-        \(text)
+        \(summaryPromptPayload(for: text))
         <<<END_TEXT_FOR_SPEECH_UNTRUSTED_CONTENT>>>
         End untrusted content.
         """
+    }
+
+    private static func summaryPromptPayload(for text: String) -> String {
+        text
+            .replacingOccurrences(
+                of: "<<<TEXT_FOR_SPEECH_UNTRUSTED_CONTENT>>>",
+                with: "<\\<\\<TEXT_FOR_SPEECH_UNTRUSTED_CONTENT>\\>\\>",
+            )
+            .replacingOccurrences(
+                of: "<<<END_TEXT_FOR_SPEECH_UNTRUSTED_CONTENT>>>",
+                with: "<\\<\\<END_TEXT_FOR_SPEECH_UNTRUSTED_CONTENT>\\>\\>",
+            )
     }
 
     private static func validateProviderInput(

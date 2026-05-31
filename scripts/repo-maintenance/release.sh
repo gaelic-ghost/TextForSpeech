@@ -455,6 +455,10 @@ run_standard_release() {
   push_release_branch "$branch_name"
   create_or_update_pr "$branch_name"
   pr_number="$PR_NUMBER"
+  if [ "$REPO_MAINTENANCE_DRY_RUN" = "true" ] || [ "$pr_number" = "DRY-RUN" ]; then
+    log "Dry-run standard release flow completed before remote PR checks for $RELEASE_TAG."
+    return 0
+  fi
   wait_for_initial_pr_checks "$pr_number"
   if defer_remote_ci_if_requested "$pr_number" "$branch_name"; then
     log "Standard release flow paused before remote CI watch for $RELEASE_TAG."

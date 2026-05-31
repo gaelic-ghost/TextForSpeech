@@ -45,6 +45,7 @@ private final class CodexExecProcessRunner: @unchecked Sendable {
     private let errorPipe = Pipe()
     private let outputBuffer = BoundedOutputBuffer(limit: SummaryProviderLimits.maxOutputBytes)
     private let errorBuffer = BoundedOutputBuffer(limit: SummaryProviderLimits.maxErrorBytes)
+    private let readerGroup = DispatchGroup()
     private let lock = NSLock()
     private var timer: DispatchSourceTimer?
     private var didComplete = false
@@ -100,12 +101,14 @@ private final class CodexExecProcessRunner: @unchecked Sendable {
         process.standardOutput = outputPipe
         process.standardError = errorPipe
 
-        outputPipe.fileHandleForReading.readabilityHandler = { [outputBuffer] handle in
-            outputBuffer.append(handle.availableData)
-        }
-        errorPipe.fileHandleForReading.readabilityHandler = { [errorBuffer] handle in
-            errorBuffer.append(handle.availableData)
-        }
+        startPipeReader(
+            handle: outputPipe.fileHandleForReading,
+            buffer: outputBuffer,
+        )
+        startPipeReader(
+            handle: errorPipe.fileHandleForReading,
+            buffer: errorBuffer,
+        )
 
         process.terminationHandler = { [weak self] process in
             self?.complete(.exit(process.terminationStatus))
@@ -190,12 +193,13 @@ private final class CodexExecProcessRunner: @unchecked Sendable {
 
     private func waitForResult() -> Result<String, TextForSpeech.SummaryError> {
         while true {
-            let completion = lock.withLock {
-                didComplete ? makeCompletionResult() : nil
+            let isComplete = lock.withLock {
+                didComplete
             }
 
-            if let completion {
-                return completion
+            if isComplete {
+                waitForPipeReaders()
+                return makeCompletionResult()
             }
 
             Thread.sleep(forTimeInterval: 0.01)
@@ -203,6 +207,9 @@ private final class CodexExecProcessRunner: @unchecked Sendable {
     }
 
     private func makeCompletionResult() -> Result<String, TextForSpeech.SummaryError> {
+        let processStatus = lock.withLock {
+            completedProcessStatus
+        }
         let output = outputBuffer.output()
         let error = errorBuffer.output()
         cleanupHandles()
@@ -223,7 +230,7 @@ private final class CodexExecProcessRunner: @unchecked Sendable {
             )
         }
 
-        switch completedProcessStatus {
+        switch processStatus {
             case let .exit(status) where status == 0:
                 return .success(output.text.trimmingCharacters(in: .whitespacesAndNewlines))
             case let .exit(status):
@@ -244,6 +251,29 @@ private final class CodexExecProcessRunner: @unchecked Sendable {
     }
 
     private var completedProcessStatus: Completion?
+
+    private func startPipeReader(
+        handle: FileHandle,
+        buffer: BoundedOutputBuffer,
+    ) {
+        readerGroup.enter()
+        DispatchQueue.global(qos: .utility).async {
+            while true {
+                let data = handle.readData(ofLength: 8 * 1024)
+                guard !data.isEmpty else {
+                    break
+                }
+                buffer.append(data)
+            }
+            self.readerGroup.leave()
+        }
+    }
+
+    private func waitForPipeReaders() {
+        if readerGroup.wait(timeout: .now() + 1) == .timedOut {
+            cleanupHandles()
+        }
+    }
 
     private func complete(_ completion: Completion) {
         lock.withLock {
@@ -274,8 +304,8 @@ private final class CodexExecProcessRunner: @unchecked Sendable {
     }
 
     private func cleanupHandles() {
-        outputPipe.fileHandleForReading.readabilityHandler = nil
-        errorPipe.fileHandleForReading.readabilityHandler = nil
+        try? outputPipe.fileHandleForReading.close()
+        try? errorPipe.fileHandleForReading.close()
     }
 }
 #endif
