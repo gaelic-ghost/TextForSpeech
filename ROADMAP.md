@@ -193,6 +193,7 @@ In Progress
 - [x] Design the style/context direction for URL, markdown-link, path, hook, and format-detection cleanup without adding a new normalization policy type.
 - [x] Move `cwd` and `repoRoot` from `InputContext` into `RequestContext` so path shortening and request metadata share one context value.
 - [x] Add a general request-context speech preface for `source` and `topic` without using path context or Codex-specific parsing.
+- [x] Remove `RequestContext.RequestPurpose.audioStream` so spoken output uses `.speech` regardless of playback, response-streaming, or LAN-streaming destination.
 - [x] Remove the previous `InputContext.textFormat` hint entirely and keep outer text-format routing detection-owned.
 - [x] Remove `InputContext.nestedSourceFormat`; text normalization now uses generic embedded-code fallback instead of request-wide source hints.
 - [x] Remove `InputContext` after moving durable request-local facts onto `RequestContext`.
@@ -230,6 +231,7 @@ In Progress
 
 - Parser-backed normalization work added `swift-markdown`, SwiftSoup, and internal semantic token runs.
 - Context cleanup moved path context onto `RequestContext` and removed `InputContext`, caller-provided text-format hints, and mixed-text nested-source hints.
+- Request-purpose cleanup removed `audioStream`; callers should use `speech` for spoken output and model transport outside TextForSpeech request metadata.
 - Added a security follow-up milestone for summary-provider pipe handling and untrusted-text boundary documentation after the May 2026 Codex Security scan.
 - Completed early milestones are condensed here: the package now ships the core normalization library, runtime profile persistence, explicit text/source lanes, runtime profile ergonomics, and the forensic-surface cleanup.
 - Roadmap normalized to the canonical checklist schema with explicit remaining work for semantic-run migration, `NSDataDetector`, style review, Codex hook ownership, and structured source normalization.

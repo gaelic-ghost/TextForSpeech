@@ -162,6 +162,21 @@ import Testing
     #expect(decoded.attributes.isEmpty)
 }
 
+@Test func `request context rejects removed audio stream purpose`() throws {
+    let json = """
+    {
+      "reqPurpose": "audioStream",
+      "source": "codex",
+      "topic": "stream"
+    }
+    """
+    let data = Data(json.utf8)
+
+    #expect(throws: DecodingError.self) {
+        try JSONDecoder().decode(TextForSpeech.RequestContext.self, from: data)
+    }
+}
+
 @Test func `request context normalizes path context`() {
     let context = TextForSpeech.RequestContext(
         reqPurpose: .speech,

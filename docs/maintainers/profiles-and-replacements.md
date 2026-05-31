@@ -56,10 +56,10 @@ That keeps responsibilities clean. In the current public API:
 
 Public normalization entrypoints may add a short utterance preface from
 `RequestContext.source` and `RequestContext.topic` after deterministic text or
-source normalization finishes. By default, `.speech` and `.audioStream` requests
-include that preface and `.audioFile` requests omit it; `prefacePolicy` can
-override the purpose default. Path context remains input metadata for path
-shortening and should not be treated as a spoken source label.
+source normalization finishes. By default, `.speech` requests include that
+preface and `.audioFile` requests omit it; `prefacePolicy` can override the
+purpose default. Path context remains input metadata for path shortening and
+should not be treated as a spoken source label.
 
 The M10 design direction has moved `cwd` and `repoRoot` into `RequestContext`.
 `InputContext` has been removed instead of becoming another behavior container.

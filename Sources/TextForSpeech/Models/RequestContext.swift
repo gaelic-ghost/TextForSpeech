@@ -15,7 +15,6 @@ public extension TextForSpeech {
         public enum RequestPurpose: String, Codable, Sendable, Equatable {
             case speech
             case audioFile
-            case audioStream
         }
 
         public enum PrefacePolicy: String, Codable, Sendable, Equatable {
@@ -107,7 +106,7 @@ extension TextForSpeech.RequestContext {
                 false
             case .default:
                 switch reqPurpose {
-                    case .speech, .audioStream:
+                    case .speech:
                         true
                     case .audioFile:
                         false

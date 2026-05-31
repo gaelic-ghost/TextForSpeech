@@ -80,20 +80,6 @@ private func occurrenceCount(of needle: String, in haystack: String) -> Int {
     #expect(normalized == "Build finished.")
 }
 
-@Test func `normalize adds request context preface for audio stream purpose by default`() async throws {
-    let normalized = try await TextForSpeech.Normalize.text(
-        "Build finished.",
-        requestContext: TextForSpeech.RequestContext(
-            reqPurpose: .audioStream,
-            source: "codex",
-            topic: "stream",
-        ),
-    )
-
-    #expect(normalized.hasPrefix("From codex, stream.\n\n"))
-    #expect(normalized.contains("Build finished."))
-}
-
 @Test func `normalize request preface policy can override purpose defaults`() async throws {
     let always = try await TextForSpeech.Normalize.text(
         "Build finished.",
