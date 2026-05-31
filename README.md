@@ -162,6 +162,8 @@ The summarization provider is explicit because each backend option has a differe
 
 The `summarize` argument defaults to `false`, so deterministic callers do not need a separate convenience method. `TextForSpeech.SummarizationProvider` selects the backend used when `summarize` is `true`.
 
+When `summarize` is `true`, caller text may be processed by the selected provider before deterministic normalization continues. TextForSpeech treats that text as untrusted content in provider prompts, applies bounded input and output limits, and keeps `.codexExec` child-process execution timeout-bound. TextForSpeech does not redact secrets or guarantee prompt-injection removal; downstream callers should redact sensitive text before enabling live providers for untrusted input.
+
 ### Runtime Profiles
 
 Use `TextForSpeech.Runtime` when you need an observable owner for stored custom profiles, one active custom profile id, one selected built-in style, one selected summarization provider, and JSON-backed persistence configured through a small enum:

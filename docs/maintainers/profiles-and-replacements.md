@@ -258,6 +258,8 @@ The runtime normalization API now centers on:
 
 `summarize` defaults to `false`, so deterministic normalization and summary-aware normalization use the same public method shape. `TextForSpeech.SummarizationProvider` is the caller-facing backend selector, and the runtime persists the selected provider through `summarizationProvider.get/list/set`. The `.test` provider is intentionally deterministic and returns the input unchanged so package tests can cover the summary-aware path without invoking Codex, OpenAI, or Foundation Models.
 
+Live summary providers are a trust boundary. When callers pass `summarize: true`, caller text may be processed by `.codexExec`, `.openAIResponses`, or `.foundationModels` before deterministic normalization resumes. Provider prompts mark caller text as untrusted content, provider input and output are bounded, and `.codexExec` drains stdout and stderr while enforcing timeout and cancellation cleanup. The package does not redact secrets or promise prompt-injection removal; downstream callers own redaction and provider selection before enabling live providers for untrusted or sensitive text.
+
 The grouped persistence API centers on:
 
 - `persistence.state`

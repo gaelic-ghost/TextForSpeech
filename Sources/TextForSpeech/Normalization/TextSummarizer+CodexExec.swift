@@ -1,0 +1,281 @@
+import Foundation
+
+#if os(macOS)
+import Darwin
+#endif
+
+extension TextSummarizer {
+    static func summarizeWithCodexExec(
+        prompt: String,
+        executableURL: URL? = nil,
+        timeoutSeconds: TimeInterval = SummaryProviderLimits.codexExecTimeoutSeconds,
+    ) async throws -> String {
+#if os(macOS)
+        let runner = CodexExecProcessRunner(
+            prompt: prompt,
+            executableURL: executableURL,
+            timeoutSeconds: timeoutSeconds,
+        )
+        return try await withTaskCancellationHandler {
+            try await runner.run()
+        } onCancel: {
+            runner.cancel()
+        }
+#else
+        throw TextForSpeech.SummaryError.providerUnavailable(
+            "TextForSpeech could not summarize with codex exec because Process-based CLI execution is only supported by this package on macOS.",
+        )
+#endif
+    }
+}
+
+#if os(macOS)
+private final class CodexExecProcessRunner: @unchecked Sendable {
+    private enum Completion {
+        case exit(Int32)
+        case failure(TextForSpeech.SummaryError)
+    }
+
+    private let prompt: String
+    private let executableURL: URL?
+    private let timeoutSeconds: TimeInterval
+    private let process = Process()
+    private let inputPipe = Pipe()
+    private let outputPipe = Pipe()
+    private let errorPipe = Pipe()
+    private let outputBuffer = BoundedOutputBuffer(limit: SummaryProviderLimits.maxOutputBytes)
+    private let errorBuffer = BoundedOutputBuffer(limit: SummaryProviderLimits.maxErrorBytes)
+    private let lock = NSLock()
+    private var timer: DispatchSourceTimer?
+    private var didComplete = false
+
+    init(
+        prompt: String,
+        executableURL: URL?,
+        timeoutSeconds: TimeInterval,
+    ) {
+        self.prompt = prompt
+        self.executableURL = executableURL
+        self.timeoutSeconds = timeoutSeconds
+    }
+
+    func run() async throws -> String {
+        try await withCheckedThrowingContinuation { continuation in
+            start(continuation: continuation)
+        }
+    }
+
+    func cancel() {
+        complete(
+            .failure(
+                TextForSpeech.SummaryError.providerFailed(
+                    "TextForSpeech cancelled codex exec summarization and terminated the child process before it could return a summary.",
+                ),
+            ),
+        )
+    }
+
+    private func start(continuation: CheckedContinuation<String, any Error>) {
+        if let executableURL {
+            process.executableURL = executableURL
+            process.arguments = [
+                "exec",
+                "--ephemeral",
+                "--sandbox",
+                "read-only",
+                "-",
+            ]
+        } else {
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            process.arguments = [
+                "codex",
+                "exec",
+                "--ephemeral",
+                "--sandbox",
+                "read-only",
+                "-",
+            ]
+        }
+        process.standardInput = inputPipe
+        process.standardOutput = outputPipe
+        process.standardError = errorPipe
+
+        outputPipe.fileHandleForReading.readabilityHandler = { [outputBuffer] handle in
+            outputBuffer.append(handle.availableData)
+        }
+        errorPipe.fileHandleForReading.readabilityHandler = { [errorBuffer] handle in
+            errorBuffer.append(handle.availableData)
+        }
+
+        process.terminationHandler = { [weak self] process in
+            self?.complete(.exit(process.terminationStatus))
+        }
+
+        configureTimeout()
+
+        do {
+            try process.run()
+        } catch {
+            complete(
+                .failure(
+                    TextForSpeech.SummaryError.providerUnavailable(
+                        "TextForSpeech could not start codex exec for summarization. Confirm the Codex CLI is installed and available on PATH. \(error.localizedDescription)",
+                    ),
+                ),
+            )
+            waitForCompletion(continuation: continuation)
+            return
+        }
+
+        if lock.withLock({ didComplete }) {
+            terminateProcessIfNeeded()
+            waitForCompletion(continuation: continuation)
+            return
+        }
+
+        inputPipe.fileHandleForWriting.write(Data(prompt.utf8))
+        try? inputPipe.fileHandleForWriting.close()
+
+        waitForCompletion(continuation: continuation)
+    }
+
+    private func configureTimeout() {
+        let timer = DispatchSource.makeTimerSource(queue: .global(qos: .utility))
+        timer.schedule(deadline: .now() + timeoutSeconds)
+        timer.setEventHandler { [weak self] in
+            guard let self else {
+                return
+            }
+
+            self.complete(
+                .failure(
+                    TextForSpeech.SummaryError.providerFailed(
+                        "TextForSpeech could not summarize with codex exec because the CLI exceeded the \(Self.timeoutDescription(self.timeoutSeconds)) timeout. TextForSpeech terminated the child process so the host request would not hang.",
+                    ),
+                ),
+            )
+        }
+        self.timer = timer
+        timer.resume()
+    }
+
+    private static func timeoutDescription(_ timeoutSeconds: TimeInterval) -> String {
+        if timeoutSeconds.rounded() == timeoutSeconds {
+            "\(Int(timeoutSeconds))-second"
+        } else {
+            "\(timeoutSeconds)-second"
+        }
+    }
+
+    private func waitForCompletion(continuation: CheckedContinuation<String, any Error>) {
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self else {
+                continuation.resume(
+                    throwing: TextForSpeech.SummaryError.providerFailed(
+                        "TextForSpeech could not summarize with codex exec because the process runner was released before the CLI returned.",
+                    ),
+                )
+                return
+            }
+
+            let result = self.waitForResult()
+            switch result {
+                case let .success(summary):
+                    continuation.resume(returning: summary)
+                case let .failure(error):
+                    continuation.resume(throwing: error)
+            }
+        }
+    }
+
+    private func waitForResult() -> Result<String, TextForSpeech.SummaryError> {
+        while true {
+            let completion = lock.withLock {
+                didComplete ? makeCompletionResult() : nil
+            }
+
+            if let completion {
+                return completion
+            }
+
+            Thread.sleep(forTimeInterval: 0.01)
+        }
+    }
+
+    private func makeCompletionResult() -> Result<String, TextForSpeech.SummaryError> {
+        let output = outputBuffer.output()
+        let error = errorBuffer.output()
+        cleanupHandles()
+
+        if output.didExceedLimit {
+            return .failure(
+                TextForSpeech.SummaryError.providerFailed(
+                    "TextForSpeech could not summarize with codex exec because the CLI returned more than \(SummaryProviderLimits.maxOutputBytes) bytes on stdout. TextForSpeech stopped collecting output so the host process would not grow memory without bound.",
+                ),
+            )
+        }
+
+        if error.didExceedLimit {
+            return .failure(
+                TextForSpeech.SummaryError.providerFailed(
+                    "TextForSpeech could not summarize with codex exec because the CLI returned more than \(SummaryProviderLimits.maxErrorBytes) bytes on stderr. TextForSpeech stopped collecting error output so the host process would not grow memory without bound.",
+                ),
+            )
+        }
+
+        switch completedProcessStatus {
+            case let .exit(status) where status == 0:
+                return .success(output.text.trimmingCharacters(in: .whitespacesAndNewlines))
+            case let .exit(status):
+                return .failure(
+                    TextForSpeech.SummaryError.providerFailed(
+                        "TextForSpeech could not summarize with codex exec because the CLI exited with status \(status). \(error.text)",
+                    ),
+                )
+            case let .failure(error):
+                return .failure(error)
+            case nil:
+                return .failure(
+                    TextForSpeech.SummaryError.providerFailed(
+                        "TextForSpeech could not summarize with codex exec because the process completed without recording an exit status.",
+                    ),
+                )
+        }
+    }
+
+    private var completedProcessStatus: Completion?
+
+    private func complete(_ completion: Completion) {
+        lock.withLock {
+            guard !didComplete else {
+                return
+            }
+
+            didComplete = true
+            completedProcessStatus = completion
+            timer?.cancel()
+            timer = nil
+            terminateProcessIfNeeded()
+        }
+    }
+
+    private func terminateProcessIfNeeded() {
+        guard process.isRunning else {
+            return
+        }
+
+        let processID = process.processIdentifier
+        process.terminate()
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1) { [process] in
+            if process.isRunning {
+                kill(processID, SIGKILL)
+            }
+        }
+    }
+
+    private func cleanupHandles() {
+        outputPipe.fileHandleForReading.readabilityHandler = nil
+        errorPipe.fileHandleForReading.readabilityHandler = nil
+    }
+}
+#endif

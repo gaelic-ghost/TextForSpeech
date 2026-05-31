@@ -18,6 +18,20 @@ The broader prompt-injection risk is that untrusted caller text can contain inst
 - Document that downstream callers own redaction before enabling live providers.
 - Prefer provider-specific safety checks that fail closed or warn clearly, without pretending to guarantee prompt-injection immunity.
 
+## Implementation Plan
+
+The current branch will implement the first two slices as one internal hardening pass:
+
+1. Add internal provider limits for input characters, output bytes, stderr bytes, and `.codexExec` runtime.
+2. Rewrite the summary prompt so trusted package instructions are separated from clearly marked untrusted caller text.
+3. Replace the blocking `.codexExec` process flow with a bounded runner that drains stdout and stderr while the process runs.
+4. Terminate the child process on timeout or task cancellation.
+5. Add Swift Testing coverage using fake `codex` executables for pipe backpressure, timeout, input limits, and prompt boundaries.
+
+The Foundation Models preflight remains a follow-up decision after the bounded execution and prompt-boundary baseline lands. That keeps the first implementation pass deterministic and avoids adding a public policy surface before downstream tuning needs are proven.
+
+Implementation should keep these changes internal. Do not add public settings for limits or prompt-risk preflight until a caller actually needs to tune those behaviors.
+
 ## Recommended Implementation Slices
 
 ### Slice 1: Bounded Provider Execution
